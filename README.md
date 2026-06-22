@@ -12,10 +12,12 @@ Shared Flutter UI infrastructure extracted from Teampilot for use by **huji** an
 
 ## Usage
 
+In **huji-app** (git submodule at `packages/shared_ui`):
+
 ```yaml
 dependencies:
   shared_ui:
-    path: ../../shared_ui
+    path: packages/shared_ui
 ```
 
 ```dart
