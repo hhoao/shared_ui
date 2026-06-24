@@ -52,27 +52,40 @@ class WorkspaceContentTabBar extends StatelessWidget {
     required this.tabs,
     required this.selectedIndex,
     required this.onSelect,
+    this.trailing,
     super.key,
   });
 
   final List<String> tabs;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var i = 0; i < tabs.length; i++)
-            WorkspaceContentTabItem(
-              label: tabs[i],
-              selected: i == selectedIndex,
-              onTap: () => onSelect(i),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (var i = 0; i < tabs.length; i++)
+                  WorkspaceContentTabItem(
+                    label: tabs[i],
+                    selected: i == selectedIndex,
+                    onTap: () => onSelect(i),
+                  ),
+              ],
             ),
+          ),
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: 12),
+          trailing!,
         ],
-      ),
+      ],
     );
   }
 }
@@ -157,6 +170,7 @@ class WorkspaceIdentityPane extends StatelessWidget {
     required this.onSelectTab,
     required this.contentKey,
     required this.child,
+    this.tabBarTrailing,
     super.key,
   });
 
@@ -166,6 +180,7 @@ class WorkspaceIdentityPane extends StatelessWidget {
   final ValueChanged<int> onSelectTab;
   final Object contentKey;
   final Widget child;
+  final Widget? tabBarTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +197,7 @@ class WorkspaceIdentityPane extends StatelessWidget {
             tabs: tabs,
             selectedIndex: selectedTabIndex,
             onSelect: onSelectTab,
+            trailing: tabBarTrailing,
           ),
           Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
