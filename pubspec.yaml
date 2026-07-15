@@ -10,6 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
   toggle_switch: ^2.3.0
+  collection: ^1.19.0
+  equatable: ^2.0.5
+  pausable_timer: ^3.1.0+3
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
