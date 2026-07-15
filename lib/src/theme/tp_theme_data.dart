@@ -35,6 +35,7 @@ class TpThemeData {
   factory TpThemeData.fromColorScheme(
     ColorScheme scheme, {
     required double scale,
+    double? iconScale,
     TpDialogTheme? dialog,
     TpInputTheme? input,
     TpTextareaTheme? textarea,
@@ -43,21 +44,24 @@ class TpThemeData {
     TpButtonTheme? button,
     TpCardTheme? card,
     TpSeparatorTheme? separator,
-  }) => TpThemeData(
-    colorScheme: scheme,
-    spacing: TpSpacing.fromScale(scale),
-    iconSizes: TpIconSizes.fromScale(scale),
-    typography: TpTypography(scale: scale),
-    control: TpControlMetrics.fromScale(scale),
-    dialog: dialog,
-    input: input,
-    textarea: textarea,
-    popover: popover,
-    select: select,
-    button: button,
-    card: card,
-    separator: separator,
-  );
+  }) {
+    final icons = iconScale ?? scale;
+    return TpThemeData(
+      colorScheme: scheme,
+      spacing: TpSpacing.fromScale(scale),
+      iconSizes: TpIconSizes.fromScale(icons),
+      typography: TpTypography(scale: scale),
+      control: TpControlMetrics.fromScale(scale),
+      dialog: dialog,
+      input: input,
+      textarea: textarea,
+      popover: popover,
+      select: select,
+      button: button,
+      card: card,
+      separator: separator,
+    );
+  }
 
   /// Sane defaults when no [TpTheme] ancestor is present.
   factory TpThemeData.fallback() => TpThemeData.fromColorScheme(

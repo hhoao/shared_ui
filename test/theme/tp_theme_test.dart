@@ -67,6 +67,28 @@ void main() {
     expect(captured.tpIconSizes.md, 36);
   });
 
+  testWidgets('iconScale can diverge from spacing scale', (tester) async {
+    late BuildContext captured;
+    await tester.pumpWidget(
+      TpTheme(
+        data: TpThemeData.fromColorScheme(
+          ColorScheme.fromSeed(seedColor: const Color(0xFFD4A06A)),
+          scale: 1.0,
+          iconScale: 1.32,
+        ),
+        child: Builder(
+          builder: (context) {
+            captured = context;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(captured.tpSpacing.md, 12);
+    expect(captured.tpIconSizes.md, closeTo(18 * 1.32, 0.01));
+    expect(TpTheme.of(captured).spacing.scale, 1.0);
+  });
+
   testWidgets('maybeOf is null without ancestor and non-null with one',
       (tester) async {
     late BuildContext outside;
