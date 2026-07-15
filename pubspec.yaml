@@ -1,25 +1,15 @@
 name: shared_ui
-description: Shared Flutter UI infrastructure for huji and teampilot.
+description: TeamPilot / shared design-system UI primitives (Tp*).
 publish_to: "none"
-version: 0.1.0
+version: 0.2.0
 
 environment:
-  sdk: ^3.12.2
+  sdk: ^3.8.1
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  flutter_bloc: ^9.1.0
-  equatable: ^2.0.5
-  flex_color_scheme: ^8.4.0
-  google_fonts: ^8.1.0
-  shared_preferences: ^2.5.3
-  window_manager: ^0.5.1
   toggle_switch: ^2.3.0
-  flutter_animate: 4.5.2
-  intl: any
 
 dev_dependencies:
   flutter_test:
@@ -27,7 +17,4 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
-  generate: true
   uses-material-design: true
-  assets:
-    - assets/google_fonts/
