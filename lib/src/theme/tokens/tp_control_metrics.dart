@@ -63,6 +63,12 @@ final class TpControlMetrics {
   final TpControlSizeMetrics medium;
   final TpControlSizeMetrics large;
 
+  /// Default painted height (medium button).
+  double get height => medium.height;
+  double get minWidth => medium.minWidth;
+  double get horizontalPadding => medium.horizontalPadding;
+  double get verticalPadding => medium.verticalPadding;
+
   static const double radiusBase = 8;
   static const double heightBase = 26;
   static const double minWidthBase = 64;

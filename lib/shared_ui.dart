@@ -1,9 +1,13 @@
 /// TeamPilot shared design system.
 library shared_ui;
 
+export 'src/components/badge/tp_status_badge.dart';
 export 'src/components/button/tp_button.dart';
+export 'src/components/card/tp_action_row.dart';
 export 'src/components/card/tp_card.dart';
+export 'src/components/card/tp_card_header.dart';
 export 'src/components/dialog/tp_dialog.dart';
+export 'src/components/disclosure/tp_disclosure.dart';
 export 'src/components/empty_state/tp_empty_state.dart';
 export 'src/components/form/tp_form.dart';
 export 'src/components/form/tp_form_field.dart';
@@ -15,7 +19,12 @@ export 'src/components/icon_button/tp_icon_button.dart';
 export 'src/components/input/tp_input.dart';
 export 'src/components/input/tp_input_form_field.dart';
 export 'src/components/popover/tp_popover.dart';
+export 'src/components/preference/tp_preference_row.dart';
+export 'src/components/preference/tp_preference_stack.dart';
+export 'src/components/section/tp_section_header.dart';
 export 'src/components/segmented_control/tp_segmented_control.dart';
+export 'src/components/segmented_control/tp_segmented_picker.dart';
+export 'src/components/select/tp_compact_select.dart';
 export 'src/components/select/tp_select.dart';
 export 'src/components/select/tp_select_decoration.dart';
 export 'src/components/select/tp_select_item_filter.dart';
@@ -40,5 +49,8 @@ export 'src/theme/tokens/tp_control_metrics.dart';
 export 'src/theme/tokens/tp_icon_sizes.dart';
 export 'src/theme/tokens/tp_spacing.dart';
 export 'src/theme/tokens/tp_typography.dart';
+export 'src/theme/tp_font_theme.dart';
+export 'src/theme/tp_glyph_warmup.dart';
+export 'src/theme/tp_text_styles.dart';
 export 'src/theme/tp_theme.dart';
 export 'src/theme/tp_theme_data.dart';

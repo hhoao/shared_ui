@@ -36,6 +36,9 @@ class TpThemeData {
     ColorScheme scheme, {
     required double scale,
     double? iconScale,
+    /// Button / input control metrics. Defaults to [scale]. Hosts that keep
+    /// layout spacing fixed while text grows should pass the text multiplier.
+    double? controlScale,
     TpDialogTheme? dialog,
     TpInputTheme? input,
     TpTextareaTheme? textarea,
@@ -46,12 +49,13 @@ class TpThemeData {
     TpSeparatorTheme? separator,
   }) {
     final icons = iconScale ?? scale;
+    final controls = controlScale ?? scale;
     return TpThemeData(
       colorScheme: scheme,
       spacing: TpSpacing.fromScale(scale),
       iconSizes: TpIconSizes.fromScale(icons),
       typography: TpTypography(scale: scale),
-      control: TpControlMetrics.fromScale(scale),
+      control: TpControlMetrics.fromScale(controls),
       dialog: dialog,
       input: input,
       textarea: textarea,

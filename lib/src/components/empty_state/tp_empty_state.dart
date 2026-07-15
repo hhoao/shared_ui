@@ -34,7 +34,7 @@ class TpEmptyState extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: context.tpIconSizes.md,
+            size: context.tpIconSizes.hero,
             color: textBase.withValues(alpha: 0.35),
           ),
           SizedBox(height: spacing.md),
