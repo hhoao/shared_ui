@@ -64,12 +64,24 @@ class ToastificationManager {
     );
 
     if (overlayEntry == null) {
+      notifications.insert(0, item);
+      while (notifications.length > config.maxToastLimit) {
+        dismissLast();
+      }
       _createNotificationHolder(overlayState);
-    }
+    } else {
+      void scheduleAddItem() {
+        scheduler.addPostFrameCallback((_) {
+          if (listGlobalKey.currentState != null) {
+            _addItemToList(item);
+            return;
+          }
+          scheduleAddItem();
+        });
+      }
 
-    scheduler.addPostFrameCallback((_) {
-      _addItemToList(item);
-    });
+      scheduleAddItem();
+    }
 
     return item;
   }
@@ -78,7 +90,7 @@ class ToastificationManager {
     if (notifications.contains(item)) return;
 
     notifications.insert(0, item);
-    listGlobalKey.currentState?.insertItem(
+    listGlobalKey.currentState!.insertItem(
       0,
       duration: _createAnimationDuration(item),
     );

@@ -37,6 +37,8 @@ export 'src/components/textarea/tp_textarea_form_field.dart';
 export 'src/components/textarea/tp_textarea_resize_grip.dart';
 export 'src/components/textarea/tp_textarea_shell.dart';
 export 'src/components/toast/tp_toast.dart';
+export 'src/components/toast/tp_toast_config.dart';
+export 'src/components/toast/tp_toast_wrapper.dart';
 export 'src/components/tooltip/tp_tooltip.dart';
 export 'src/theme/components/tp_button_theme.dart';
 export 'src/theme/components/tp_card_theme.dart';
