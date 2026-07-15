@@ -2,24 +2,43 @@
 
 TeamPilot **Tp** design system — reusable Flutter UI primitives (`Tp*`) and theme tokens.
 
-## Wiring (TeamPilot)
+## Theme
 
-Wrap the app with `TpTheme` so components resolve spacing, typography, and control metrics from `TpThemeData`:
+Wrap the app with `TpTheme`. Prefer `TpTextStyles.of(context)` for semantic text,
+`context.tpFonts` for families, and `TpGlyphWarmup` for boot glyph shaping:
 
 ```dart
 import 'package:shared_ui/shared_ui.dart';
 
 MaterialApp(
+  theme: ThemeData(
+    extensions: [
+      TpFontTheme(
+        uiFontFamily: 'Noto Sans SC',
+        monoFontFamily: 'JetBrains Mono',
+        monoFontFamilyFallback: const ['monospace'],
+      ),
+    ],
+  ),
   builder: (context, child) {
     return TpTheme(
       data: TpThemeData.fromColorScheme(
         Theme.of(context).colorScheme,
-        scale: 1.0,
+        scale: 1.0, // layout spacing
+        iconScale: iconMultiplier,
+        controlScale: textMultiplier, // buttons/inputs track text size
       ),
       child: child ?? const SizedBox.shrink(),
     );
   },
 );
+
+// Boot warmup (host supplies glyphs charset):
+final styles = TpGlyphWarmup.dedupeByShapeKey([
+  ...TpTextStyles(theme).stylesForWarmup(),
+  ...hostExtras,
+]);
+TpGlyphWarmup.shapeAll(styles: styles, glyphs: warmupGlyphs);
 ```
 
 In `pubspec.yaml`:
@@ -44,8 +63,9 @@ import 'package:shared_ui/shared_ui.dart';
 | **Dialog** | `TpDialog` |
 | **Form** | `TpForm`, `TpFormField`, `TpFormFieldLayout`, `TpFormMap` |
 | **Overlay** | `TpPopover`, `TpTooltip` |
-| **Layout / chrome** | `TpCard`, `TpSeparator`, `TpSegmentedControl`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
-| **Theme** | `TpTheme`, `TpThemeData`, spacing / typography / control metric tokens, per-component themes |
+| **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
+| **Preference** | `TpPreferenceRow`, `TpPreferenceStack`, `TpSectionHeader`, `TpDisclosure`, `TpStatusBadge`, `TpCompactSelect` |
+| **Theme** | `TpTheme`, `TpThemeData`, `TpTextStyles`, `TpFontTheme`, `TpGlyphWarmup`, icon sizes (`sm`/`md`/`lg`/`hero`), spacing / typography / control metrics, per-component themes |
 
 ## Layout
 

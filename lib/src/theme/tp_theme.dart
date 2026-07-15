@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'tp_theme_data.dart';
+import 'tokens/tp_control_metrics.dart';
 import 'tokens/tp_icon_sizes.dart';
 import 'tokens/tp_spacing.dart';
 
@@ -25,4 +26,12 @@ extension TpThemeContext on BuildContext {
   TpThemeData get tpTheme => TpTheme.of(this);
   TpSpacing get tpSpacing => tpTheme.spacing;
   TpIconSizes get tpIconSizes => tpTheme.iconSizes;
+  TpControlMetrics get tpControl => tpTheme.control;
+
+  /// Resolved default icon size from [ThemeData.iconTheme].
+  double get tpIconSize => IconTheme.of(this).size ?? tpIconSizes.md;
+
+  /// Resolved default icon color from [ThemeData.iconTheme].
+  Color get tpIconColor =>
+      IconTheme.of(this).color ?? Theme.of(this).colorScheme.tpIcon;
 }
