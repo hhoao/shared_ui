@@ -1,0 +1,207 @@
+import 'package:flutter/material.dart';
+
+import '../../theme/tp_theme.dart';
+import '../icon_button/tp_icon_button.dart';
+import 'tp_select.dart';
+import 'tp_select_decoration.dart';
+
+/// [TpSelect] that also supports typing a custom value (cancel / confirm).
+class TpSelectWithCustomInput extends StatefulWidget {
+  const TpSelectWithCustomInput({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    required this.hintText,
+    this.decoration,
+    this.customInputTooltip,
+    this.cancelLabel = 'Cancel',
+    this.confirmLabel = 'Confirm',
+    this.searchable = true,
+    this.searchHintText,
+    this.emptySearchText,
+    this.searchMinItems = 8,
+    this.clearSearchOnClose = true,
+    this.onSearchChanged,
+    super.key,
+  });
+
+  final String value;
+  final List<String> items;
+  final ValueChanged<String> onChanged;
+  final String hintText;
+  final TpSelectDecoration? decoration;
+  final String? customInputTooltip;
+  final String cancelLabel;
+  final String confirmLabel;
+  final bool searchable;
+  final String? searchHintText;
+  final String? emptySearchText;
+  final int searchMinItems;
+  final bool clearSearchOnClose;
+  final ValueChanged<String>? onSearchChanged;
+
+  @override
+  State<TpSelectWithCustomInput> createState() =>
+      _TpSelectWithCustomInputState();
+}
+
+class _TpSelectWithCustomInputState extends State<TpSelectWithCustomInput> {
+  late final TextEditingController _customController;
+  late final FocusNode _customFocusNode;
+  bool _customMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _customController = TextEditingController(text: widget.value);
+    _customFocusNode = FocusNode();
+    _customController.addListener(_onDraftChanged);
+  }
+
+  @override
+  void didUpdateWidget(TpSelectWithCustomInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_customMode && widget.value != _customController.text) {
+      _customController.text = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _customController.removeListener(_onDraftChanged);
+    _customFocusNode.dispose();
+    _customController.dispose();
+    super.dispose();
+  }
+
+  void _onDraftChanged() {
+    if (mounted) setState(() {});
+  }
+
+  bool get _canConfirm => _customController.text.trim().isNotEmpty;
+
+  List<String> _selectItems() {
+    final items = List<String>.from(widget.items);
+    final trimmed = widget.value.trim();
+    if (trimmed.isNotEmpty && !items.contains(trimmed)) {
+      items.add(trimmed);
+    }
+    items.sort();
+    return items;
+  }
+
+  void _enterCustomMode() {
+    setState(() {
+      _customMode = true;
+      _customController.text = widget.value;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _customFocusNode.requestFocus();
+    });
+  }
+
+  void _cancelCustom() {
+    _customFocusNode.unfocus();
+    setState(() {
+      _customMode = false;
+      _customController.text = widget.value;
+    });
+  }
+
+  void _confirmCustom() {
+    if (!_canConfirm) return;
+    _customFocusNode.unfocus();
+    final next = _customController.text.trim();
+    setState(() => _customMode = false);
+    if (next != widget.value) {
+      widget.onChanged(next);
+    }
+  }
+
+  Widget _buildCustomInput() {
+    return TextField(
+      controller: _customController,
+      focusNode: _customFocusNode,
+      decoration: InputDecoration(isDense: true, hintText: widget.hintText),
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) {
+        if (_canConfirm) _confirmCustom();
+      },
+    );
+  }
+
+  Widget _buildCustomActions(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton(
+          onPressed: _cancelCustom,
+          child: Text(widget.cancelLabel),
+        ),
+        FilledButton(
+          onPressed: _canConfirm ? _confirmCustom : null,
+          child: Text(widget.confirmLabel),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditAction(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return TpIconButton(
+      icon: Icons.edit_outlined,
+      tooltip: widget.customInputTooltip,
+      color: cs.primary,
+      size: TpIconButton.kCompactSize,
+      iconSize: context.tpIconSizes.sm,
+      onTap: _enterCustomMode,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectItems = _selectItems();
+    final deco = widget.decoration ?? TpSelectDecorations.themed(context);
+    final spacing = context.tpSpacing;
+
+    if (_customMode) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(child: _buildCustomInput()),
+          SizedBox(width: spacing.sm),
+          _buildCustomActions(context),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: TpSelect<String>(
+            key: ValueKey(
+              'select-custom-input-${selectItems.join("|")}-${widget.value}',
+            ),
+            items: selectItems,
+            initialItem: widget.value.trim().isEmpty
+                ? null
+                : widget.value.trim(),
+            hintText: widget.hintText,
+            decoration: deco,
+            searchable: widget.searchable,
+            searchHintText: widget.searchHintText,
+            emptySearchText: widget.emptySearchText,
+            searchMinItems: widget.searchMinItems,
+            clearSearchOnClose: widget.clearSearchOnClose,
+            onSearchChanged: widget.onSearchChanged,
+            onChanged: (next) => widget.onChanged(next ?? ''),
+            itemLabel: (item) => item,
+          ),
+        ),
+        SizedBox(width: spacing.xs),
+        _buildEditAction(context),
+      ],
+    );
+  }
+}
