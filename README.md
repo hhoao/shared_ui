@@ -1,18 +1,28 @@
 # shared_ui
 
-Shared Flutter UI infrastructure extracted from Teampilot for use by **huji** and (future) **teampilot**.
+TeamPilot **Tp** design system — reusable Flutter UI primitives (`Tp*`) and theme tokens.
 
-## Contents
+## Wiring (TeamPilot)
 
-- `theme/` — AppTheme, typography, spacing, color presets
-- `shell/` — WorkspacePageCardShell, surface layers
-- `preferences/` — AppearanceCubit (theme, locale, zoom)
-- `l10n/` — generic UI strings (window chrome, theme labels)
-- `widgets/` — desktop chrome, dialogs, controls
+Wrap the app with `TpTheme` so components resolve spacing, typography, and control metrics from `TpThemeData`:
 
-## Usage
+```dart
+import 'package:shared_ui/shared_ui.dart';
 
-In **huji-app** (git submodule at `packages/shared_ui`):
+MaterialApp(
+  builder: (context, child) {
+    return TpTheme(
+      data: TpThemeData.fromColorScheme(
+        Theme.of(context).colorScheme,
+        scale: 1.0,
+      ),
+      child: child ?? const SizedBox.shrink(),
+    );
+  },
+);
+```
+
+In `pubspec.yaml`:
 
 ```yaml
 dependencies:
@@ -23,3 +33,22 @@ dependencies:
 ```dart
 import 'package:shared_ui/shared_ui.dart';
 ```
+
+## Component categories
+
+| Category | Examples |
+|----------|----------|
+| **Button** | `TpButton`, `TpIconButton` |
+| **Input** | `TpInput`, `TpInputFormField`, `TpTextarea`, `TpTextareaFormField` |
+| **Select** | `TpSelect`, `TpSelectWithCustomInput`, search / filter helpers |
+| **Dialog** | `TpDialog` |
+| **Form** | `TpForm`, `TpFormField`, `TpFormFieldLayout`, `TpFormMap` |
+| **Overlay** | `TpPopover`, `TpTooltip` |
+| **Layout / chrome** | `TpCard`, `TpSeparator`, `TpSegmentedControl`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
+| **Theme** | `TpTheme`, `TpThemeData`, spacing / typography / control metric tokens, per-component themes |
+
+## Layout
+
+- `lib/src/components/` — `Tp*` widgets by category
+- `lib/src/theme/` — `TpTheme` / `TpThemeData`, tokens, component themes
+- `lib/shared_ui.dart` — public barrel export
