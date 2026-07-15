@@ -1,7 +1,7 @@
 name: shared_ui
 description: TeamPilot / shared design-system UI primitives (Tp*).
 publish_to: "none"
-version: 0.2.0
+version: 0.3.0
 
 environment:
   sdk: ^3.8.1

@@ -1,6 +1,8 @@
 /// TeamPilot shared design system.
 library shared_ui;
 
+export 'src/components/button/tp_button.dart';
+export 'src/components/card/tp_card.dart';
 export 'src/components/dialog/tp_dialog.dart';
 export 'src/components/empty_state/tp_empty_state.dart';
 export 'src/components/form/tp_form.dart';
@@ -10,6 +12,8 @@ export 'src/components/form/tp_form_map.dart';
 export 'src/components/hover/tp_hover.dart';
 export 'src/components/hover/tp_hover_row.dart';
 export 'src/components/icon_button/tp_icon_button.dart';
+export 'src/components/input/tp_input.dart';
+export 'src/components/input/tp_input_form_field.dart';
 export 'src/components/popover/tp_popover.dart';
 export 'src/components/segmented_control/tp_segmented_control.dart';
 export 'src/components/select/tp_select.dart';
@@ -18,15 +22,19 @@ export 'src/components/select/tp_select_item_filter.dart';
 export 'src/components/select/tp_select_menu_item_button.dart';
 export 'src/components/select/tp_select_search_field.dart';
 export 'src/components/select/tp_select_with_custom_input.dart';
+export 'src/components/separator/tp_separator.dart';
 export 'src/components/textarea/tp_textarea.dart';
 export 'src/components/textarea/tp_textarea_form_field.dart';
 export 'src/components/textarea/tp_textarea_resize_grip.dart';
 export 'src/components/textarea/tp_textarea_shell.dart';
 export 'src/components/tooltip/tp_tooltip.dart';
+export 'src/theme/components/tp_button_theme.dart';
+export 'src/theme/components/tp_card_theme.dart';
 export 'src/theme/components/tp_dialog_theme.dart';
 export 'src/theme/components/tp_input_theme.dart';
 export 'src/theme/components/tp_popover_theme.dart';
 export 'src/theme/components/tp_select_theme.dart';
+export 'src/theme/components/tp_separator_theme.dart';
 export 'src/theme/components/tp_textarea_theme.dart';
 export 'src/theme/tokens/tp_control_metrics.dart';
 export 'src/theme/tokens/tp_icon_sizes.dart';

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'components/tp_button_theme.dart';
+import 'components/tp_card_theme.dart';
 import 'components/tp_dialog_theme.dart';
 import 'components/tp_input_theme.dart';
 import 'components/tp_popover_theme.dart';
 import 'components/tp_select_theme.dart';
+import 'components/tp_separator_theme.dart';
 import 'components/tp_textarea_theme.dart';
 import 'tokens/tp_control_metrics.dart';
 import 'tokens/tp_icon_sizes.dart';
@@ -24,6 +27,9 @@ class TpThemeData {
     this.textarea,
     this.popover,
     this.select,
+    this.button,
+    this.card,
+    this.separator,
   });
 
   factory TpThemeData.fromColorScheme(
@@ -34,6 +40,9 @@ class TpThemeData {
     TpTextareaTheme? textarea,
     TpPopoverTheme? popover,
     TpSelectTheme? select,
+    TpButtonTheme? button,
+    TpCardTheme? card,
+    TpSeparatorTheme? separator,
   }) => TpThemeData(
     colorScheme: scheme,
     spacing: TpSpacing.fromScale(scale),
@@ -45,6 +54,9 @@ class TpThemeData {
     textarea: textarea,
     popover: popover,
     select: select,
+    button: button,
+    card: card,
+    separator: separator,
   );
 
   /// Sane defaults when no [TpTheme] ancestor is present.
@@ -75,6 +87,15 @@ class TpThemeData {
   /// Optional select metrics override; resolved via [selectTheme].
   final TpSelectTheme? select;
 
+  /// Optional button metrics override; resolved via [buttonTheme].
+  final TpButtonTheme? button;
+
+  /// Optional card metrics override; resolved via [cardTheme].
+  final TpCardTheme? card;
+
+  /// Optional separator metrics override; resolved via [separatorTheme].
+  final TpSeparatorTheme? separator;
+
   /// Resolved dialog theme (defaults when [dialog] is null).
   TpDialogTheme get dialogTheme => dialog ?? TpDialogTheme.defaults();
 
@@ -90,6 +111,16 @@ class TpThemeData {
   /// Resolved select theme (defaults when [select] is null).
   TpSelectTheme get selectTheme => select ?? TpSelectTheme.defaults();
 
+  /// Resolved button theme (defaults when [button] is null).
+  TpButtonTheme get buttonTheme => button ?? TpButtonTheme.defaults();
+
+  /// Resolved card theme (defaults when [card] is null).
+  TpCardTheme get cardTheme => card ?? TpCardTheme.defaults();
+
+  /// Resolved separator theme (defaults when [separator] is null).
+  TpSeparatorTheme get separatorTheme =>
+      separator ?? TpSeparatorTheme.defaults();
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -103,7 +134,10 @@ class TpThemeData {
           inputTheme == other.inputTheme &&
           textareaTheme == other.textareaTheme &&
           popoverTheme == other.popoverTheme &&
-          selectTheme == other.selectTheme;
+          selectTheme == other.selectTheme &&
+          buttonTheme == other.buttonTheme &&
+          cardTheme == other.cardTheme &&
+          separatorTheme == other.separatorTheme;
 
   @override
   int get hashCode => Object.hash(
@@ -117,5 +151,8 @@ class TpThemeData {
     textareaTheme,
     popoverTheme,
     selectTheme,
+    buttonTheme,
+    cardTheme,
+    separatorTheme,
   );
 }
