@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'components/tp_dialog_theme.dart';
+import 'components/tp_input_theme.dart';
+import 'components/tp_textarea_theme.dart';
 import 'tokens/tp_control_metrics.dart';
 import 'tokens/tp_icon_sizes.dart';
 import 'tokens/tp_spacing.dart';
@@ -16,12 +18,16 @@ class TpThemeData {
     required this.typography,
     required this.control,
     this.dialog,
+    this.input,
+    this.textarea,
   });
 
   factory TpThemeData.fromColorScheme(
     ColorScheme scheme, {
     required double scale,
     TpDialogTheme? dialog,
+    TpInputTheme? input,
+    TpTextareaTheme? textarea,
   }) => TpThemeData(
     colorScheme: scheme,
     spacing: TpSpacing.fromScale(scale),
@@ -29,6 +35,8 @@ class TpThemeData {
     typography: TpTypography(scale: scale),
     control: TpControlMetrics.fromScale(scale),
     dialog: dialog,
+    input: input,
+    textarea: textarea,
   );
 
   /// Sane defaults when no [TpTheme] ancestor is present.
@@ -47,8 +55,20 @@ class TpThemeData {
   /// Optional dialog metrics override; resolved via [dialogTheme].
   final TpDialogTheme? dialog;
 
+  /// Optional outline-input metrics override; resolved via [inputTheme].
+  final TpInputTheme? input;
+
+  /// Optional textarea metrics override; resolved via [textareaTheme].
+  final TpTextareaTheme? textarea;
+
   /// Resolved dialog theme (defaults when [dialog] is null).
   TpDialogTheme get dialogTheme => dialog ?? TpDialogTheme.defaults();
+
+  /// Resolved input theme (defaults when [input] is null).
+  TpInputTheme get inputTheme => input ?? TpInputTheme.defaults();
+
+  /// Resolved textarea theme (defaults when [textarea] is null).
+  TpTextareaTheme get textareaTheme => textarea ?? TpTextareaTheme.defaults();
 
   @override
   bool operator ==(Object other) =>
@@ -59,7 +79,9 @@ class TpThemeData {
           iconSizes == other.iconSizes &&
           typography == other.typography &&
           control == other.control &&
-          dialogTheme == other.dialogTheme;
+          dialogTheme == other.dialogTheme &&
+          inputTheme == other.inputTheme &&
+          textareaTheme == other.textareaTheme;
 
   @override
   int get hashCode => Object.hash(
@@ -69,5 +91,7 @@ class TpThemeData {
     typography,
     control,
     dialogTheme,
+    inputTheme,
+    textareaTheme,
   );
 }
