@@ -10,21 +10,9 @@ class TpTheme extends InheritedWidget {
 
   final TpThemeData data;
 
-  static TpThemeData of(BuildContext context) {
-    final theme = maybeOf(context);
-    if (theme == null) {
-      throw FlutterError.fromParts(<DiagnosticsNode>[
-        ErrorSummary('TpTheme.of() called with a context that does not '
-            'contain a TpTheme.'),
-        ErrorDescription(
-          'No TpTheme ancestor could be found starting from the context '
-          'that was passed to TpTheme.of().',
-        ),
-        context.describeElement('The context used was'),
-      ]);
-    }
-    return theme;
-  }
+  /// Returns the nearest [TpTheme] data, or [TpThemeData.fallback] if absent.
+  static TpThemeData of(BuildContext context) =>
+      maybeOf(context) ?? TpThemeData.fallback();
 
   static TpThemeData? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<TpTheme>()?.data;

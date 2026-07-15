@@ -27,6 +27,12 @@ class TpThemeData {
     control: TpControlMetrics.fromScale(scale),
   );
 
+  /// Sane defaults when no [TpTheme] ancestor is present.
+  factory TpThemeData.fallback() => TpThemeData.fromColorScheme(
+    ColorScheme.fromSeed(seedColor: const Color(0xFFD4A06A)),
+    scale: 1.0,
+  );
+
   /// Stored for future component themes; tokens themselves are scale-driven.
   final ColorScheme colorScheme;
   final TpSpacing spacing;
