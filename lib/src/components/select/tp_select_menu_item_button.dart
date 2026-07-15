@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+
+/// Single selectable row in a select menu.
+class TpSelectMenuItemButton extends StatefulWidget {
+  const TpSelectMenuItemButton({
+    super.key,
+    required this.child,
+    required this.onTap,
+    required this.padding,
+    required this.highlightColor,
+    required this.selectedColor,
+    this.isSelected = false,
+    this.borderRadius,
+    this.enabled = true,
+    this.onHoverChanged,
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsetsGeometry padding;
+  final Color highlightColor;
+  final Color selectedColor;
+  final bool isSelected;
+  final BorderRadius? borderRadius;
+  final bool enabled;
+
+  /// Fired when the pointer enters (`true`) or leaves (`false`) this row.
+  final ValueChanged<bool>? onHoverChanged;
+
+  @override
+  State<TpSelectMenuItemButton> createState() => _TpSelectMenuItemButtonState();
+}
+
+class _TpSelectMenuItemButtonState extends State<TpSelectMenuItemButton> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = widget.borderRadius ?? BorderRadius.circular(6);
+    Color background = Colors.transparent;
+    if (widget.isSelected) {
+      background = widget.selectedColor;
+    } else if (_isHovering) {
+      background = widget.highlightColor;
+    }
+
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() => _isHovering = true);
+        widget.onHoverChanged?.call(true);
+      },
+      onExit: (_) {
+        setState(() => _isHovering = false);
+        widget.onHoverChanged?.call(false);
+      },
+      cursor: widget.enabled && widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: widget.enabled ? widget.onTap : null,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: widget.padding,
+          decoration: BoxDecoration(color: background, borderRadius: radius),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
