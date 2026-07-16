@@ -8,6 +8,7 @@ import 'components/tp_popover_theme.dart';
 import 'components/tp_select_theme.dart';
 import 'components/tp_separator_theme.dart';
 import 'components/tp_textarea_theme.dart';
+import 'components/tp_toast_theme.dart';
 import 'tokens/tp_control_metrics.dart';
 import 'tokens/tp_icon_sizes.dart';
 import 'tokens/tp_spacing.dart';
@@ -30,12 +31,16 @@ class TpThemeData {
     this.button,
     this.card,
     this.separator,
+    this.toast,
   });
 
   factory TpThemeData.fromColorScheme(
     ColorScheme scheme, {
     required double scale,
     double? iconScale,
+    /// Button / input control metrics. Defaults to [scale]. Hosts that keep
+    /// layout spacing fixed while text grows should pass the text multiplier.
+    double? controlScale,
     TpDialogTheme? dialog,
     TpInputTheme? input,
     TpTextareaTheme? textarea,
@@ -44,14 +49,16 @@ class TpThemeData {
     TpButtonTheme? button,
     TpCardTheme? card,
     TpSeparatorTheme? separator,
+    TpToastTheme? toast,
   }) {
     final icons = iconScale ?? scale;
+    final controls = controlScale ?? scale;
     return TpThemeData(
       colorScheme: scheme,
       spacing: TpSpacing.fromScale(scale),
       iconSizes: TpIconSizes.fromScale(icons),
       typography: TpTypography(scale: scale),
-      control: TpControlMetrics.fromScale(scale),
+      control: TpControlMetrics.fromScale(controls),
       dialog: dialog,
       input: input,
       textarea: textarea,
@@ -60,6 +67,7 @@ class TpThemeData {
       button: button,
       card: card,
       separator: separator,
+      toast: toast,
     );
   }
 
@@ -100,6 +108,9 @@ class TpThemeData {
   /// Optional separator metrics override; resolved via [separatorTheme].
   final TpSeparatorTheme? separator;
 
+  /// Optional toast metrics override; resolved via [toastTheme].
+  final TpToastTheme? toast;
+
   /// Resolved dialog theme (defaults when [dialog] is null).
   TpDialogTheme get dialogTheme => dialog ?? TpDialogTheme.defaults();
 
@@ -125,6 +136,10 @@ class TpThemeData {
   TpSeparatorTheme get separatorTheme =>
       separator ?? TpSeparatorTheme.defaults();
 
+  /// Resolved toast theme (defaults from [colorScheme] when [toast] is null).
+  TpToastTheme get toastTheme =>
+      toast ?? TpToastTheme.fromColorScheme(colorScheme);
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -141,7 +156,8 @@ class TpThemeData {
           selectTheme == other.selectTheme &&
           buttonTheme == other.buttonTheme &&
           cardTheme == other.cardTheme &&
-          separatorTheme == other.separatorTheme;
+          separatorTheme == other.separatorTheme &&
+          toastTheme == other.toastTheme;
 
   @override
   int get hashCode => Object.hash(
@@ -158,5 +174,6 @@ class TpThemeData {
     buttonTheme,
     cardTheme,
     separatorTheme,
+    toastTheme,
   );
 }
