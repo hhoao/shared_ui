@@ -17,8 +17,33 @@ class TpToastWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ToastificationWrapper(
-      config: config.toEngineConfig(),
+      config: _toEngineConfig(config),
       child: child,
     );
   }
+}
+
+ToastificationConfig _toEngineConfig(TpToastConfig config) {
+  return ToastificationConfig(
+    alignment: config.alignment,
+    itemWidth: config.itemWidth,
+    maxToastLimit: config.maxToastLimit,
+    animationDuration: config.animationDuration,
+    maxTitleLines: config.maxTitleLines,
+    maxDescriptionLines: config.maxDescriptionLines,
+    marginBuilder: config.marginBuilder ?? _defaultMarginBuilder,
+  );
+}
+
+EdgeInsetsGeometry _defaultMarginBuilder(
+  BuildContext context,
+  AlignmentGeometry alignment,
+) {
+  final y = alignment.resolve(Directionality.of(context)).y;
+
+  return switch (y) {
+    <= -0.5 => const EdgeInsets.only(top: 12),
+    >= 0.5 => const EdgeInsets.only(bottom: 12),
+    _ => EdgeInsets.zero,
+  };
 }

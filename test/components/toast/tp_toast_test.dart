@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
-import 'package:shared_ui/src/toast/engine/toastification.dart';
 
-Widget _harness({required Widget child, TpToastTheme? toast}) {
+Widget _harness({
+  required Widget child,
+  TpToastTheme? toast,
+  TpToastConfig? config,
+}) {
   final scheme = ColorScheme.fromSeed(seedColor: Colors.indigo);
   return TpToastWrapper(
-    config: const TpToastConfig(
-      alignment: AlignmentDirectional.topEnd,
-      itemWidth: 400,
-      maxToastLimit: 1,
-      animationDuration: Duration(milliseconds: 200),
-    ),
+    config: config ??
+        const TpToastConfig(
+          alignment: AlignmentDirectional.topEnd,
+          itemWidth: 400,
+          maxToastLimit: 1,
+          animationDuration: Duration(milliseconds: 200),
+        ),
     child: MaterialApp(
       theme: ThemeData(colorScheme: scheme),
       home: TpTheme(
@@ -69,34 +73,78 @@ void main() {
     expect(find.text('   '), findsNothing);
   });
 
+  testWidgets('action dismisses toast and invokes callback', (tester) async {
+    var pressed = false;
+    await tester.pumpWidget(
+      _harness(
+        child: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => TpToast.show(
+                context,
+                message: 'With action',
+                action: TpToastAction(
+                  label: 'Undo',
+                  onPressed: () => pressed = true,
+                ),
+              ),
+              child: const Text('go'),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('go'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('With action'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(pressed, isTrue);
+    expect(find.text('With action'), findsNothing);
+  });
+
   testWidgets('TpToastConfig itemWidth and marginBuilder are applied', (
     tester,
   ) async {
     const customMargin = EdgeInsets.all(42);
-    late BuildContext capturedContext;
-
+    // Distinct alignment so the engine manager is created with this config
+    // (managers are keyed by alignment and retain the first config).
     await tester.pumpWidget(
-      TpToastWrapper(
+      _harness(
         config: TpToastConfig(
+          alignment: AlignmentDirectional.bottomStart,
           itemWidth: 300,
           marginBuilder: (_, _) => customMargin,
         ),
-        child: MaterialApp(
-          home: Builder(
-            builder: (context) {
-              capturedContext = context;
-              return const SizedBox();
-            },
-          ),
+        child: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => TpToast.show(context, message: 'Sized toast'),
+              child: const Text('go'),
+            );
+          },
         ),
       ),
     );
+    await tester.tap(find.text('go'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('Sized toast'), findsOneWidget);
 
-    final provider = ToastificationConfigProvider.of(capturedContext);
-    expect(provider.config.itemWidth, 300);
+    final holder = tester
+        .widgetList<Container>(find.byType(Container))
+        .firstWhere((c) => c.constraints?.maxWidth == 300);
+    expect(holder.constraints?.maxWidth, 300);
     expect(
-      provider.config.marginBuilder(capturedContext, Alignment.topRight),
+      holder.margin!.resolve(TextDirection.ltr),
       customMargin,
     );
+
+    TpToast.dismiss();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
   });
 }
