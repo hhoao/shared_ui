@@ -63,12 +63,16 @@ import 'package:shared_ui/shared_ui.dart';
 | **Dialog** | `TpDialog` |
 | **Form** | `TpForm`, `TpFormField`, `TpFormFieldLayout`, `TpFormMap` |
 | **Overlay** | `TpPopover`, `TpTooltip` |
+| **Toast** | `TpToast`, `TpToastWrapper`, `TpToastConfig`, `TpToastTheme`, `TpToastVariant`, `TpToastAction` |
 | **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
 | **Preference** | `TpPreferenceRow`, `TpPreferenceStack`, `TpSectionHeader`, `TpDisclosure`, `TpStatusBadge`, `TpCompactSelect` |
 | **Theme** | `TpTheme`, `TpThemeData`, `TpTextStyles`, `TpFontTheme`, `TpGlyphWarmup`, icon sizes (`sm`/`md`/`lg`/`hero`), spacing / typography / control metrics, per-component themes |
+
+Toast engine sources live under `lib/src/toast/engine/` and are **not** barrel-exported.
 
 ## Layout
 
 - `lib/src/components/` — `Tp*` widgets by category
 - `lib/src/theme/` — `TpTheme` / `TpThemeData`, tokens, component themes
+- `lib/src/toast/engine/` — private toast overlay engine (not public API)
 - `lib/shared_ui.dart` — public barrel export
