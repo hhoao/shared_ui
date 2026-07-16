@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../toast/engine/src/core/toastification_config.dart';
-
 typedef TpToastMarginBuilder = EdgeInsetsGeometry Function(
   BuildContext context,
   AlignmentGeometry alignment,
@@ -26,29 +24,4 @@ class TpToastConfig {
   final int maxTitleLines;
   final int maxDescriptionLines;
   final TpToastMarginBuilder? marginBuilder;
-
-  ToastificationConfig toEngineConfig() {
-    return ToastificationConfig(
-      alignment: alignment,
-      itemWidth: itemWidth,
-      maxToastLimit: maxToastLimit,
-      animationDuration: animationDuration,
-      maxTitleLines: maxTitleLines,
-      maxDescriptionLines: maxDescriptionLines,
-      marginBuilder: marginBuilder ?? _defaultMarginBuilder,
-    );
-  }
-}
-
-EdgeInsetsGeometry _defaultMarginBuilder(
-  BuildContext context,
-  AlignmentGeometry alignment,
-) {
-  final y = alignment.resolve(Directionality.of(context)).y;
-
-  return switch (y) {
-    <= -0.5 => const EdgeInsets.only(top: 12),
-    >= 0.5 => const EdgeInsets.only(bottom: 12),
-    _ => EdgeInsets.zero,
-  };
 }
