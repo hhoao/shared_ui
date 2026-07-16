@@ -59,10 +59,12 @@ import 'package:shared_ui/shared_ui.dart';
 |----------|----------|
 | **Button** | `TpButton`, `TpIconButton` |
 | **Input** | `TpInput`, `TpInputFormField`, `TpTextarea`, `TpTextareaFormField` |
+| **Token field** | `TpTokenTextField`, `TpTokenChipMirror`, palette typedefs / edit helpers (`applyTpTokenBackspace`, …) |
 | **Select** | `TpSelect`, `TpSelectWithCustomInput`, search / filter helpers |
 | **Dialog** | `TpDialog` |
 | **Form** | `TpForm`, `TpFormField`, `TpFormFieldLayout`, `TpFormMap` |
-| **Overlay** | `TpPopover`, `TpTooltip` |
+| **Overlay** | `TpPopover`, `TpTooltip`, `TpActionMenu` / `TpActionMenuPanel` |
+| **Date range** | `TpDateRangePicker`, `TpRangeCalendar`, calendar date utils |
 | **Toast** | `TpToast`, `TpToastWrapper`, `TpToastConfig`, `TpToastTheme`, `TpToastVariant`, `TpToastAction` |
 | **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
 | **Preference** | `TpPreferenceRow`, `TpPreferenceStack`, `TpSectionHeader`, `TpDisclosure`, `TpStatusBadge`, `TpCompactSelect` |
