@@ -1,11 +1,17 @@
 /// TeamPilot shared design system.
 library shared_ui;
 
+export 'src/components/action_menu/tp_action_menu.dart';
+export 'src/components/action_menu/tp_action_menu_overlay.dart';
+export 'src/components/action_menu/tp_context_menu_position.dart';
 export 'src/components/badge/tp_status_badge.dart';
 export 'src/components/button/tp_button.dart';
 export 'src/components/card/tp_action_row.dart';
 export 'src/components/card/tp_card.dart';
 export 'src/components/card/tp_card_header.dart';
+export 'src/components/date_range/calendar_date_utils.dart';
+export 'src/components/date_range/tp_date_range_picker.dart';
+export 'src/components/date_range/tp_range_calendar.dart';
 export 'src/components/dialog/tp_dialog.dart';
 export 'src/components/disclosure/tp_disclosure.dart';
 export 'src/components/empty_state/tp_empty_state.dart';
@@ -39,6 +45,10 @@ export 'src/components/textarea/tp_textarea_shell.dart';
 export 'src/components/toast/tp_toast.dart';
 export 'src/components/toast/tp_toast_config.dart';
 export 'src/components/toast/tp_toast_wrapper.dart';
+export 'src/components/token_field/tp_token_chip_mirror.dart';
+export 'src/components/token_field/tp_token_edit.dart';
+export 'src/components/token_field/tp_token_palette.dart';
+export 'src/components/token_field/tp_token_text_field.dart';
 export 'src/components/tooltip/tp_tooltip.dart';
 export 'src/theme/components/tp_button_theme.dart';
 export 'src/theme/components/tp_card_theme.dart';
