@@ -60,111 +60,82 @@ double tpTokenPillWidth(double layoutWidth) {
   return layoutWidth + tpTokenPillLeftBleed;
 }
 
-/// Paints token pill chrome using [size] from the child (no [LayoutBuilder]).
-///
-/// A [LayoutBuilder] here forced nested BUILD during LAYOUT on workspace
-/// landing first-open (~667 ms in DevTools test53).
-class _TpTokenPillOverlayPainter extends CustomPainter {
-  _TpTokenPillOverlayPainter({
-    required this.text,
+List<Widget> buildTpTokenPillOverlays({
+  required String text,
+  required TextStyle baseStyle,
+  required ColorScheme colorScheme,
+  required TextPainter painter,
+  required RegExp tokenPattern,
+  required TpTokenPaletteResolver resolvePalette,
+}) {
+  final overlays = <Widget>[];
+  for (final match in tokenPattern.allMatches(text)) {
+    final token = match.group(0)!;
+    final palette = resolvePalette(token, colorScheme);
+    final boxes = painter.getBoxesForSelection(
+      TextSelection(baseOffset: match.start, extentOffset: match.end),
+    );
+    if (boxes.isEmpty) continue;
+
+    final left = boxes.first.left;
+    final top = boxes.map((box) => box.top).reduce((a, b) => a < b ? a : b);
+    final bottom = boxes.map((box) => box.bottom).reduce((a, b) => a > b ? a : b);
+    final layoutWidth = boxes.last.right - left;
+
+    overlays.add(
+      Positioned(
+        left: left - tpTokenPillLeftBleed,
+        top: top + 1,
+        width: tpTokenPillWidth(layoutWidth),
+        height: bottom - top - 2,
+        child: _TpTokenPill(
+          token: token,
+          baseStyle: baseStyle,
+          palette: palette,
+        ),
+      ),
+    );
+  }
+  return overlays;
+}
+
+class _TpTokenPill extends StatelessWidget {
+  const _TpTokenPill({
+    required this.token,
     required this.baseStyle,
-    required this.colorScheme,
-    required this.tokenPattern,
-    required this.resolvePalette,
-    required this.textDirection,
-    required this.textScaler,
-    required this.strutStyle,
-    required this.maxLines,
+    required this.palette,
   });
 
-  final String text;
+  final String token;
   final TextStyle baseStyle;
-  final ColorScheme colorScheme;
-  final RegExp tokenPattern;
-  final TpTokenPaletteResolver resolvePalette;
-  final TextDirection textDirection;
-  final TextScaler textScaler;
-  final StrutStyle strutStyle;
-  final int? maxLines;
+  final TpTokenPalette palette;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    if (size.width <= 0 || text.isEmpty) return;
-
-    final layoutSpans = buildTpTokenMirrorLayoutSpans(
-      text: text,
-      baseStyle: baseStyle,
-      tokenPattern: tokenPattern,
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.background,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: tpTokenPillHorizontalPadding,
+        ),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              token,
+              maxLines: 1,
+              softWrap: false,
+              style: tpTokenPillLabelStyle(baseStyle, palette.foreground),
+            ),
+          ),
+        ),
+      ),
     );
-    final painter = TextPainter(
-      text: TextSpan(children: layoutSpans),
-      textDirection: textDirection,
-      textScaler: textScaler,
-      strutStyle: strutStyle,
-      maxLines: maxLines,
-    )..layout(maxWidth: size.width);
-
-    for (final match in tokenPattern.allMatches(text)) {
-      final token = match.group(0)!;
-      final palette = resolvePalette(token, colorScheme);
-      final boxes = painter.getBoxesForSelection(
-        TextSelection(baseOffset: match.start, extentOffset: match.end),
-      );
-      if (boxes.isEmpty) continue;
-
-      final left = boxes.first.left;
-      final top = boxes.map((box) => box.top).reduce((a, b) => a < b ? a : b);
-      final bottom = boxes
-          .map((box) => box.bottom)
-          .reduce((a, b) => a > b ? a : b);
-      final layoutWidth = boxes.last.right - left;
-      final pillWidth = tpTokenPillWidth(layoutWidth);
-      final pillHeight = bottom - top - 2;
-      if (pillWidth <= 0 || pillHeight <= 0) continue;
-
-      final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          left - tpTokenPillLeftBleed,
-          top + 1,
-          pillWidth,
-          pillHeight,
-        ),
-        const Radius.circular(6),
-      );
-      canvas.drawRRect(rect, Paint()..color = palette.background);
-
-      final labelPainter = TextPainter(
-        text: TextSpan(
-          text: token,
-          style: tpTokenPillLabelStyle(baseStyle, palette.foreground),
-        ),
-        textDirection: textDirection,
-        textScaler: textScaler,
-        maxLines: 1,
-        ellipsis: '',
-      )..layout(maxWidth: (pillWidth - 2 * tpTokenPillHorizontalPadding).clamp(
-          0.0,
-          double.infinity,
-        ));
-
-      final labelDx =
-          left - tpTokenPillLeftBleed + tpTokenPillHorizontalPadding;
-      final labelDy = top + 1 + (pillHeight - labelPainter.height) / 2;
-      labelPainter.paint(canvas, Offset(labelDx, labelDy));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _TpTokenPillOverlayPainter oldDelegate) {
-    return oldDelegate.text != text ||
-        oldDelegate.baseStyle != baseStyle ||
-        oldDelegate.colorScheme != colorScheme ||
-        oldDelegate.tokenPattern != tokenPattern ||
-        oldDelegate.textDirection != textDirection ||
-        oldDelegate.textScaler != textScaler ||
-        oldDelegate.strutStyle != strutStyle ||
-        oldDelegate.maxLines != maxLines ||
-        oldDelegate.resolvePalette != resolvePalette;
   }
 }
 
@@ -198,45 +169,51 @@ class TpTokenChipMirror extends StatelessWidget {
     final minHeight = lineHeight * minLines;
     final maxHeight = lineHeight * maxLines;
     final strutStyle = tpTokenMirrorStrutStyle(baseStyle);
-    final layoutSpans = buildTpTokenMirrorLayoutSpans(
-      text: text,
-      baseStyle: baseStyle,
-      tokenPattern: tokenPattern,
-    );
-    final effectiveMaxLines = expands ? null : maxLines;
 
-    final mirrorText = Text.rich(
-      TextSpan(children: layoutSpans),
-      maxLines: effectiveMaxLines,
-      strutStyle: strutStyle,
-    );
-
-    // Size from parent constraints via SizedBox/CustomPaint — do not use
-    // LayoutBuilder (nested BUILD during LAYOUT; see test53).
     final content = ClipRect(
       clipBehavior: Clip.none,
       child: Transform.translate(
         offset: Offset(0, -scrollOffset),
-        child: CustomPaint(
-          painter: _TpTokenPillOverlayPainter(
-            text: text,
-            baseStyle: baseStyle,
-            colorScheme: cs,
-            tokenPattern: tokenPattern,
-            resolvePalette: resolvePalette,
-            textDirection: Directionality.of(context),
-            textScaler: MediaQuery.textScalerOf(context),
-            strutStyle: strutStyle,
-            maxLines: effectiveMaxLines,
-          ),
-          child: expands
-              ? SizedBox.expand(
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: mirrorText,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final layoutSpans = buildTpTokenMirrorLayoutSpans(
+              text: text,
+              baseStyle: baseStyle,
+              tokenPattern: tokenPattern,
+            );
+            final painter = TextPainter(
+              text: TextSpan(children: layoutSpans),
+              textDirection: Directionality.of(context),
+              textScaler: MediaQuery.textScalerOf(context),
+              strutStyle: strutStyle,
+              maxLines: expands ? null : maxLines,
+            )..layout(maxWidth: constraints.maxWidth);
+
+            return SizedBox(
+              width: constraints.maxWidth,
+              height: expands
+                  ? constraints.maxHeight
+                  : painter.height,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Text.rich(
+                    TextSpan(children: layoutSpans),
+                    maxLines: expands ? null : maxLines,
+                    strutStyle: strutStyle,
                   ),
-                )
-              : SizedBox(width: double.infinity, child: mirrorText),
+                  ...buildTpTokenPillOverlays(
+                    text: text,
+                    baseStyle: baseStyle,
+                    colorScheme: cs,
+                    painter: painter,
+                    tokenPattern: tokenPattern,
+                    resolvePalette: resolvePalette,
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

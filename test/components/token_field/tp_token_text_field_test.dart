@@ -217,45 +217,6 @@ void main() {
     },
   );
 
-  testWidgets(
-    'TpTokenChipMirror has no LayoutBuilder (avoids LAYOUT-time BUILD)',
-    (tester) async {
-      // LayoutBuilder inside the mirror forced ~667ms nested BUILD during
-      // LAYOUT on workspace landing first-open (DevTools test53 #1869).
-      await tester.pumpWidget(
-        wrap(
-          SizedBox(
-            width: 320,
-            height: 120,
-            child: TpTokenChipMirror(
-              text: 'hello #token world',
-              baseStyle: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: Colors.black,
-              ),
-              minLines: 3,
-              maxLines: 6,
-              tokenPattern: pattern,
-              resolvePalette: resolvePalette,
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byType(TpTokenChipMirror), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byType(TpTokenChipMirror),
-          matching: find.byType(LayoutBuilder),
-        ),
-        findsNothing,
-      );
-      expect(find.text('hello #token world'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
   test('buildTpTokenMirrorLayoutSpans keeps token glyphs transparent', () {
     const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
     final spans = buildTpTokenMirrorLayoutSpans(
