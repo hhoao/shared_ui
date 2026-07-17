@@ -9,8 +9,11 @@ import 'tp_token_palette.dart';
 
 /// Multiline text field that renders [tokenPattern] matches as inline chips.
 ///
-/// The editable layer keeps plain text (transparent glyphs) while a mirror layer
-/// underneath paints token pills aligned to layout metrics.
+/// When the text has no token matches, this is a normal opaque [TextField] (no
+/// mirror). With matches, the editable layer uses transparent glyphs and a
+/// [TpTokenChipMirror] underneath paints pills aligned to layout metrics.
+/// Skipping the mirror when unused avoids a second text layout on common paths
+/// (empty landing compose, plain typing).
 ///
 /// Callers must supply [tokenPattern] and [resolveTokenPalette]; the package
 /// does not ship product-specific compose token defaults.
@@ -167,48 +170,56 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
         widget.selectionColor ??
         Theme.of(context).colorScheme.primary.withValues(alpha: 0.25);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final child = widget.expands
-            ? SizedBox.expand(child: _buildEditorStack(selectionColor))
-            : _buildEditorStack(selectionColor);
+    // Avoid LayoutBuilder here: nesting under ide/MultiPane LayoutBuilders
+    // forces TextField BUILD during parent layout (landing first-open jank).
+    final editor = widget.expands
+        ? SizedBox.expand(child: _buildEditorStack(selectionColor))
+        : _buildEditorStack(selectionColor);
 
-        if (widget.overlayBuilder == null) {
-          return child;
-        }
+    if (widget.overlayBuilder == null) {
+      return editor;
+    }
 
-        return TpPortal(
-          visible: widget.overlayVisible,
-          anchor: TpGlobalAnchor(widget.overlayAnchor),
-          portalBuilder: (context) => SizedBox(
-            width: constraints.maxWidth,
-            child: widget.overlayBuilder!(context),
-          ),
-          child: child,
+    return TpPortal(
+      visible: widget.overlayVisible,
+      anchor: TpGlobalAnchor(widget.overlayAnchor),
+      portalBuilder: (context) {
+        final box =
+            _effectiveFieldKey.currentContext?.findRenderObject() as RenderBox?;
+        final width = (box != null && box.hasSize) ? box.size.width : 320.0;
+        return SizedBox(
+          width: width,
+          child: widget.overlayBuilder!(context),
         );
       },
+      child: editor,
     );
   }
 
   Widget _buildEditorStack(Color selectionColor) {
-    final mirror = ListenableBuilder(
-      listenable: _scrollController,
-      builder: (context, _) {
-        final scrollOffset = _scrollController.hasClients
-            ? _scrollController.offset
-            : 0.0;
-        return TpTokenChipMirror(
-          text: widget.controller.text,
-          baseStyle: widget.textStyle,
-          minLines: widget.expands ? 1 : widget.minLines,
-          maxLines: widget.expands ? 100 : widget.maxLines,
-          expands: widget.expands,
-          scrollOffset: scrollOffset,
-          tokenPattern: widget.tokenPattern,
-          resolvePalette: widget.resolveTokenPalette,
-        );
-      },
-    );
+    final text = widget.controller.text;
+    final showChipMirror = widget.tokenPattern.hasMatch(text);
+
+    final Widget? mirror = showChipMirror
+        ? ListenableBuilder(
+            listenable: _scrollController,
+            builder: (context, _) {
+              final scrollOffset = _scrollController.hasClients
+                  ? _scrollController.offset
+                  : 0.0;
+              return TpTokenChipMirror(
+                text: text,
+                baseStyle: widget.textStyle,
+                minLines: widget.expands ? 1 : widget.minLines,
+                maxLines: widget.expands ? 100 : widget.maxLines,
+                expands: widget.expands,
+                scrollOffset: scrollOffset,
+                tokenPattern: widget.tokenPattern,
+                resolvePalette: widget.resolveTokenPalette,
+              );
+            },
+          )
+        : null;
 
     final field = TextSelectionTheme(
       data: TextSelectionThemeData(
@@ -227,7 +238,10 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
           setState(() {});
           widget.onChanged(value);
         },
-        style: widget.textStyle.copyWith(color: Colors.transparent),
+        // Opaque when solo; transparent when mirror paints visible glyphs.
+        style: showChipMirror
+            ? widget.textStyle.copyWith(color: Colors.transparent)
+            : widget.textStyle,
         cursorColor: widget.cursorColor,
         textAlignVertical: widget.expands ? TextAlignVertical.top : null,
         decoration: InputDecoration(
@@ -249,7 +263,8 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
       key: _effectiveFieldKey,
       alignment: Alignment.topLeft,
       children: [
-        if (widget.expands) Positioned.fill(child: mirror) else mirror,
+        if (mirror != null)
+          widget.expands ? Positioned.fill(child: mirror) : mirror,
         if (widget.expands) Positioned.fill(child: field) else field,
       ],
     );

@@ -55,6 +55,207 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'skips chip mirror when text has no token matches',
+    (tester) async {
+      // Dual TextField+mirror layout paid ~580ms RenderParagraph on landing
+      // first-open (test55) even with empty compose — mirror is only needed
+      // when chips are visible.
+      const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+      final empty = TextEditingController();
+      final plain = TextEditingController(text: 'hello world');
+      final focusEmpty = FocusNode();
+      final focusPlain = FocusNode();
+      addTearDown(() {
+        empty.dispose();
+        plain.dispose();
+        focusEmpty.dispose();
+        focusPlain.dispose();
+      });
+
+      await tester.pumpWidget(
+        wrap(
+          Column(
+            children: [
+              TpTokenTextField(
+                controller: empty,
+                focusNode: focusEmpty,
+                hint: 'Type here',
+                enabled: true,
+                onChanged: (_) {},
+                textStyle: style,
+                hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                cursorColor: Colors.blue,
+                tokenPattern: pattern,
+                resolveTokenPalette: resolvePalette,
+              ),
+              TpTokenTextField(
+                controller: plain,
+                focusNode: focusPlain,
+                hint: 'Type here',
+                enabled: true,
+                onChanged: (_) {},
+                textStyle: style,
+                hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                cursorColor: Colors.blue,
+                tokenPattern: pattern,
+                resolveTokenPalette: resolvePalette,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.byType(TpTokenChipMirror), findsNothing);
+      final fields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(fields, hasLength(2));
+      expect(fields[0].style?.color, Colors.black);
+      expect(fields[1].style?.color, Colors.black);
+    },
+  );
+
+  testWidgets(
+    'mounts chip mirror when a token appears, unmounts when gone',
+    (tester) async {
+      const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+      final controller = TextEditingController(text: 'hello');
+      final focusNode = FocusNode();
+      addTearDown(() {
+        controller.dispose();
+        focusNode.dispose();
+      });
+
+      await tester.pumpWidget(
+        wrap(
+          TpTokenTextField(
+            controller: controller,
+            focusNode: focusNode,
+            hint: 'Type here',
+            enabled: true,
+            onChanged: (_) {},
+            textStyle: style,
+            hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+            cursorColor: Colors.blue,
+            tokenPattern: pattern,
+            resolveTokenPalette: resolvePalette,
+          ),
+        ),
+      );
+      expect(find.byType(TpTokenChipMirror), findsNothing);
+
+      controller.text = 'hello #token';
+      await tester.pump();
+      expect(find.byType(TpTokenChipMirror), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).style?.color,
+        Colors.transparent,
+      );
+
+      controller.text = 'hello';
+      await tester.pump();
+      expect(find.byType(TpTokenChipMirror), findsNothing);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).style?.color,
+        Colors.black,
+      );
+    },
+  );
+  testWidgets(
+    'expands without nesting LayoutBuilder around the TextField',
+    (tester) async {
+      final controller = TextEditingController();
+      final focusNode = FocusNode();
+      addTearDown(() {
+        controller.dispose();
+        focusNode.dispose();
+      });
+
+      await tester.pumpWidget(
+        wrap(
+          SizedBox(
+            height: 120,
+            child: TpTokenTextField(
+              controller: controller,
+              focusNode: focusNode,
+              hint: 'Type here',
+              enabled: true,
+              onChanged: (_) {},
+              textStyle: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Colors.black,
+              ),
+              hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+              cursorColor: Colors.blue,
+              tokenPattern: pattern,
+              resolveTokenPalette: resolvePalette,
+              expands: true,
+              minLines: 3,
+              maxLines: 3,
+            ),
+          ),
+        ),
+      );
+
+      // LayoutBuilder around TextField forces BUILD during parent layout and
+      // spikes workspace landing first-open (see DevTools test48).
+      var nested = false;
+      tester.element(find.byType(TextField)).visitAncestorElements((ancestor) {
+        if (ancestor.widget is TpTokenTextField) return false;
+        if (ancestor.widget is LayoutBuilder) {
+          nested = true;
+          return false;
+        }
+        return true;
+      });
+      expect(nested, isFalse);
+
+      focusNode.requestFocus();
+      await tester.pump();
+      await tester.enterText(find.byType(TextField), 'ok');
+      expect(controller.text, 'ok');
+    },
+  );
+
+  testWidgets(
+    'TpTokenChipMirror has no LayoutBuilder (avoids LAYOUT-time BUILD)',
+    (tester) async {
+      // LayoutBuilder inside the mirror forced ~667ms nested BUILD during
+      // LAYOUT on workspace landing first-open (DevTools test53 #1869).
+      await tester.pumpWidget(
+        wrap(
+          SizedBox(
+            width: 320,
+            height: 120,
+            child: TpTokenChipMirror(
+              text: 'hello #token world',
+              baseStyle: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Colors.black,
+              ),
+              minLines: 3,
+              maxLines: 6,
+              tokenPattern: pattern,
+              resolvePalette: resolvePalette,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(TpTokenChipMirror), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(TpTokenChipMirror),
+          matching: find.byType(LayoutBuilder),
+        ),
+        findsNothing,
+      );
+      expect(find.text('hello #token world'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('buildTpTokenMirrorLayoutSpans keeps token glyphs transparent', () {
     const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
     final spans = buildTpTokenMirrorLayoutSpans(
