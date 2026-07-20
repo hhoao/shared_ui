@@ -81,4 +81,28 @@ void main() {
     expect(buttons.elementAt(1).isSelected, isTrue);
     expect(buttons.elementAt(0).isSelected, isFalse);
   });
+
+  testWidgets('uses custom highlight and selected colors when provided', (
+    tester,
+  ) async {
+    const customHighlight = Color(0xFF111111);
+    const customSelected = Color(0xFF222222);
+    await tester.pumpWidget(
+      _wrap(
+        TpSuggestionList<String>(
+          items: const ['alpha', 'beta'],
+          itemLabel: (i) => i,
+          highlightedIndex: 0,
+          highlightColor: customHighlight,
+          selectedColor: customSelected,
+          onItemSelected: (_) {},
+        ),
+      ),
+    );
+    final buttons = tester.widgetList<TpSelectMenuItemButton>(
+      find.byType(TpSelectMenuItemButton),
+    );
+    expect(buttons.first.highlightColor, customHighlight);
+    expect(buttons.first.selectedColor, customSelected);
+  });
 }

@@ -16,6 +16,9 @@ class TpSuggestionList<T extends Object> extends StatelessWidget {
     this.listItemPadding,
     this.selectedItem,
     this.scrollController,
+    this.highlightColor,
+    this.selectedColor,
+    this.borderRadius,
   }) : assert(
          itemLabel != null || itemBuilder != null,
          'Provide itemLabel or itemBuilder',
@@ -30,13 +33,17 @@ class TpSuggestionList<T extends Object> extends StatelessWidget {
   final EdgeInsetsGeometry? listItemPadding;
   final T? selectedItem;
   final ScrollController? scrollController;
+  final Color? highlightColor;
+  final Color? selectedColor;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final padding = listItemPadding ?? kTpSelectListItemPadding;
-    final highlight = cs.onSurface.withValues(alpha: 0.06);
-    final selected = cs.primary.withValues(alpha: 0.12);
+    final highlight =
+        highlightColor ?? cs.onSurface.withValues(alpha: 0.06);
+    final selected = selectedColor ?? cs.primary.withValues(alpha: 0.12);
 
     if (items.isEmpty) {
       return Padding(
@@ -68,6 +75,7 @@ class TpSuggestionList<T extends Object> extends StatelessWidget {
           padding: padding,
           highlightColor: highlight,
           selectedColor: selected,
+          borderRadius: borderRadius,
           isSelected: isSelected || isHighlighted,
           onTap: () => onItemSelected(item),
           child: child,
