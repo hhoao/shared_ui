@@ -3,17 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/tp_text_styles.dart';
 import '../../theme/tp_theme.dart';
 import '../icon_button/tp_icon_button.dart';
-import 'tp_sidebar_config.dart';
-import 'tp_sidebar_scope.dart';
-
-bool _hideInIconCollapse(BuildContext context) {
-  final config = TpSidebarConfig.maybeOf(context);
-  final scope = TpSidebarScope.maybeOf(context);
-  if (config == null || scope == null) return false;
-  return config.collapsible == TpSidebarCollapsible.icon &&
-      scope.state == TpSidebarDesktopState.collapsed &&
-      !scope.isMobile;
-}
+import 'tp_sidebar_icon_collapse.dart';
 
 /// Padded section inside [TpSidebarContent] for a label, optional action, and
 /// menu block.
@@ -50,7 +40,7 @@ class TpSidebarGroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (_hideInIconCollapse(context)) {
+    if (hideInIconCollapse(context)) {
       return const SizedBox.shrink();
     }
 
@@ -92,7 +82,7 @@ class TpSidebarGroupAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (_hideInIconCollapse(context)) {
+    if (hideInIconCollapse(context)) {
       return const SizedBox.shrink();
     }
 

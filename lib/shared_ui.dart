@@ -34,6 +34,7 @@ export 'src/components/sidebar/tp_sidebar_content.dart';
 export 'src/components/sidebar/tp_sidebar_footer.dart';
 export 'src/components/sidebar/tp_sidebar_group.dart';
 export 'src/components/sidebar/tp_sidebar_header.dart';
+export 'src/components/sidebar/tp_sidebar_menu.dart';
 export 'src/components/sidebar/tp_sidebar_provider.dart';
 export 'src/components/sidebar/tp_sidebar_scope.dart';
 export 'src/components/segmented_control/tp_segmented_control.dart';
