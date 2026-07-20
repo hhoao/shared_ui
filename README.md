@@ -67,7 +67,7 @@ import 'package:shared_ui/shared_ui.dart';
 | **Overlay** | `TpPopover`, `TpTooltip`, `TpActionMenu` / `TpActionMenuPanel`, `TpActionMenuShortcut` (Context Menu) |
 | **Date range** | `TpDateRangePicker`, `TpRangeCalendar`, calendar date utils |
 | **Toast** | `TpToast`, `TpToastWrapper`, `TpToastConfig`, `TpToastTheme`, `TpToastVariant`, `TpToastAction` |
-| **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
+| **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` (click cursor, hover fill, optional press scale — prefer over bare `GestureDetector` for onTap UI), `TpSidebar*` (see below) |
 | **Preference** | `TpPreferenceRow`, `TpPreferenceStack`, `TpSectionHeader`, `TpDisclosure`, `TpStatusBadge`, `TpCompactSelect` |
 | **Theme** | `TpTheme`, `TpThemeData`, `TpTextStyles`, `TpFontTheme`, `TpGlyphWarmup`, icon sizes (`sm`/`md`/`lg`/`hero`), spacing / typography / control metrics, per-component themes |
 
@@ -91,6 +91,24 @@ Toast engine sources live under `lib/src/toast/engine/` and are **not** barrel-e
 | Submenu / Radio | Not yet — extend `TpActionMenu` when needed |
 
 Use `showTpActionMenuFromSpecsAtTap` + `contextMenuGlobalPosition` for pointer-anchored menus.
+
+## Sidebar
+
+Composable shell chrome aligned with [shadcn Sidebar](https://ui.shadcn.com/docs/components/base/sidebar). The **host** owns `Row(sidebar, inset)`; `TpSidebarProvider` wraps the shell (title bar + content) so triggers and keyboard shortcuts resolve `TpSidebarScope`. On mobile, `TpSidebar` reserves ~0 in-flow width and presents the panel as an `OverlayPortal` drawer.
+
+| shadcn | Tp |
+|--------|-----|
+| `SidebarProvider` | `TpSidebarProvider` |
+| `Sidebar` | `TpSidebar` |
+| `SidebarInset` | `TpSidebarInset` |
+| `SidebarTrigger` | `TpSidebarTrigger` |
+| `SidebarRail` | `TpSidebarRail` |
+| `SidebarHeader` / `Footer` / `Content` | `TpSidebarHeader` / `Footer` / `Content` |
+| `SidebarGroup*` | `TpSidebarGroup*` |
+| `SidebarMenu*` | `TpSidebarMenu*` |
+| `useSidebar` | `TpSidebarScope.of` |
+
+`TpSidebarRail` needs a **bounded-height** parent (it sizes its hit strip from `LayoutBuilder` constraints). Prefer a `Stack` overlay on the sidebar panel rather than placing it in an unbounded `Column` child.
 
 ## Layout
 
