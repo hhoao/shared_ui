@@ -34,4 +34,22 @@ void main() {
     await tester.pump();
     expect(tapped, isTrue);
   });
+
+  testWidgets('TpActionMenuShortcut renders muted trailing label', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        TpActionMenuPanel(
+          children: [
+            TpActionMenuItem(
+              icon: Icons.content_copy,
+              label: 'Copy',
+              trailing: const TpActionMenuShortcut('⌘C'),
+              onTap: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+    expect(find.text('⌘C'), findsOneWidget);
+  });
 }

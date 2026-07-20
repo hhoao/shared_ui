@@ -163,6 +163,25 @@ class TpActionMenuDivider extends StatelessWidget {
   }
 }
 
+/// Muted keyboard shortcut label for [TpActionMenuItem.trailing].
+class TpActionMenuShortcut extends StatelessWidget {
+  const TpActionMenuShortcut(this.label, {super.key});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final styles = TpTextStyles.of(context);
+    return Text(
+      label,
+      style: styles.sm.copyWith(
+        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+      ),
+    );
+  }
+}
+
 /// Single menu row with instant hover (no route animation).
 class TpActionMenuItem extends StatefulWidget {
   const TpActionMenuItem({
