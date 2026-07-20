@@ -61,6 +61,7 @@ class _TpComboboxState<T extends Object> extends State<TpCombobox<T>> {
   bool _drafting = false;
   int _highlightedIndex = -1;
   double? _overlayWidth;
+  bool _overlayPointerDown = false;
 
   @override
   void initState() {
@@ -146,7 +147,13 @@ class _TpComboboxState<T extends Object> extends State<TpCombobox<T>> {
     ];
   }
 
-  List<T> get _filteredItems => _filteredItemsFor(_textController.text);
+  List<T> get _filteredItems => _filteredItemsFor(_filterQuery);
+
+  /// While not drafting, the input may show the committed label but suggestions
+  /// use an empty query so reopen lists every option.
+  String get _filterQuery => _drafting ? _textController.text : '';
+
+  bool get _hasActiveFilterQuery => _filterQuery.trim().isNotEmpty;
 
   void _resetHighlightForCurrentFilter() {
     final filtered = _filteredItems;
@@ -157,7 +164,16 @@ class _TpComboboxState<T extends Object> extends State<TpCombobox<T>> {
   void _onFocusChanged() {
     if (_focusNode.hasFocus) {
       _openPopover();
+      return;
     }
+    // Defer so pointer-up on an overlay item can commit before we tear down.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_focusNode.hasFocus || _overlayPointerDown) return;
+      if (_popoverController.isOpen) {
+        _popoverController.hide();
+      }
+    });
   }
 
   void _onPopoverChanged() {
@@ -303,9 +319,8 @@ class _TpComboboxState<T extends Object> extends State<TpCombobox<T>> {
     final maxHeight =
         widget.overlayHeight ??
         context.tpTheme.selectTheme.defaultOverlayHeight;
-    final query = _textController.text;
     final filtered = _filteredItems;
-    final showEmpty = query.trim().isNotEmpty && filtered.isEmpty;
+    final showEmpty = _hasActiveFilterQuery && filtered.isEmpty;
 
     return ListenableBuilder(
       listenable: _popoverController,
@@ -322,16 +337,32 @@ class _TpComboboxState<T extends Object> extends State<TpCombobox<T>> {
             offset: Offset(0, 4),
           ),
           popover: (popoverContext) {
-            return ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxHeight),
-              child: TpSuggestionList<T>(
-                items: showEmpty ? const [] : filtered,
-                highlightedIndex: _highlightedIndex,
-                selectedItem: widget.value,
-                itemLabel: widget.itemLabel,
-                itemBuilder: widget.itemBuilder,
-                emptyText: widget.emptyText ?? 'No results',
-                onItemSelected: _selectItem,
+            return Listener(
+              onPointerDown: (_) => _overlayPointerDown = true,
+              onPointerUp: (_) {
+                _overlayPointerDown = false;
+                if (!_focusNode.hasFocus && _popoverController.isOpen) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    if (_focusNode.hasFocus || _overlayPointerDown) return;
+                    if (_popoverController.isOpen) {
+                      _popoverController.hide();
+                    }
+                  });
+                }
+              },
+              onPointerCancel: (_) => _overlayPointerDown = false,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                child: TpSuggestionList<T>(
+                  items: showEmpty ? const [] : filtered,
+                  highlightedIndex: _highlightedIndex,
+                  selectedItem: widget.value,
+                  itemLabel: widget.itemLabel,
+                  itemBuilder: widget.itemBuilder,
+                  emptyText: widget.emptyText ?? 'No results',
+                  onItemSelected: _selectItem,
+                ),
               ),
             );
           },
