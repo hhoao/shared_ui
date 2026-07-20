@@ -61,9 +61,10 @@ import 'package:shared_ui/shared_ui.dart';
 | **Input** | `TpInput`, `TpInputFormField`, `TpTextarea`, `TpTextareaFormField` |
 | **Token field** | `TpTokenTextField`, `TpTokenChipMirror`, palette typedefs / edit helpers (`applyTpTokenBackspace`, …) |
 | **Select** | `TpSelect`, `TpSelectWithCustomInput`, search / filter helpers |
+| **Combobox** | `TpCombobox`, `TpSuggestionList` |
 | **Dialog** | `TpDialog` |
 | **Form** | `TpForm`, `TpFormField`, `TpFormFieldLayout`, `TpFormMap` |
-| **Overlay** | `TpPopover`, `TpTooltip`, `TpActionMenu` / `TpActionMenuPanel` |
+| **Overlay** | `TpPopover`, `TpTooltip`, `TpActionMenu` / `TpActionMenuPanel`, `TpActionMenuShortcut` (Context Menu) |
 | **Date range** | `TpDateRangePicker`, `TpRangeCalendar`, calendar date utils |
 | **Toast** | `TpToast`, `TpToastWrapper`, `TpToastConfig`, `TpToastTheme`, `TpToastVariant`, `TpToastAction` |
 | **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
@@ -71,6 +72,25 @@ import 'package:shared_ui/shared_ui.dart';
 | **Theme** | `TpTheme`, `TpThemeData`, `TpTextStyles`, `TpFontTheme`, `TpGlyphWarmup`, icon sizes (`sm`/`md`/`lg`/`hero`), spacing / typography / control metrics, per-component themes |
 
 Toast engine sources live under `lib/src/toast/engine/` and are **not** barrel-exported.
+
+## Combobox vs Select
+
+- `TpSelect` — closed header + chevron; optional search inside the overlay.
+- `TpCombobox` — editable input; typing filters suggestions (shadcn Combobox).
+
+## Context Menu → TpActionMenu
+
+| shadcn | Tp |
+|--------|-----|
+| ContextMenu + Trigger + Content | `TpActionMenu*` / `showTpActionMenu*` |
+| ContextMenuItem | `TpActionMenuItem` / `TpActionMenuSpec.item` |
+| ContextMenuSeparator | `TpActionMenuDivider` |
+| Destructive | `destructive: true` |
+| Checkbox / selected | `selected: true` (+ trailing check) |
+| Shortcut | `TpActionMenuShortcut` or custom `trailing` |
+| Submenu / Radio | Not yet — extend `TpActionMenu` when needed |
+
+Use `showTpActionMenuFromSpecsAtTap` + `contextMenuGlobalPosition` for pointer-anchored menus.
 
 ## Layout
 
