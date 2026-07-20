@@ -53,6 +53,83 @@ void main() {
     expect(hovered.last, isFalse);
   });
 
+  testWidgets('TpHover ignores tap when disabled', (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TpHover(
+            enabled: false,
+            onTap: () => taps++,
+            child: const Text('row'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('row'));
+    expect(taps, 0);
+  });
+
+  testWidgets('TpHover invokes onLongPress', (tester) async {
+    var longPresses = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TpHover(
+            onLongPress: () => longPresses++,
+            child: const Text('row'),
+          ),
+        ),
+      ),
+    );
+    await tester.longPress(find.text('row'));
+    expect(longPresses, 1);
+  });
+
+  testWidgets('TpHover paints backgroundColor when idle', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TpHover(
+            backgroundColor: const Color(0xFF112233),
+            child: const SizedBox(width: 40, height: 20),
+          ),
+        ),
+      ),
+    );
+    final container = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+    expect(decoration.color, const Color(0xFF112233));
+  });
+
+  testWidgets('TpHover scales on press when pressScale != 1', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TpHover(
+            onTap: () {},
+            pressScale: 0.97,
+            child: const SizedBox(
+              width: 80,
+              height: 40,
+              child: Text('row'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final center = tester.getCenter(find.text('row'));
+    final gesture = await tester.startGesture(center);
+    await tester.pump();
+    final scale = tester.widget<AnimatedScale>(find.byType(AnimatedScale));
+    expect(scale.scale, 0.97);
+    await gesture.up();
+    await tester.pump();
+  });
+
   testWidgets('TpHoverRow shows trailing when forceShowTrailing', (
     tester,
   ) async {
