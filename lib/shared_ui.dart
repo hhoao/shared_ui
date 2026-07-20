@@ -57,6 +57,7 @@ export 'src/theme/components/tp_input_theme.dart';
 export 'src/theme/components/tp_popover_theme.dart';
 export 'src/theme/components/tp_select_theme.dart';
 export 'src/theme/components/tp_separator_theme.dart';
+export 'src/theme/components/tp_sidebar_theme.dart';
 export 'src/theme/components/tp_textarea_theme.dart';
 export 'src/theme/components/tp_toast_theme.dart';
 export 'src/theme/tokens/tp_control_metrics.dart';
