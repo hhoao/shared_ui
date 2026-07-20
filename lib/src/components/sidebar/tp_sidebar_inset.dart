@@ -17,11 +17,11 @@ class TpSidebarInset extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.tpTheme.sidebarTheme;
     final cs = Theme.of(context).colorScheme;
+    final isDark = cs.brightness == Brightness.dark;
     final radius = BorderRadius.circular(theme.insetRadius);
-    final background =
-        theme.insetBackgroundColor ?? cs.surface;
+    final background = theme.insetBackgroundColor ?? cs.surface;
     final borderColor = theme.borderColor ??
-        cs.outlineVariant.withValues(alpha: 0.6);
+        cs.outlineVariant.withValues(alpha: isDark ? 0.45 : 0.55);
 
     return ClipRRect(
       key: const Key('tp-sidebar-inset'),
@@ -33,9 +33,9 @@ class TpSidebarInset extends StatelessWidget {
           border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
-              color: cs.shadow.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),

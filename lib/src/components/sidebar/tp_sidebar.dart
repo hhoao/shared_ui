@@ -100,7 +100,8 @@ class _TpSidebarState extends State<TpSidebar> {
   BoxDecoration _decoration(TpSidebarTheme theme, ColorScheme scheme) {
     final bg = theme.backgroundColor ?? scheme.surfaceContainerLow;
     final border = theme.borderColor ??
-        scheme.outlineVariant.withValues(alpha: 0.6);
+        scheme.outlineVariant.withValues(alpha: 0.55);
+    final isDark = scheme.brightness == Brightness.dark;
 
     return switch (widget.variant) {
       TpSidebarVariant.sidebar => BoxDecoration(
@@ -120,14 +121,15 @@ class _TpSidebarState extends State<TpSidebar> {
           border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
+      // Sit on page chrome; keep fill quiet so inset card carries hierarchy.
       TpSidebarVariant.inset => BoxDecoration(
-          color: bg.withValues(alpha: 0.5),
+          color: bg,
         ),
     };
   }

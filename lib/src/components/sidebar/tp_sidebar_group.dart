@@ -20,8 +20,12 @@ class TpSidebarGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.tpSpacing;
+    final collapsed = hideInIconCollapse(context);
     return Padding(
-      padding: padding ?? EdgeInsets.all(spacing.sm),
+      padding: padding ??
+          (collapsed
+              ? EdgeInsets.symmetric(vertical: spacing.xs)
+              : EdgeInsets.all(spacing.sm)),
       child: child,
     );
   }
@@ -50,14 +54,16 @@ class TpSidebarGroupLabel extends StatelessWidget {
 
     return Padding(
       padding: padding ??
-          EdgeInsets.symmetric(horizontal: spacing.sm, vertical: spacing.xs),
+          EdgeInsets.fromLTRB(spacing.sm, spacing.xs, spacing.sm, spacing.xxs),
       child: SizedBox(
-        height: 32,
+        height: 24,
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
             label,
-            style: styles.xsTrackColored(cs.onSurfaceVariant),
+            style: styles.xsTrackColored(
+              cs.onSurfaceVariant.withValues(alpha: 0.85),
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

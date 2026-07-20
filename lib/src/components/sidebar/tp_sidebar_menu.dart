@@ -18,10 +18,17 @@ class TpSidebarMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // shadcn menu uses a tight vertical gap (~2–4px) between items.
+    const gap = 2.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
-      children: children,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(height: gap),
+          children[i],
+        ],
+      ],
     );
   }
 }
@@ -155,34 +162,49 @@ class TpSidebarMenuButton extends StatelessWidget {
     final styles = TpTextStyles.of(context);
 
     final accent = sidebarTheme.accentColor ??
-        cs.primaryContainer.withValues(alpha: 0.35);
-    final accentFg = sidebarTheme.accentForegroundColor ?? cs.primary;
-    final fg = sidebarTheme.foregroundColor ?? cs.onSurface;
+        cs.onSurface.withValues(
+          alpha: cs.brightness == Brightness.dark ? 0.10 : 0.06,
+        );
+    final accentFg = sidebarTheme.accentForegroundColor ?? cs.onSurface;
+    final fg = (sidebarTheme.foregroundColor ?? cs.onSurface)
+        .withValues(alpha: isActive ? 1 : 0.82);
+    final hover =
+        isActive ? accent : TpHover.defaultHoverColor(context);
 
     final showLabel = !iconCollapsed && label != null && label!.isNotEmpty;
     final tipMessage = tooltip ?? (iconCollapsed ? (label ?? '') : '');
+    final iconSize = context.tpIconSizes.sm;
+    final railWidth = sidebarTheme.widthIcon;
 
-    Widget content = TpHover(
-      onTap: onPressed,
-      backgroundColor: isActive ? accent : null,
-      hoverColor: isActive ? accent : null,
-      borderRadius: BorderRadius.circular(8),
-      padding: EdgeInsets.symmetric(
-        horizontal: spacing.sm,
-        vertical: spacing.xs,
-      ),
-      child: SizedBox(
+    final iconWidget = icon == null
+        ? null
+        : IconTheme(
+            data: IconThemeData(
+              size: iconSize,
+              color: isActive ? accentFg : fg,
+            ),
+            child: icon!,
+          );
+
+    // OverflowBox keeps expanded-width children while the panel clips to the
+    // left [widthIcon] strip — center icons inside that strip, not the full width.
+    // Align left so stretch constraints from Column don't expand the rail box.
+    final Widget rowChild;
+    if (iconCollapsed) {
+      rowChild = Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: railWidth,
+          height: 32,
+          child: Center(child: iconWidget),
+        ),
+      );
+    } else {
+      rowChild = SizedBox(
         height: 32,
         child: Row(
           children: [
-            if (icon != null)
-              IconTheme(
-                data: IconThemeData(
-                  size: context.tpIconSizes.md,
-                  color: isActive ? accentFg : fg,
-                ),
-                child: icon!,
-              ),
+            if (iconWidget != null) iconWidget,
             if (showLabel) ...[
               SizedBox(width: spacing.sm),
               Expanded(
@@ -193,11 +215,24 @@ class TpSidebarMenuButton extends StatelessWidget {
                   style: styles.smMediumColored(isActive ? accentFg : fg),
                 ),
               ),
-            ] else
-              const Spacer(),
+            ],
           ],
         ),
-      ),
+      );
+    }
+
+    Widget content = TpHover(
+      onTap: onPressed,
+      backgroundColor: isActive ? accent : null,
+      hoverColor: hover,
+      borderRadius: BorderRadius.circular(6),
+      padding: iconCollapsed
+          ? EdgeInsets.zero
+          : EdgeInsets.symmetric(
+              horizontal: spacing.sm,
+              vertical: spacing.xs,
+            ),
+      child: rowChild,
     );
 
     if (tipMessage.isNotEmpty) {
@@ -253,13 +288,25 @@ class TpSidebarMenuBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (child != null) return child!;
+
     final styles = TpTextStyles.of(context);
     final cs = Theme.of(context).colorScheme;
-    return child ??
-        Text(
-          label!,
-          style: styles.xsTrackColored(cs.onSurfaceVariant),
-        );
+    final spacing = context.tpSpacing;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label!,
+        style: styles.xsTrackColored(cs.onSurfaceVariant),
+      ),
+    );
   }
 }
 
@@ -275,12 +322,33 @@ class TpSidebarMenuSub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.tpSpacing;
+    final cs = Theme.of(context).colorScheme;
+    final border = cs.outlineVariant.withValues(alpha: 0.55);
     return Padding(
-      padding: EdgeInsets.only(left: spacing.lg, top: spacing.xxs),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: children,
+      padding: EdgeInsets.only(
+        left: spacing.md,
+        top: spacing.xxs,
+        bottom: spacing.xxs,
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(color: border, width: 1),
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(left: spacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) const SizedBox(height: 2),
+                children[i],
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -322,15 +390,20 @@ class TpSidebarMenuSubButton extends StatelessWidget {
     final styles = TpTextStyles.of(context);
 
     final accent = sidebarTheme.accentColor ??
-        cs.primaryContainer.withValues(alpha: 0.35);
-    final accentFg = sidebarTheme.accentForegroundColor ?? cs.primary;
-    final fg = sidebarTheme.foregroundColor ?? cs.onSurface;
+        cs.onSurface.withValues(
+          alpha: cs.brightness == Brightness.dark ? 0.10 : 0.06,
+        );
+    final accentFg = sidebarTheme.accentForegroundColor ?? cs.onSurface;
+    final fg = (sidebarTheme.foregroundColor ?? cs.onSurface)
+        .withValues(alpha: isActive ? 1 : 0.75);
+    final hover =
+        isActive ? accent : TpHover.defaultHoverColor(context);
 
     return TpHover(
       onTap: onPressed,
       backgroundColor: isActive ? accent : null,
-      hoverColor: isActive ? accent : null,
-      borderRadius: BorderRadius.circular(8),
+      hoverColor: hover,
+      borderRadius: BorderRadius.circular(6),
       padding: EdgeInsets.symmetric(
         horizontal: spacing.sm,
         vertical: spacing.xs,

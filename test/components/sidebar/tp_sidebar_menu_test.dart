@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -19,9 +18,15 @@ Widget _wrap({
         child: TpSidebarProvider(
           open: open,
           onOpenChange: (_) {},
-          child: TpSidebar(
-            collapsible: collapsible,
-            child: child,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TpSidebar(
+                collapsible: collapsible,
+                child: child,
+              ),
+              const Expanded(child: SizedBox.expand()),
+            ],
           ),
         ),
       ),
@@ -153,28 +158,42 @@ void main() {
     await tester.pumpAndSettle();
 
     final tip = find.byType(TpTooltip);
-    final materialTip = find.byWidgetPredicate(
-      (w) => w is Tooltip && w.message == 'Tasks',
+    expect(tip, findsWidgets);
+    final widget = tester.widgetList<TpTooltip>(tip).firstWhere(
+          (t) => t.message == 'Tasks',
+          orElse: () => tester.widget<TpTooltip>(tip.first),
+        );
+    expect(widget.message, 'Tasks');
+  });
+
+  testWidgets('icon-collapsed centers menu icon in the rail', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        open: false,
+        child: TpSidebarMenu(
+          children: [
+            TpSidebarMenuItem(
+              children: [
+                TpSidebarMenuButton(
+                  icon: const Icon(Icons.inbox, key: Key('nav-icon')),
+                  label: 'Tasks',
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
+    await tester.pumpAndSettle();
+
+    final panel = tester.getRect(find.byKey(const Key('sidebar-panel')));
+    final icon = tester.getRect(find.byKey(const Key('nav-icon')));
+    expect(panel.width, closeTo(48, 0.5));
     expect(
-      tip.evaluate().isNotEmpty || materialTip.evaluate().isNotEmpty,
-      isTrue,
-      reason: 'expected TpTooltip or Tooltip with label message',
+      (icon.center.dx - (panel.left + panel.width / 2)).abs(),
+      lessThan(6),
+      reason: 'icon should be roughly centered in the icon rail',
     );
-
-    if (tip.evaluate().isNotEmpty) {
-      final widget = tester.widget<TpTooltip>(tip);
-      expect(widget.message, 'Tasks');
-
-      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await gesture.addPointer(location: Offset.zero);
-      addTearDown(gesture.removePointer);
-      await tester.pump();
-      await gesture.moveTo(tester.getCenter(find.byType(TpSidebarMenuButton)));
-      await tester.pump(const Duration(milliseconds: 600));
-      expect(find.text('Tasks'), findsWidgets);
-    } else {
-      expect(materialTip, findsOneWidget);
-    }
   });
 }

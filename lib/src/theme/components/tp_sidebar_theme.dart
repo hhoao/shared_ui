@@ -21,14 +21,21 @@ class TpSidebarTheme {
 
   factory TpSidebarTheme.defaults() => const TpSidebarTheme();
 
-  factory TpSidebarTheme.fromColorScheme(ColorScheme cs) => TpSidebarTheme(
-        backgroundColor: cs.surfaceContainerLow,
-        foregroundColor: cs.onSurface,
-        accentColor: cs.primaryContainer.withValues(alpha: 0.35),
-        accentForegroundColor: cs.primary,
-        borderColor: cs.outlineVariant.withValues(alpha: 0.6),
-        insetBackgroundColor: cs.surface,
-      );
+  /// Muted sidebar chrome derived from [ColorScheme] (shadcn-like, theme-tinted).
+  ///
+  /// Active/hover use a soft on-surface wash instead of brand primary so rows
+  /// stay quiet against product themes (e.g. huji workspace surfaces).
+  factory TpSidebarTheme.fromColorScheme(ColorScheme cs) {
+    final isDark = cs.brightness == Brightness.dark;
+    return TpSidebarTheme(
+      backgroundColor: cs.surfaceContainerLow,
+      foregroundColor: cs.onSurface,
+      accentColor: cs.onSurface.withValues(alpha: isDark ? 0.10 : 0.06),
+      accentForegroundColor: cs.onSurface,
+      borderColor: cs.outlineVariant.withValues(alpha: isDark ? 0.45 : 0.55),
+      insetBackgroundColor: cs.surface,
+    );
+  }
 
   final double width;
   final double widthIcon;
