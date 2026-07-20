@@ -108,6 +108,44 @@ void main() {
     expect(pressed, 1);
   });
 
+  testWidgets('action and badge are side by side when expanded', (tester) async {
+    var actionPressed = 0;
+    await tester.pumpWidget(
+      _wrap(
+        child: TpSidebarMenu(
+          children: [
+            TpSidebarMenuItem(
+              children: [
+                TpSidebarMenuButton(
+                  icon: const Icon(Icons.inbox),
+                  label: 'Tasks',
+                  onPressed: () {},
+                ),
+                TpSidebarMenuAction(
+                  icon: Icons.more_horiz,
+                  onPressed: () => actionPressed++,
+                ),
+                const TpSidebarMenuBadge(label: '3'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('3'), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz), findsOneWidget);
+
+    final actionRect = tester.getRect(find.byIcon(Icons.more_horiz));
+    final badgeRect = tester.getRect(find.text('3'));
+    expect(actionRect.right, lessThanOrEqualTo(badgeRect.left));
+
+    await tester.tap(find.byIcon(Icons.more_horiz));
+    await tester.pump();
+    expect(actionPressed, 1);
+  });
+
   testWidgets('collapsed tooltip defaults to label', (tester) async {
     await tester.pumpWidget(
       _wrap(open: false, child: _sampleMenu()),

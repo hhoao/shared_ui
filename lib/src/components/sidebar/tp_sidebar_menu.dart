@@ -72,24 +72,32 @@ class TpSidebarMenuItem extends StatelessWidget {
       }
     }
 
-    final row = Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        if (button != null) button,
-        if (action != null && !iconCollapsed)
-          Positioned(
-            right: spacing.xs,
-            child: action,
-          ),
-        if (badgeSlot != null)
-          Positioned(
-            right: spacing.xs,
-            child: badgeSlot,
-          ),
-        ...extras,
-      ],
-    );
+    final Widget row;
+    if (iconCollapsed) {
+      row = Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          if (button != null) button,
+          if (badgeSlot != null)
+            Positioned(
+              right: spacing.xs,
+              child: badgeSlot,
+            ),
+          ...extras,
+        ],
+      );
+    } else {
+      row = Row(
+        children: [
+          if (button != null) Expanded(child: button),
+          if (action != null) action,
+          if (action != null && badgeSlot != null) SizedBox(width: spacing.xs),
+          if (badgeSlot != null) badgeSlot,
+          ...extras,
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
