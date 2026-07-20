@@ -28,6 +28,8 @@ export 'src/components/popover/tp_popover.dart';
 export 'src/components/preference/tp_preference_row.dart';
 export 'src/components/preference/tp_preference_stack.dart';
 export 'src/components/section/tp_section_header.dart';
+export 'src/components/sidebar/tp_sidebar.dart';
+export 'src/components/sidebar/tp_sidebar_config.dart';
 export 'src/components/sidebar/tp_sidebar_provider.dart';
 export 'src/components/sidebar/tp_sidebar_scope.dart';
 export 'src/components/segmented_control/tp_segmented_control.dart';
