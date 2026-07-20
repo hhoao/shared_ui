@@ -43,20 +43,41 @@ class _TpSidebarState extends State<TpSidebar> {
     _scheduleOverlaySync();
   }
 
-  void _scheduleOverlaySync() {
-    final scope = TpSidebarScope.maybeOf(context);
-    final shouldShow = scope != null && scope.isMobile && scope.openMobile;
-    if (shouldShow == _overlayShown) return;
+  @override
+  void dispose() {
+    _hideOverlay();
+    super.dispose();
+  }
 
+  void _showOverlay() {
+    if (!_overlayController.isShowing) {
+      _overlayController.show();
+    }
+  }
+
+  void _hideOverlay() {
+    if (_overlayController.isShowing) {
+      _overlayController.hide();
+    }
+  }
+
+  void _scheduleOverlaySync() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final current = TpSidebarScope.maybeOf(context);
-      final show = current != null && current.isMobile && current.openMobile;
+
+      // Portal is only in the tree while mobile. Never hide() after it detaches.
+      if (current == null || !current.isMobile) {
+        _overlayShown = false;
+        return;
+      }
+
+      final show = current.openMobile;
       if (show == _overlayShown) return;
       if (show) {
-        _overlayController.show();
+        _showOverlay();
       } else {
-        _overlayController.hide();
+        _hideOverlay();
       }
       _overlayShown = show;
     });
@@ -168,52 +189,55 @@ class _TpSidebarState extends State<TpSidebar> {
         widget.themeOverride ?? TpTheme.of(context).sidebarTheme;
     final configured = _buildConfiguredChild(widget.child);
 
-    if (scope.isMobile) {
-      _scheduleOverlaySync();
-      return OverlayPortal(
-        controller: _overlayController,
-        overlayChildBuilder: (overlayContext) {
-          final drawerPanel = Material(
-            elevation: 8,
-            color: theme.backgroundColor ??
-                Theme.of(overlayContext).colorScheme.surfaceContainerLow,
-            child: SizedBox(
-              width: theme.widthMobile,
-              height: double.infinity,
-              child: configured,
-            ),
-          );
-          return Stack(
-            children: [
-              ModalBarrier(
-                dismissible: true,
-                color: Colors.black54,
-                onDismiss: () => scope.setOpenMobile(false),
-              ),
-              Align(
-                alignment: widget.side == TpSidebarSide.left
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
-                child: drawerPanel,
-              ),
-            ],
-          );
-        },
-        child: _buildPanel(
-          context: context,
-          theme: theme,
-          width: 0,
-          child: const SizedBox.shrink(),
-        ),
+    if (!scope.isMobile) {
+      // Portal already left the tree with this rebuild — only clear local flag.
+      _overlayShown = false;
+      final width = _desktopWidth(scope: scope, theme: theme);
+      return _buildPanel(
+        context: context,
+        theme: theme,
+        width: width,
+        child: configured,
       );
     }
 
-    final width = _desktopWidth(scope: scope, theme: theme);
-    return _buildPanel(
-      context: context,
-      theme: theme,
-      width: width,
-      child: configured,
+    _scheduleOverlaySync();
+    return OverlayPortal(
+      controller: _overlayController,
+      overlayChildBuilder: (overlayContext) {
+        final drawerPanel = Material(
+          elevation: 8,
+          color: theme.backgroundColor ??
+              Theme.of(overlayContext).colorScheme.surfaceContainerLow,
+          child: SizedBox(
+            width: theme.widthMobile,
+            height: double.infinity,
+            child: configured,
+          ),
+        );
+        return Stack(
+          children: [
+            ModalBarrier(
+              dismissible: true,
+              color: Colors.black54,
+              onDismiss: () => TpSidebarScope.maybeOf(overlayContext)
+                  ?.setOpenMobile(false),
+            ),
+            Align(
+              alignment: widget.side == TpSidebarSide.left
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: drawerPanel,
+            ),
+          ],
+        );
+      },
+      child: _buildPanel(
+        context: context,
+        theme: theme,
+        width: 0,
+        child: const SizedBox.shrink(),
+      ),
     );
   }
 }

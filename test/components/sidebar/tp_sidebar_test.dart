@@ -112,6 +112,40 @@ void main() {
     expect(find.text('drawer-body'), findsOneWidget);
   });
 
+  testWidgets('resizing open mobile drawer to desktop does not assert',
+      (tester) async {
+    Widget buildAt(Size size) {
+      return _wrap(
+        size: size,
+        open: false,
+        const TpSidebar(
+          child: Text('drawer-body'),
+        ),
+        content: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => TpSidebarScope.of(context).setOpenMobile(true),
+              child: const Text('open-drawer'),
+            );
+          },
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildAt(const Size(400, 800)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-drawer'));
+    await tester.pumpAndSettle();
+    expect(find.text('drawer-body'), findsOneWidget);
+
+    await tester.pumpWidget(buildAt(const Size(1200, 800)));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('drawer-body'), findsNothing);
+    expect(find.byKey(const Key('sidebar-panel')), findsOneWidget);
+  });
+
   testWidgets('variant sidebar exposes sidebar-panel', (tester) async {
     await tester.pumpWidget(
       _wrap(
