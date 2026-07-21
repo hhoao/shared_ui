@@ -79,11 +79,13 @@ void main() {
       wrap(
         const TpDisclosure(
           title: 'Advanced',
+          subtitle: 'Agent preset and extra flags.',
           children: [Text('Secret')],
         ),
       ),
     );
     expect(find.text('Secret'), findsNothing);
+    expect(find.text('Agent preset and extra flags.'), findsOneWidget);
     await tester.tap(find.text('Advanced'));
     await tester.pumpAndSettle();
     expect(find.text('Secret'), findsOneWidget);
