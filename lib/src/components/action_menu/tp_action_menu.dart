@@ -571,6 +571,7 @@ class TpActionMenuSpec {
     : isDivider = true,
       value = null,
       icon = null,
+      iconWidget = null,
       label = null,
       subtitle = null,
       subtitleSuffix = null,
@@ -583,7 +584,8 @@ class TpActionMenuSpec {
 
   const TpActionMenuSpec.item({
     this.value,
-    required this.icon,
+    this.icon,
+    this.iconWidget,
     required this.label,
     this.subtitle,
     this.subtitleSuffix,
@@ -593,11 +595,13 @@ class TpActionMenuSpec {
     this.selected = false,
     this.onAction,
     this.tooltip,
-  }) : isDivider = false;
+  }) : assert(icon != null || iconWidget != null),
+       isDivider = false;
 
   final bool isDivider;
   final Object? value;
   final IconData? icon;
+  final Widget? iconWidget;
   final String? label;
   final Widget? subtitle;
   final String? subtitleSuffix;
@@ -662,6 +666,7 @@ Widget _specToMenuItem({
 
   return TpActionMenuItem(
     icon: spec.icon,
+    iconWidget: spec.iconWidget,
     label: spec.label ?? '',
     subtitle: spec.subtitle,
     subtitleSuffix: spec.subtitleSuffix,
