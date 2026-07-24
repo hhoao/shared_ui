@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -223,6 +224,72 @@ void main() {
       expect(controller.text, 'typed after delete');
     },
   );
+
+  testWidgets('whole-token backspace can be undone and redone immediately', (
+    tester,
+  ) async {
+    // Flutter UndoHistory drops redo when undo lands inside its 500ms throttle;
+    // token deletes keep a side-channel pair so Ctrl/Cmd+Shift+Z still works.
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    final undoController = UndoHistoryController();
+    final controller = TextEditingController(text: 'hello #token');
+    controller.selection = TextSelection.collapsed(
+      offset: controller.text.length,
+    );
+    final focusNode = FocusNode();
+    addTearDown(() {
+      undoController.dispose();
+      controller.dispose();
+      focusNode.dispose();
+    });
+
+    await tester.pumpWidget(
+      wrap(
+        SizedBox(
+          height: 120,
+          child: TpTokenTextField(
+            controller: controller,
+            focusNode: focusNode,
+            undoController: undoController,
+            hint: 'Type here',
+            enabled: true,
+            onChanged: (_) {},
+            textStyle: style,
+            hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+            cursorColor: Colors.blue,
+            tokenPattern: pattern,
+            resolveTokenPalette: resolvePalette,
+            expands: true,
+            minLines: 3,
+            maxLines: 3,
+          ),
+        ),
+      ),
+    );
+
+    focusNode.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pump();
+    expect(controller.text, 'hello ');
+
+    // Immediate undo (no 500ms wait) must still restore the token.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    expect(controller.text, 'hello #token');
+
+    // Immediate redo must delete it again.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    expect(controller.text, 'hello ');
+  });
 
   testWidgets(
     'expands without nesting LayoutBuilder around the TextField',
