@@ -160,6 +160,70 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'keeps EditableText after last token delete and still accepts input',
+    (tester) async {
+      // Regression: Stack slot shift remounted EditableText when mirror
+      // unmounted, leaving IME dead while FocusNode stayed focused.
+      const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+      final controller = TextEditingController(text: 'hello #token');
+      final focusNode = FocusNode();
+      addTearDown(() {
+        controller.dispose();
+        focusNode.dispose();
+      });
+
+      await tester.pumpWidget(
+        wrap(
+          SizedBox(
+            height: 120,
+            child: TpTokenTextField(
+              controller: controller,
+              focusNode: focusNode,
+              hint: 'Type here',
+              enabled: true,
+              onChanged: (_) {},
+              textStyle: style,
+              hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+              cursorColor: Colors.blue,
+              tokenPattern: pattern,
+              resolveTokenPalette: resolvePalette,
+              expands: true,
+              minLines: 3,
+              maxLines: 3,
+            ),
+          ),
+        ),
+      );
+
+      focusNode.requestFocus();
+      await tester.pump();
+      expect(find.byType(TpTokenChipMirror), findsOneWidget);
+      final editableBefore = tester.element(find.byType(EditableText));
+
+      final deleted = applyTpTokenBackspace(
+        TextEditingValue(
+          text: controller.text,
+          selection: TextSelection.collapsed(offset: controller.text.length),
+        ),
+        pattern,
+      );
+      expect(deleted, isNotNull);
+      controller.value = deleted!;
+      await tester.pump();
+
+      expect(find.byType(TpTokenChipMirror), findsNothing);
+      expect(
+        identical(editableBefore, tester.element(find.byType(EditableText))),
+        isTrue,
+      );
+
+      await tester.enterText(find.byType(TextField), 'typed after delete');
+      expect(controller.text, 'typed after delete');
+    },
+  );
+
   testWidgets(
     'expands without nesting LayoutBuilder around the TextField',
     (tester) async {
@@ -217,19 +281,73 @@ void main() {
     },
   );
 
-  test('buildTpTokenMirrorLayoutSpans keeps token glyphs transparent', () {
+  test('buildTpTokenMirrorLayoutSpans paints token glyphs with palette color', () {
     const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    const scheme = ColorScheme.light();
     final spans = buildTpTokenMirrorLayoutSpans(
       text: 'hello #token world',
       baseStyle: style,
       tokenPattern: pattern,
+      colorScheme: scheme,
+      resolvePalette: resolvePalette,
     );
 
     expect(spans.length, 3);
     expect((spans[0] as TextSpan).text, 'hello ');
     final token = spans[1] as TextSpan;
     expect(token.text, '#token');
-    expect(token.style?.color, Colors.transparent);
+    expect(token.style?.color, const Color(0xFF112233));
+    expect(token.style?.fontWeight, style.fontWeight);
+  });
+
+  test('buildTpTokenPillOverlays emits one background per wrapped line box', () {
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    const path =
+        '@/home/user/Documents/TeamPilot/Attachments/'
+        'abcdef12-3456-7890-abcd-ef1234567890.png';
+    final painter = TextPainter(
+      text: TextSpan(text: path, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 120);
+    final boxes = painter.getBoxesForSelection(
+      TextSelection(baseOffset: 0, extentOffset: path.length),
+    );
+    expect(boxes.length, greaterThan(1));
+
+    final overlays = buildTpTokenPillOverlays(
+      text: path,
+      baseStyle: style,
+      colorScheme: const ColorScheme.light(),
+      painter: painter,
+      tokenPattern: RegExp(r'@\S+'),
+      resolvePalette: resolvePalette,
+    );
+
+    expect(overlays, hasLength(boxes.length));
+  });
+
+  testWidgets('token chip mirror has no FittedBox scaleDown label', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        SizedBox(
+          width: 160,
+          child: TpTokenChipMirror(
+            text:
+                '@/home/user/Documents/TeamPilot/Attachments/'
+                'abcdef12-3456-7890-abcd-ef1234567890.png',
+            baseStyle: const TextStyle(fontSize: 14, height: 1.5),
+            minLines: 1,
+            maxLines: 8,
+            tokenPattern: RegExp(r'@\S+'),
+            resolvePalette: resolvePalette,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(FittedBox), findsNothing);
   });
 
   test('applyTpTokenBackspace deletes whole token when caret inside', () {

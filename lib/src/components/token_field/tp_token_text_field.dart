@@ -11,9 +11,11 @@ import 'tp_token_palette.dart';
 ///
 /// When the text has no token matches, this is a normal opaque [TextField] (no
 /// mirror). With matches, the editable layer uses transparent glyphs and a
-/// [TpTokenChipMirror] underneath paints pills aligned to layout metrics.
-/// Skipping the mirror when unused avoids a second text layout on common paths
-/// (empty landing compose, plain typing).
+/// [TpTokenChipMirror] underneath paints colored tokens + background pills
+/// aligned to layout metrics. Skipping the mirror widget when unused avoids a
+/// second text layout on common paths (empty landing compose, plain typing).
+/// The Stack always keeps a stable editor slot so mirror mount/unmount does
+/// not remount [EditableText].
 ///
 /// Callers must supply [tokenPattern] and [resolveTokenPalette]; the package
 /// does not ship product-specific compose token defaults.
@@ -72,6 +74,8 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
   FocusOnKeyEventCallback? _chainedKeyHandler;
   final _scrollController = ScrollController();
   final _internalFieldKey = GlobalKey();
+  /// Keeps [TextField]/[EditableText] identity when the mirror slot toggles.
+  final _editorKey = GlobalKey();
 
   GlobalKey get _effectiveFieldKey => widget.fieldKey ?? _internalFieldKey;
 
@@ -200,61 +204,68 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
     final text = widget.controller.text;
     final showChipMirror = widget.tokenPattern.hasMatch(text);
 
-    final Widget? mirror = showChipMirror
-        ? ListenableBuilder(
-            listenable: _scrollController,
-            builder: (context, _) {
-              final scrollOffset = _scrollController.hasClients
-                  ? _scrollController.offset
-                  : 0.0;
-              return TpTokenChipMirror(
-                text: text,
-                baseStyle: widget.textStyle,
-                minLines: widget.expands ? 1 : widget.minLines,
-                maxLines: widget.expands ? 100 : widget.maxLines,
-                expands: widget.expands,
-                scrollOffset: scrollOffset,
-                tokenPattern: widget.tokenPattern,
-                resolvePalette: widget.resolveTokenPalette,
-              );
-            },
+    // Always keep two Stack slots so toggling the mirror never shifts the
+    // TextField from index 1 → 0 (that remounts EditableText and can kill IME).
+    final Widget mirrorSlot = showChipMirror
+        ? IgnorePointer(
+            child: ListenableBuilder(
+              listenable: _scrollController,
+              builder: (context, _) {
+                final scrollOffset = _scrollController.hasClients
+                    ? _scrollController.offset
+                    : 0.0;
+                return TpTokenChipMirror(
+                  text: text,
+                  baseStyle: widget.textStyle,
+                  minLines: widget.expands ? 1 : widget.minLines,
+                  maxLines: widget.expands ? 100 : widget.maxLines,
+                  expands: widget.expands,
+                  scrollOffset: scrollOffset,
+                  tokenPattern: widget.tokenPattern,
+                  resolvePalette: widget.resolveTokenPalette,
+                );
+              },
+            ),
           )
-        : null;
+        : const SizedBox.shrink();
 
-    final field = TextSelectionTheme(
-      data: TextSelectionThemeData(
-        selectionColor: selectionColor,
-        cursorColor: widget.cursorColor,
-      ),
-      child: TextField(
-        controller: widget.controller,
-        focusNode: widget.focusNode,
-        scrollController: _scrollController,
-        expands: widget.expands,
-        minLines: widget.expands ? null : widget.minLines,
-        maxLines: widget.expands ? null : widget.maxLines,
-        enabled: widget.enabled,
-        onChanged: (value) {
-          setState(() {});
-          widget.onChanged(value);
-        },
-        // Opaque when solo; transparent when mirror paints visible glyphs.
-        style: showChipMirror
-            ? widget.textStyle.copyWith(color: Colors.transparent)
-            : widget.textStyle,
-        cursorColor: widget.cursorColor,
-        textAlignVertical: widget.expands ? TextAlignVertical.top : null,
-        decoration: InputDecoration(
-          filled: false,
-          hoverColor: Colors.transparent,
-          hintText: widget.hint,
-          hintStyle: widget.hintStyle,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          disabledBorder: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-          isDense: true,
+    final field = KeyedSubtree(
+      key: _editorKey,
+      child: TextSelectionTheme(
+        data: TextSelectionThemeData(
+          selectionColor: selectionColor,
+          cursorColor: widget.cursorColor,
+        ),
+        child: TextField(
+          controller: widget.controller,
+          focusNode: widget.focusNode,
+          scrollController: _scrollController,
+          expands: widget.expands,
+          minLines: widget.expands ? null : widget.minLines,
+          maxLines: widget.expands ? null : widget.maxLines,
+          enabled: widget.enabled,
+          onChanged: (value) {
+            setState(() {});
+            widget.onChanged(value);
+          },
+          // Opaque when solo; transparent when mirror paints visible glyphs.
+          style: showChipMirror
+              ? widget.textStyle.copyWith(color: Colors.transparent)
+              : widget.textStyle,
+          cursorColor: widget.cursorColor,
+          textAlignVertical: widget.expands ? TextAlignVertical.top : null,
+          decoration: InputDecoration(
+            filled: false,
+            hoverColor: Colors.transparent,
+            hintText: widget.hint,
+            hintStyle: widget.hintStyle,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+            isDense: true,
+          ),
         ),
       ),
     );
@@ -263,8 +274,10 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
       key: _effectiveFieldKey,
       alignment: Alignment.topLeft,
       children: [
-        if (mirror != null)
-          widget.expands ? Positioned.fill(child: mirror) : mirror,
+        if (widget.expands)
+          Positioned.fill(child: mirrorSlot)
+        else
+          mirrorSlot,
         if (widget.expands) Positioned.fill(child: field) else field,
       ],
     );

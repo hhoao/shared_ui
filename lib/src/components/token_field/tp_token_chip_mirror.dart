@@ -5,13 +5,15 @@ import 'tp_token_palette.dart';
 /// Visual bleed on the left only; right edge stays at the layout token end.
 const double tpTokenPillLeftBleed = 4;
 
-/// Inner text padding inside the pill background.
+/// Inner horizontal inset reserved when measuring chip chrome (legacy).
 const double tpTokenPillHorizontalPadding = 6;
 
 List<InlineSpan> buildTpTokenMirrorLayoutSpans({
   required String text,
   required TextStyle baseStyle,
   required RegExp tokenPattern,
+  ColorScheme? colorScheme,
+  TpTokenPaletteResolver? resolvePalette,
 }) {
   if (text.isEmpty) return [TextSpan(text: '', style: baseStyle)];
 
@@ -24,10 +26,15 @@ List<InlineSpan> buildTpTokenMirrorLayoutSpans({
       );
     }
     final token = match.group(0)!;
+    final foreground = (colorScheme != null && resolvePalette != null)
+        ? resolvePalette(token, colorScheme).foreground
+        : (baseStyle.color ?? Colors.black);
+    // Keep font metrics identical to [baseStyle] so caret/selection stay
+    // aligned with the transparent TextField glyphs above.
     spans.add(
       TextSpan(
         text: token,
-        style: baseStyle.copyWith(color: Colors.transparent),
+        style: baseStyle.copyWith(color: foreground),
       ),
     );
     start = match.end;
@@ -60,6 +67,10 @@ double tpTokenPillWidth(double layoutWidth) {
   return layoutWidth + tpTokenPillLeftBleed;
 }
 
+/// Background-only chip chrome — one [Positioned] pill per layout [TextBox].
+///
+/// Token glyphs are painted by the mirror [Text.rich] spans; wrapping a long
+/// `@path` must not squeeze the full string through [FittedBox].
 List<Widget> buildTpTokenPillOverlays({
   required String text,
   required TextStyle baseStyle,
@@ -77,66 +88,24 @@ List<Widget> buildTpTokenPillOverlays({
     );
     if (boxes.isEmpty) continue;
 
-    final left = boxes.first.left;
-    final top = boxes.map((box) => box.top).reduce((a, b) => a < b ? a : b);
-    final bottom = boxes.map((box) => box.bottom).reduce((a, b) => a > b ? a : b);
-    final layoutWidth = boxes.last.right - left;
-
-    overlays.add(
-      Positioned(
-        left: left - tpTokenPillLeftBleed,
-        top: top + 1,
-        width: tpTokenPillWidth(layoutWidth),
-        height: bottom - top - 2,
-        child: _TpTokenPill(
-          token: token,
-          baseStyle: baseStyle,
-          palette: palette,
-        ),
-      ),
-    );
-  }
-  return overlays;
-}
-
-class _TpTokenPill extends StatelessWidget {
-  const _TpTokenPill({
-    required this.token,
-    required this.baseStyle,
-    required this.palette,
-  });
-
-  final String token;
-  final TextStyle baseStyle;
-  final TpTokenPalette palette;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.background,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: tpTokenPillHorizontalPadding,
-        ),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              token,
-              maxLines: 1,
-              softWrap: false,
-              style: tpTokenPillLabelStyle(baseStyle, palette.foreground),
+    for (final box in boxes) {
+      overlays.add(
+        Positioned(
+          left: box.left - tpTokenPillLeftBleed,
+          top: box.top + 1,
+          width: tpTokenPillWidth(box.right - box.left),
+          height: box.bottom - box.top - 2,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: palette.background,
+              borderRadius: BorderRadius.circular(6),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
   }
+  return overlays;
 }
 
 /// Decorative mirror of text with inline token chips (sits under the TextField).
@@ -180,6 +149,8 @@ class TpTokenChipMirror extends StatelessWidget {
               text: text,
               baseStyle: baseStyle,
               tokenPattern: tokenPattern,
+              colorScheme: cs,
+              resolvePalette: resolvePalette,
             );
             final painter = TextPainter(
               text: TextSpan(children: layoutSpans),
@@ -197,11 +168,7 @@ class TpTokenChipMirror extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Text.rich(
-                    TextSpan(children: layoutSpans),
-                    maxLines: expands ? null : maxLines,
-                    strutStyle: strutStyle,
-                  ),
+                  // Backgrounds under glyphs so opaque pills do not cover text.
                   ...buildTpTokenPillOverlays(
                     text: text,
                     baseStyle: baseStyle,
@@ -209,6 +176,11 @@ class TpTokenChipMirror extends StatelessWidget {
                     painter: painter,
                     tokenPattern: tokenPattern,
                     resolvePalette: resolvePalette,
+                  ),
+                  Text.rich(
+                    TextSpan(children: layoutSpans),
+                    maxLines: expands ? null : maxLines,
+                    strutStyle: strutStyle,
                   ),
                 ],
               ),
