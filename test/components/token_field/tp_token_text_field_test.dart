@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -402,8 +403,8 @@ void main() {
           width: 160,
           child: TpTokenChipMirror(
             text:
-                '@/home/user/Documents/TeamPilot/Attachments/'
-                'abcdef12-3456-7890-abcd-ef1234567890.png',
+                '@/home/user/Downloads/DingDing/'
+                '事件Syslog格式和字段_2025.docx',
             baseStyle: const TextStyle(fontSize: 14, height: 1.5),
             minLines: 1,
             maxLines: 8,
@@ -416,6 +417,56 @@ void main() {
 
     expect(find.byType(FittedBox), findsNothing);
   });
+
+  testWidgets(
+    'expands mirror lays out full text taller than viewport for scroll',
+    (tester) async {
+      // Regression: expands used constraints.maxHeight as the mirror body
+      // height, so Text.rich only laid out the visible ~3 lines. Scrolling
+      // the transparent TextField then translated empty space — excess text
+      // never painted (compose with @path tokens).
+      const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+      const lineHeight = 14.0 * 1.5;
+      const viewportLines = 3;
+      const viewportHeight = lineHeight * viewportLines;
+      const text =
+          '我需要完成这个需求：@/home/user/Downloads/file.docx '
+          '1、因DLP日志的数据源发生变更，且新版日志的字段结构已发生变化，'
+          '现需根据最新的天空卫视日志规范完成映射 UNIQUE_TAIL_LINE';
+
+      await tester.pumpWidget(
+        wrap(
+          SizedBox(
+            width: 280,
+            height: viewportHeight,
+            child: TpTokenChipMirror(
+              text: text,
+              baseStyle: style,
+              minLines: 1,
+              maxLines: 100,
+              expands: true,
+              scrollOffset: lineHeight * 2,
+              tokenPattern: RegExp(r'@\S+'),
+              resolvePalette: resolvePalette,
+            ),
+          ),
+        ),
+      );
+
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.descendant(
+          of: find.byType(TpTokenChipMirror),
+          matching: find.byType(RichText),
+        ),
+      );
+      expect(
+        paragraph.size.height,
+        greaterThan(viewportHeight),
+        reason: 'mirror must layout all lines so scrollOffset can reveal them',
+      );
+      expect(find.textContaining('UNIQUE_TAIL_LINE'), findsOneWidget);
+    },
+  );
 
   test('applyTpTokenBackspace deletes whole token when caret inside', () {
     final value = TextEditingValue(

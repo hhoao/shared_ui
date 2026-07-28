@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'tp_token_palette.dart';
@@ -139,64 +141,80 @@ class TpTokenChipMirror extends StatelessWidget {
     final maxHeight = lineHeight * maxLines;
     final strutStyle = tpTokenMirrorStrutStyle(baseStyle);
 
-    final content = ClipRect(
-      clipBehavior: Clip.none,
-      child: Transform.translate(
-        offset: Offset(0, -scrollOffset),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final layoutSpans = buildTpTokenMirrorLayoutSpans(
-              text: text,
-              baseStyle: baseStyle,
-              tokenPattern: tokenPattern,
-              colorScheme: cs,
-              resolvePalette: resolvePalette,
-            );
-            final painter = TextPainter(
-              text: TextSpan(children: layoutSpans),
-              textDirection: Directionality.of(context),
-              textScaler: MediaQuery.textScalerOf(context),
-              strutStyle: strutStyle,
-              maxLines: expands ? null : maxLines,
-            )..layout(maxWidth: constraints.maxWidth);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final layoutSpans = buildTpTokenMirrorLayoutSpans(
+          text: text,
+          baseStyle: baseStyle,
+          tokenPattern: tokenPattern,
+          colorScheme: cs,
+          resolvePalette: resolvePalette,
+        );
+        final painter = TextPainter(
+          text: TextSpan(children: layoutSpans),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+          strutStyle: strutStyle,
+          maxLines: expands ? null : maxLines,
+        )..layout(maxWidth: constraints.maxWidth);
 
-            return SizedBox(
-              width: constraints.maxWidth,
-              height: expands
-                  ? constraints.maxHeight
-                  : painter.height,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Backgrounds under glyphs so opaque pills do not cover text.
-                  ...buildTpTokenPillOverlays(
-                    text: text,
-                    baseStyle: baseStyle,
-                    colorScheme: cs,
-                    painter: painter,
-                    tokenPattern: tokenPattern,
-                    resolvePalette: resolvePalette,
-                  ),
-                  Text.rich(
-                    TextSpan(children: layoutSpans),
-                    maxLines: expands ? null : maxLines,
-                    strutStyle: strutStyle,
-                  ),
-                ],
+        // When expands, the shell gives a tight viewport height. Layout the
+        // full document (not just the viewport) so [scrollOffset] can reveal
+        // lines below the fold — otherwise transparent TextField glyphs have
+        // nothing underneath once the caret scrolls past ~minLines.
+        final contentHeight = expands
+            ? math.max(painter.height, constraints.maxHeight)
+            : painter.height;
+
+        final body = SizedBox(
+          width: constraints.maxWidth,
+          height: contentHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Backgrounds under glyphs so opaque pills do not cover text.
+              ...buildTpTokenPillOverlays(
+                text: text,
+                baseStyle: baseStyle,
+                colorScheme: cs,
+                painter: painter,
+                tokenPattern: tokenPattern,
+                resolvePalette: resolvePalette,
               ),
-            );
-          },
-        ),
-      ),
-    );
+              Text.rich(
+                TextSpan(children: layoutSpans),
+                maxLines: expands ? null : maxLines,
+                strutStyle: strutStyle,
+              ),
+            ],
+          ),
+        );
 
-    if (expands) {
-      return content;
-    }
+        final scrolled = ClipRect(
+          child: Transform.translate(
+            offset: Offset(0, -scrollOffset),
+            child: expands
+                ? OverflowBox(
+                    alignment: Alignment.topLeft,
+                    minWidth: constraints.maxWidth,
+                    maxWidth: constraints.maxWidth,
+                    minHeight: contentHeight,
+                    maxHeight: contentHeight,
+                    child: body,
+                  )
+                : body,
+          ),
+        );
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: minHeight, maxHeight: maxHeight),
-      child: content,
+        if (expands) {
+          return scrolled;
+        }
+
+        return ConstrainedBox(
+          constraints: BoxConstraints(minHeight: minHeight, maxHeight: maxHeight),
+          child: scrolled,
+        );
+      },
     );
   }
 }
