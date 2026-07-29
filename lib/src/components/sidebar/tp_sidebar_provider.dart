@@ -11,12 +11,15 @@ class TpSidebarProvider extends StatefulWidget {
     this.defaultOpen = true,
     this.open,
     this.onOpenChange,
+    this.openMobile,
+    this.onOpenMobileChange,
     this.defaultWidth,
     this.width,
     this.onWidthChanged,
     this.minWidth = 200,
     this.maxWidth = 480,
     this.mobileBreakpoint = 768,
+    this.edgeOpenEnabled = true,
     this.enableKeyboardShortcut = true,
     required this.child,
   });
@@ -24,6 +27,8 @@ class TpSidebarProvider extends StatefulWidget {
   final bool defaultOpen;
   final bool? open;
   final ValueChanged<bool>? onOpenChange;
+  final bool? openMobile;
+  final ValueChanged<bool>? onOpenMobileChange;
 
   /// Initial expanded width when uncontrolled. Defaults to theme `sidebar.width`.
   final double? defaultWidth;
@@ -33,6 +38,7 @@ class TpSidebarProvider extends StatefulWidget {
   final double maxWidth;
 
   final double mobileBreakpoint;
+  final bool edgeOpenEnabled;
   final bool enableKeyboardShortcut;
   final Widget child;
 
@@ -77,9 +83,11 @@ class _TpSidebarProviderState extends State<TpSidebarProvider> {
   }
 
   bool get _isOpenControlled => widget.open != null;
+  bool get _isOpenMobileControlled => widget.openMobile != null;
   bool get _isWidthControlled => widget.width != null;
 
   bool get _openValue => widget.open ?? _open;
+  bool get _openMobileValue => widget.openMobile ?? _openMobile;
   double get _widthValue => _clamp(widget.width ?? _width);
 
   double _clamp(double value) => value.clamp(widget.minWidth, widget.maxWidth);
@@ -93,7 +101,11 @@ class _TpSidebarProviderState extends State<TpSidebarProvider> {
   }
 
   void _setOpenMobile(bool value) {
-    setState(() => _openMobile = value);
+    if (_isOpenMobileControlled) {
+      widget.onOpenMobileChange?.call(value);
+    } else {
+      setState(() => _openMobile = value);
+    }
   }
 
   void _setWidth(double value) {
@@ -121,7 +133,7 @@ class _TpSidebarProviderState extends State<TpSidebarProvider> {
     final isMobile =
         MediaQuery.sizeOf(context).width < widget.mobileBreakpoint;
     if (isMobile) {
-      _setOpenMobile(!_openMobile);
+      _setOpenMobile(!_openMobileValue);
     } else {
       _setOpen(!_openValue);
     }
@@ -134,8 +146,9 @@ class _TpSidebarProviderState extends State<TpSidebarProvider> {
 
     Widget child = TpSidebarScope(
       open: _openValue,
-      openMobile: _openMobile,
+      openMobile: _openMobileValue,
       isMobile: isMobile,
+      edgeOpenEnabled: widget.edgeOpenEnabled,
       width: _widthValue,
       minWidth: widget.minWidth,
       maxWidth: widget.maxWidth,

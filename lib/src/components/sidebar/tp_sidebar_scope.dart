@@ -13,6 +13,7 @@ class TpSidebarScope extends InheritedWidget {
     required this.open,
     required this.openMobile,
     required this.isMobile,
+    required this.edgeOpenEnabled,
     required this.width,
     required this.minWidth,
     required this.maxWidth,
@@ -29,6 +30,7 @@ class TpSidebarScope extends InheritedWidget {
   final bool open;
   final bool openMobile;
   final bool isMobile;
+  final bool edgeOpenEnabled;
 
   /// Current expanded desktop width (clamped to [minWidth]–[maxWidth]).
   final double width;
@@ -71,6 +73,7 @@ class TpSidebarScope extends InheritedWidget {
       open != oldWidget.open ||
       openMobile != oldWidget.openMobile ||
       isMobile != oldWidget.isMobile ||
+      edgeOpenEnabled != oldWidget.edgeOpenEnabled ||
       width != oldWidget.width ||
       minWidth != oldWidget.minWidth ||
       maxWidth != oldWidget.maxWidth ||
