@@ -47,7 +47,7 @@ void main() {
     expect(find.text('drawer-body'), findsOneWidget);
   });
 
-  testWidgets('drag below midpoint snaps closed', (tester) async {
+  testWidgets('drag below midpoint from open snaps back open', (tester) async {
     await tester.pumpWidget(
       _wrapMobile(
         child: const TpSidebar(child: Text('drawer-body')),
@@ -66,6 +66,32 @@ void main() {
     final panel = tester.getRect(find.text('drawer-body'));
     final gesture = await tester.startGesture(panel.center);
     await gesture.moveBy(const Offset(-80, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.text('drawer-body'), findsOneWidget);
+  });
+
+  testWidgets('drag past midpoint from open closes drawer', (tester) async {
+    const widthMobile = 288;
+
+    await tester.pumpWidget(
+      _wrapMobile(
+        child: const TpSidebar(child: Text('drawer-body')),
+        content: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => TpSidebarScope.of(context).setOpenMobile(true),
+            child: const Text('open-drawer'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open-drawer'));
+    await tester.pumpAndSettle();
+    expect(find.text('drawer-body'), findsOneWidget);
+
+    final panel = tester.getRect(find.text('drawer-body'));
+    final gesture = await tester.startGesture(panel.center);
+    await gesture.moveBy(Offset(-widthMobile * 0.6, 0));
     await gesture.up();
     await tester.pumpAndSettle();
     expect(find.text('drawer-body'), findsNothing);

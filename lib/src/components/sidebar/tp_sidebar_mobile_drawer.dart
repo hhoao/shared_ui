@@ -31,7 +31,6 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
 
   double _dragExtent = 0;
   bool _isDragging = false;
-  bool _wasOpenAtDragStart = false;
 
   double get _drawerWidth => widget.theme.widthMobile;
 
@@ -71,7 +70,6 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
 
   void _onDragStart(DragStartDetails details) {
     _isDragging = true;
-    _wasOpenAtDragStart = widget.openMobile;
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
@@ -91,8 +89,6 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
     bool open;
     if (signedVelocity.abs() > 500) {
       open = signedVelocity > 0;
-    } else if (_wasOpenAtDragStart && _dragExtent < _drawerWidth) {
-      open = false;
     } else {
       open = _dragExtent > _drawerWidth * 0.5;
     }
