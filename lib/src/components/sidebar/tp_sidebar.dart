@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import '../../theme/components/tp_sidebar_theme.dart';
 import '../../theme/tp_theme.dart';
 import 'tp_sidebar_config.dart';
+import 'tp_sidebar_mobile_drawer.dart';
 import 'tp_sidebar_scope.dart';
 
 /// Sized sidebar panel with collapse animation and mobile overlay drawer.
@@ -61,6 +62,21 @@ class _TpSidebarState extends State<TpSidebar> {
     }
   }
 
+  void _ensureOverlayVisible(TpSidebarScope scope) {
+    final show = scope.openMobile || scope.edgeOpenEnabled;
+    if (!show) {
+      if (_overlayShown) {
+        _hideOverlay();
+        _overlayShown = false;
+      }
+      return;
+    }
+    if (!_overlayShown) {
+      _showOverlay();
+      _overlayShown = true;
+    }
+  }
+
   void _scheduleOverlaySync() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -72,14 +88,7 @@ class _TpSidebarState extends State<TpSidebar> {
         return;
       }
 
-      final show = current.openMobile;
-      if (show == _overlayShown) return;
-      if (show) {
-        _showOverlay();
-      } else {
-        _hideOverlay();
-      }
-      _overlayShown = show;
+      _ensureOverlayVisible(current);
     });
   }
 
@@ -208,35 +217,25 @@ class _TpSidebarState extends State<TpSidebar> {
       );
     }
 
+    _ensureOverlayVisible(scope);
     _scheduleOverlaySync();
-    return OverlayPortal(
+    return OverlayPortal.overlayChildLayoutBuilder(
       controller: _overlayController,
-      overlayChildBuilder: (overlayContext) {
-        final drawerPanel = Material(
-          elevation: 8,
-          color: theme.backgroundColor ??
-              Theme.of(overlayContext).colorScheme.surfaceContainerLow,
-          child: SizedBox(
-            width: theme.widthMobile,
-            height: double.infinity,
+      overlayLocation: OverlayChildLocation.rootOverlay,
+      overlayChildBuilder: (overlayContext, info) {
+        return Positioned(
+          left: 0,
+          top: 0,
+          width: info.overlaySize.width,
+          height: info.overlaySize.height,
+          child: TpSidebarMobileDrawer(
+            side: widget.side,
+            theme: theme,
+            openMobile: scope.openMobile,
+            edgeOpenEnabled: scope.edgeOpenEnabled,
+            onOpenMobileChange: scope.setOpenMobile,
             child: configured,
           ),
-        );
-        return Stack(
-          children: [
-            ModalBarrier(
-              dismissible: true,
-              color: Colors.black54,
-              onDismiss: () => TpSidebarScope.maybeOf(overlayContext)
-                  ?.setOpenMobile(false),
-            ),
-            Align(
-              alignment: widget.side == TpSidebarSide.left
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
-              child: drawerPanel,
-            ),
-          ],
         );
       },
       child: _buildPanel(
