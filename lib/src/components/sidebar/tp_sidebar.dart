@@ -15,6 +15,7 @@ class TpSidebar extends StatefulWidget {
     this.variant = TpSidebarVariant.sidebar,
     this.collapsible = TpSidebarCollapsible.offcanvas,
     this.themeOverride,
+    this.overlayActive = true,
     required this.child,
   });
 
@@ -22,6 +23,9 @@ class TpSidebar extends StatefulWidget {
   final TpSidebarVariant variant;
   final TpSidebarCollapsible collapsible;
   final TpSidebarTheme? themeOverride;
+
+  /// When false on mobile, this instance does not host the root overlay drawer.
+  final bool overlayActive;
   final Widget child;
 
   @override
@@ -41,12 +45,17 @@ class _TpSidebarState extends State<TpSidebar> {
   @override
   void didUpdateWidget(TpSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.overlayActive && !widget.overlayActive) {
+      _deactivateOverlayHost(TpSidebarScope.maybeOf(context));
+    }
     _scheduleOverlaySync();
   }
 
   @override
   void dispose() {
-    _hideOverlay();
+    if (_overlayShown) {
+      _hideOverlay();
+    }
     super.dispose();
   }
 
@@ -62,7 +71,19 @@ class _TpSidebarState extends State<TpSidebar> {
     }
   }
 
+  void _deactivateOverlayHost(TpSidebarScope? scope) {
+    // OverlayPortal leaves the tree on the next build — do not hide() after detach.
+    _overlayShown = false;
+    if (scope != null && scope.openMobile) {
+      scope.setOpenMobile(false);
+    }
+  }
+
   void _ensureOverlayVisible(TpSidebarScope scope) {
+    if (!widget.overlayActive) {
+      _deactivateOverlayHost(scope);
+      return;
+    }
     final show = scope.openMobile || scope.edgeOpenEnabled;
     if (!show) {
       if (_overlayShown) {
@@ -85,6 +106,11 @@ class _TpSidebarState extends State<TpSidebar> {
       // Portal is only in the tree while mobile. Never hide() after it detaches.
       if (current == null || !current.isMobile) {
         _overlayShown = false;
+        return;
+      }
+
+      if (!widget.overlayActive) {
+        _deactivateOverlayHost(current);
         return;
       }
 
@@ -214,6 +240,17 @@ class _TpSidebarState extends State<TpSidebar> {
         scope: scope,
         width: width,
         child: configured,
+      );
+    }
+
+    if (!widget.overlayActive) {
+      _deactivateOverlayHost(scope);
+      return _buildPanel(
+        context: context,
+        theme: theme,
+        scope: scope,
+        width: 0,
+        child: const SizedBox.shrink(),
       );
     }
 
