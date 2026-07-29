@@ -71,4 +71,62 @@ void main() {
       ),
     );
   });
+
+  testWidgets('controlled openMobile stays until parent rebuilds',
+      (tester) async {
+    TpSidebarScope? scope;
+
+    await tester.pumpWidget(
+      _wrapMobile(
+        openMobile: true,
+        onOpenMobileChange: (_) {},
+        child: const TpSidebar(child: Text('drawer-body')),
+        content: Builder(
+          builder: (context) {
+            scope = TpSidebarScope.of(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('drawer-body'), findsOneWidget);
+
+    scope!.setOpenMobile(false);
+    await tester.pumpAndSettle();
+    expect(find.text('drawer-body'), findsOneWidget);
+  });
+
+  testWidgets('onOpenMobileChange is invoked without local UI update',
+      (tester) async {
+    bool? lastValue;
+    TpSidebarScope? scope;
+
+    await tester.pumpWidget(
+      _wrapMobile(
+        openMobile: true,
+        onOpenMobileChange: (v) => lastValue = v,
+        child: const TpSidebar(child: Text('drawer-body')),
+        content: Builder(
+          builder: (context) {
+            scope = TpSidebarScope.of(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('drawer-body'), findsOneWidget);
+
+    scope!.setOpenMobile(false);
+    await tester.pumpAndSettle();
+    expect(lastValue, isFalse);
+    expect(find.text('drawer-body'), findsOneWidget);
+
+    lastValue = null;
+    scope!.toggleSidebar();
+    await tester.pumpAndSettle();
+    expect(lastValue, isFalse);
+    expect(find.text('drawer-body'), findsOneWidget);
+  });
 }
