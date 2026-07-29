@@ -66,12 +66,36 @@ import 'package:shared_ui/shared_ui.dart';
 | **Overlay** | `TpPopover`, `TpTooltip`, `TpActionMenu` / `TpActionMenuPanel` |
 | **Date range** | `TpDateRangePicker`, `TpRangeCalendar`, calendar date utils |
 | **Toast** | `TpToast`, `TpToastWrapper`, `TpToastConfig`, `TpToastTheme`, `TpToastVariant`, `TpToastAction` |
-| **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` |
+| **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow`, `TpSidebar` |
 | **Deferred / keep-alive** | `TpDeferredMountShell`, `TpDeferredMountAfter`, `TpDeferredForegroundMount`, `TpKeepAliveLayer` — host progressive paint guide (TeamPilot: `docs/PERFORMANCE.md`) |
 | **Preference** | `TpPreferenceRow`, `TpPreferenceStack`, `TpSectionHeader`, `TpDisclosure`, `TpStatusBadge`, `TpCompactSelect` |
 | **Theme** | `TpTheme`, `TpThemeData`, `TpTextStyles`, `TpFontTheme`, `TpGlyphWarmup`, icon sizes (`sm`/`md`/`lg`/`hero`), spacing / typography / control metrics, per-component themes |
 
 Toast engine sources live under `lib/src/toast/engine/` and are **not** barrel-exported.
+
+## TpSidebar
+
+Composable workspace sidebar: wrap the shell in `TpSidebarProvider`, place `TpSidebar`
+beside `TpSidebarInset` (or use `TpSidebarMenu` / `TpSidebarTrigger` inside).
+
+- **State:** `TpSidebarProvider` owns desktop `open` + `width` and mobile `openMobile`.
+  Read or mutate via `TpSidebarScope.of(context)` / `maybeOf`.
+- **Mobile drawer:** below `mobileBreakpoint` (default `768`), the sidebar becomes a hidden
+  overlay drawer opened by `TpSidebarTrigger` or edge drag. Close with
+  `TpSidebarScope.maybeOf(context)?.setOpenMobile(false)` after navigation.
+- **TeamPilot hosts** pass `mobileBreakpoint: 840` (`WorkspacePanePolicy.narrowBreakpointWidth`).
+
+```dart
+TpSidebarProvider(
+  mobileBreakpoint: 840,
+  child: Row(
+    children: [
+      TpSidebar(child: /* menu */),
+      Expanded(child: TpSidebarInset(child: /* main */)),
+    ],
+  ),
+);
+```
 
 ## Layout
 
