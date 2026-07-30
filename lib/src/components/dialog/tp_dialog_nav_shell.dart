@@ -31,6 +31,7 @@ class TpDialogNavShell extends StatefulWidget {
     this.initialIndex = 0,
     this.mobileBreakpoint = 768,
     this.onClose,
+    this.onSelectedIndexChanged,
     super.key,
   });
 
@@ -39,6 +40,7 @@ class TpDialogNavShell extends StatefulWidget {
   final int initialIndex;
   final double mobileBreakpoint;
   final VoidCallback? onClose;
+  final ValueChanged<int>? onSelectedIndexChanged;
 
   @override
   State<TpDialogNavShell> createState() => _TpDialogNavShellState();
@@ -68,7 +70,9 @@ class _TpDialogNavShellState extends State<TpDialogNavShell> {
   }
 
   void _selectIndex(int index) {
+    if (_selectedIndex == index) return;
     setState(() => _selectedIndex = index);
+    widget.onSelectedIndexChanged?.call(index);
   }
 
   TpDialogNavEntry get _activeEntry => widget.entries[_selectedIndex];

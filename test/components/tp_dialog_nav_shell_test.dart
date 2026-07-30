@@ -169,4 +169,26 @@ void main() {
     expect(find.byIcon(Icons.close_rounded), findsOneWidget);
     expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
   });
+
+  testWidgets('onSelectedIndexChanged fires when selection changes', (
+    tester,
+  ) async {
+    var selectedIndex = 0;
+    await _pumpSized(
+      tester,
+      const Size(1200, 800),
+      TpDialogNavShell(
+        navTitle: (_) => 'Settings',
+        entries: _testEntries(),
+        onSelectedIndexChanged: (index) => selectedIndex = index,
+      ),
+    );
+
+    expect(selectedIndex, 0);
+
+    await tester.tap(find.text('Section B'));
+    await tester.pumpAndSettle();
+
+    expect(selectedIndex, 1);
+  });
 }
