@@ -14,6 +14,7 @@ export 'src/components/date_range/tp_date_range_picker.dart';
 export 'src/components/date_range/tp_range_calendar.dart';
 export 'src/components/dialog/show_tp_dialog.dart';
 export 'src/components/dialog/tp_dialog.dart';
+export 'src/components/dialog/tp_dialog_nav_shell.dart';
 export 'src/components/dialog/tp_dialog_page_shell.dart';
 export 'src/components/dialog/tp_dialog_presentation.dart';
 export 'src/components/disclosure/tp_disclosure.dart';
