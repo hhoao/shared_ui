@@ -32,7 +32,8 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
   double _dragExtent = 0;
   bool _isDragging = false;
 
-  double get _drawerWidth => widget.theme.widthMobile;
+  double _drawerWidth(BuildContext context) =>
+      widget.theme.resolveMobileDrawerWidth(MediaQuery.sizeOf(context).width);
 
   @override
   void didChangeDependencies() {
@@ -51,7 +52,7 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
   }
 
   void _syncExtentFromOpen() {
-    final target = widget.openMobile ? _drawerWidth : 0.0;
+    final target = widget.openMobile ? _drawerWidth(context) : 0.0;
     if (_dragExtent != target) {
       setState(() => _dragExtent = target);
     }
@@ -60,7 +61,7 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
   void _setOpenMobile(bool open) {
     widget.onOpenMobileChange(open);
     if (!_isDragging) {
-      setState(() => _dragExtent = open ? _drawerWidth : 0);
+      setState(() => _dragExtent = open ? _drawerWidth(context) : 0);
     }
   }
 
@@ -73,8 +74,9 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
+    final width = _drawerWidth(context);
     final next = (_dragExtent + _signedDelta(details.delta.dx))
-        .clamp(0.0, _drawerWidth);
+        .clamp(0.0, width);
     if (next != _dragExtent) {
       setState(() => _dragExtent = next);
     }
@@ -82,6 +84,7 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
 
   void _onDragEnd(DragEndDetails details) {
     _isDragging = false;
+    final width = _drawerWidth(context);
     final velocity = details.primaryVelocity ?? 0;
     final signedVelocity =
         widget.side == TpSidebarSide.left ? velocity : -velocity;
@@ -90,27 +93,29 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
     if (signedVelocity.abs() > 500) {
       open = signedVelocity > 0;
     } else {
-      open = _dragExtent > _drawerWidth * 0.5;
+      open = _dragExtent > width * 0.5;
     }
 
     widget.onOpenMobileChange(open);
-    setState(() => _dragExtent = open ? _drawerWidth : 0);
+    setState(() => _dragExtent = open ? width : 0);
   }
 
-  double get _panelOffset {
+  double _panelOffset(BuildContext context) {
+    final width = _drawerWidth(context);
     if (widget.side == TpSidebarSide.left) {
-      return _dragExtent - _drawerWidth;
+      return _dragExtent - width;
     }
-    return _drawerWidth - _dragExtent;
+    return width - _dragExtent;
   }
 
   Widget _buildPanel(BuildContext overlayContext) {
     final scheme = Theme.of(overlayContext).colorScheme;
+    final width = _drawerWidth(overlayContext);
     return Material(
       elevation: 8,
       color: widget.theme.backgroundColor ?? scheme.surfaceContainerLow,
       child: SizedBox(
-        width: _drawerWidth,
+        width: width,
         height: double.infinity,
         child: widget.child,
       ),
@@ -136,8 +141,8 @@ class _TpSidebarMobileDrawerState extends State<TpSidebarMobileDrawer> {
           ),
         if (showDrawer)
           Positioned(
-            left: widget.side == TpSidebarSide.left ? _panelOffset : null,
-            right: widget.side == TpSidebarSide.right ? _panelOffset : null,
+            left: widget.side == TpSidebarSide.left ? _panelOffset(context) : null,
+            right: widget.side == TpSidebarSide.right ? _panelOffset(context) : null,
             top: 0,
             bottom: 0,
             child: GestureDetector(

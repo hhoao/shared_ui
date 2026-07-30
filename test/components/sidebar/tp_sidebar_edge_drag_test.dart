@@ -64,6 +64,8 @@ void main() {
     expect(find.text('drawer-body'), findsOneWidget);
 
     final panel = tester.getRect(find.text('drawer-body'));
+    expect(panel.width, closeTo(320, 0.5));
+
     final gesture = await tester.startGesture(panel.center);
     await gesture.moveBy(const Offset(-80, 0));
     await gesture.up();
@@ -72,7 +74,7 @@ void main() {
   });
 
   testWidgets('drag past midpoint from open closes drawer', (tester) async {
-    const widthMobile = 288;
+    const drawerWidth = 320;
 
     await tester.pumpWidget(
       _wrapMobile(
@@ -91,7 +93,7 @@ void main() {
 
     final panel = tester.getRect(find.text('drawer-body'));
     final gesture = await tester.startGesture(panel.center);
-    await gesture.moveBy(Offset(-widthMobile * 0.6, 0));
+    await gesture.moveBy(Offset(-drawerWidth * 0.6, 0));
     await gesture.up();
     await tester.pumpAndSettle();
     expect(find.text('drawer-body'), findsNothing);
@@ -134,6 +136,29 @@ void main() {
     await gesture.up();
     await tester.pumpAndSettle();
     expect(find.text('drawer-body'), findsNothing);
+  });
+
+  testWidgets('widthMobileOverride keeps fixed drawer width', (tester) async {
+    await tester.pumpWidget(
+      _wrapMobile(
+        child: TpSidebar(
+          themeOverride: const TpSidebarTheme(widthMobileOverride: 288),
+          child: const Text('drawer-body'),
+        ),
+        content: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => TpSidebarScope.of(context).setOpenMobile(true),
+            child: const Text('open-drawer'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open-drawer'));
+    await tester.pumpAndSettle();
+    expect(find.text('drawer-body'), findsOneWidget);
+
+    final panel = tester.getRect(find.text('drawer-body'));
+    expect(panel.width, closeTo(288, 0.5));
   });
 
   testWidgets('tap scrim closes open drawer', (tester) async {
