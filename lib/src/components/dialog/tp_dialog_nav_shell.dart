@@ -301,7 +301,9 @@ class _BodyPane extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: EdgeInsets.fromLTRB(spacing.xl, spacing.lg, spacing.md, spacing.lg),
+          // Match pre-NavShell WorkspaceHubTitleBar / SplitShell insets
+          // (24–28), not denser tpSpacing.lg tops that felt cramped.
+          padding: const EdgeInsets.fromLTRB(24, 28, 16, 20),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
@@ -346,7 +348,7 @@ class _BodyPane extends StatelessWidget {
         ),
         Expanded(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(spacing.xl, spacing.lg, spacing.xl, spacing.xl),
+            padding: const EdgeInsets.fromLTRB(24, 20, 28, 24),
             child: child,
           ),
         ),

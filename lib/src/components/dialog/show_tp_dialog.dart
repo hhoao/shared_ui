@@ -30,6 +30,9 @@ Future<T?> showTpDialog<T>({
   bool useRootNavigator = true,
   RouteSettings? routeSettings,
   Color? barrierColor,
+  /// Optional dialog/page surface. Prefer leaving null so [TpDialog] /
+  /// fullscreen [Material] resolve [ColorScheme] live — a Theme-captured
+  /// [Color] freezes at open and will not follow theme toggles.
   Color? backgroundColor,
   double? maxWidth,
   double? maxHeight,
