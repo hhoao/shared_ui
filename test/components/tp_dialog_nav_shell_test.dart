@@ -104,7 +104,7 @@ void main() {
     expect(find.text('body-a'), findsNothing);
   });
 
-  testWidgets('narrow: nav then detail; back; X dismisses dialog', (
+  testWidgets('narrow: nav then detail; back; leading dismisses dialog', (
     tester,
   ) async {
     await _openNarrowNavShell(tester);
@@ -114,28 +114,26 @@ void main() {
     expect(find.text('Section A'), findsOneWidget);
     expect(find.text('Section A Title'), findsNothing);
     expect(find.text('body-a'), findsNothing);
-    expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+    expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.close_rounded), findsNothing);
 
     await tester.tap(find.text('Section A'));
     await tester.pumpAndSettle();
 
     expect(find.text('Section A Title'), findsOneWidget);
     expect(find.text('body-a'), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+    // Detail uses leading chevron for back (same icon as nav dismiss).
+    expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.close_rounded), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.tap(find.byIcon(Icons.chevron_left_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Section A Title'), findsNothing);
     expect(find.text('body-a'), findsNothing);
 
-    await tester.tap(find.text('Section A'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.tap(find.byIcon(Icons.chevron_left_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('Settings'), findsNothing);
@@ -166,8 +164,9 @@ void main() {
 
     expect(find.byType(TpDialogPageShell), findsNothing);
     expect(find.byType(TpDialogNavShell), findsOneWidget);
-    expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+    expect(find.byType(TpDialogMobileNavBar), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.close_rounded), findsNothing);
   });
 
   testWidgets('onSelectedIndexChanged fires when selection changes', (

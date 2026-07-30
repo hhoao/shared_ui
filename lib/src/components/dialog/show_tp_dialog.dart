@@ -30,6 +30,7 @@ Future<T?> showTpDialog<T>({
   bool useRootNavigator = true,
   RouteSettings? routeSettings,
   Color? barrierColor,
+  Color? backgroundColor,
   double? maxWidth,
   double? maxHeight,
 }) {
@@ -51,7 +52,9 @@ Future<T?> showTpDialog<T>({
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
         return Material(
           type: MaterialType.canvas,
-          color: Theme.of(dialogContext).colorScheme.surface,
+          color:
+              backgroundColor ??
+              Theme.of(dialogContext).colorScheme.surface,
           child: SizedBox.expand(child: builder(dialogContext)),
         );
       },
@@ -74,6 +77,7 @@ Future<T?> showTpDialog<T>({
           maxWidth: maxWidth ?? kTpDialogPageWideMaxWidth,
           maxHeight: maxHeight ?? kTpDialogPageWideMaxHeight,
           contentPadding: EdgeInsets.zero,
+          backgroundColor: backgroundColor,
           child: content,
         );
       }

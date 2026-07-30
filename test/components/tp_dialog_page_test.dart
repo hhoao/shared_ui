@@ -66,7 +66,7 @@ void main() {
     expect(shellRect.width, closeTo(400, 0.5));
     expect(shellRect.height, closeTo(800, 0.5));
 
-    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.tap(find.byIcon(Icons.chevron_left_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Automations'), findsNothing);
   });

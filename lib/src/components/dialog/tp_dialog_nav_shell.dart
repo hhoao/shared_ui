@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/tp_text_styles.dart';
 import '../../theme/tp_theme.dart';
 import '../icon_button/tp_icon_button.dart';
+import 'tp_dialog_mobile_nav_bar.dart';
 
 /// One section in a [TpDialogNavShell] left nav.
 class TpDialogNavEntry {
@@ -120,7 +121,6 @@ class _TpDialogNavShellState extends State<TpDialogNavShell> {
               builder: (detailContext) => _NarrowDetailPage(
                 entry: _activeEntry,
                 onBack: () => Navigator.of(detailContext).pop(),
-                onClose: () => _close(context),
               ),
             );
           case _navRoute:
@@ -164,8 +164,9 @@ class _NavPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
-    final spacing = context.tpSpacing;
 
+    // Match the pre-NavShell settings rail (WorkspaceHubNavItem): fixed
+    // paddings, not denser tpSpacing.sm tiles.
     return Container(
       width: width,
       decoration: BoxDecoration(
@@ -175,12 +176,12 @@ class _NavPanel extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: spacing.lg, vertical: spacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(spacing.lg, spacing.lg, spacing.lg, spacing.md),
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 14),
               child: Text(
                 navTitle,
                 style: styles.lgSemiboldSnugColored(cs.onSurface),
@@ -219,35 +220,57 @@ class _NavTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+  static const double _height = 48;
+  static const double _itemGap = 8;
+  static const double _horizontalPadding = 18;
+  static const double _iconLabelGap = 16;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final spacing = context.tpSpacing;
     final iconSizes = context.tpIconSizes;
-    final textStyle = (Theme.of(context).textTheme.bodyMedium ?? const TextStyle())
-        .copyWith(
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-          color: selected ? cs.onSecondaryContainer : cs.onSurface,
-        );
+    final styles = TpTextStyles.of(context);
+    // Same roles as WorkspaceHubNavItem: regular md type, primaryContainer
+    // selection (not secondaryContainer / forced w500–w600).
+    final selectedFg = cs.onPrimaryContainer;
+    final normalFg = cs.onSurface.withValues(alpha: 0.88);
+    final muted = cs.onSurfaceVariant;
 
-    return Material(
-      color: selected ? cs.secondaryContainer : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: spacing.md, vertical: spacing.sm),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: iconSizes.md,
-                color: selected ? cs.onSecondaryContainer : cs.onSurfaceVariant,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: _itemGap),
+      child: Material(
+        color: selected ? cs.primaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: SizedBox(
+            height: _height,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: _horizontalPadding,
               ),
-              SizedBox(width: spacing.sm),
-              Expanded(child: Text(label, style: textStyle)),
-            ],
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: iconSizes.md,
+                    color: selected ? selectedFg : muted,
+                  ),
+                  const SizedBox(width: _iconLabelGap),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: styles.md.copyWith(
+                        color: selected ? selectedFg : normalFg,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -348,53 +371,125 @@ class _NarrowNavPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final spacing = context.tpSpacing;
-    final titleStyle = (textTheme.bodyLarge ?? const TextStyle()).copyWith(
-      fontWeight: FontWeight.w600,
-      height: 1.25,
-      color: cs.onSurface,
-    );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(spacing.lg, spacing.md, spacing.md, spacing.md),
-            child: Row(
-              children: [
-                Expanded(child: Text(navTitle, style: titleStyle)),
-                TpIconButton(
-                  icon: Icons.close_rounded,
-                  tooltip: MaterialLocalizations.of(context).cancelButtonLabel,
-                  compact: true,
-                  color: cs.onSurfaceVariant,
-                  onTap: onClose,
+    return ColoredBox(
+      color: cs.surfaceContainerLow,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ColoredBox(
+            color: cs.surfaceContainerLow,
+            child: TpDialogMobileNavBar(
+              title: navTitle,
+              onLeading: onClose,
+              leadingTooltip:
+                  MaterialLocalizations.of(context).cancelButtonLabel,
+            ),
+          ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  spacing.lg,
+                  spacing.md,
+                  spacing.lg,
+                  spacing.xl,
                 ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          child: SafeArea(
-            top: false,
-            child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: spacing.md),
-              children: [
-                for (final (index, entry) in entries.indexed)
-                  _NavTile(
-                    label: entry.navLabel(context),
-                    icon: entry.icon,
-                    selected: false,
-                    onTap: () => onSelect(index),
+                children: [
+                  _NarrowNavCard(
+                    entries: entries,
+                    onSelect: onSelect,
                   ),
-              ],
+                ],
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Grouped settings-style card for narrow nav lists.
+class _NarrowNavCard extends StatelessWidget {
+  const _NarrowNavCard({
+    required this.entries,
+    required this.onSelect,
+  });
+
+  final List<TpDialogNavEntry> entries;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final spacing = context.tpSpacing;
+    final iconSizes = context.tpIconSizes;
+    final radius = BorderRadius.circular(12);
+
+    return Material(
+      color: cs.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(
+          color: cs.outlineVariant.withValues(alpha: 0.35),
         ),
-      ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (final (index, entry) in entries.indexed) ...[
+            if (index > 0)
+              Divider(
+                height: 1,
+                thickness: 1,
+                indent: spacing.lg + iconSizes.md + spacing.md,
+                endIndent: spacing.lg,
+                color: cs.outlineVariant.withValues(alpha: 0.45),
+              ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => onSelect(index),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: spacing.lg,
+                    vertical: spacing.md + 2,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        entry.icon,
+                        size: iconSizes.md,
+                        color: cs.onSurface,
+                      ),
+                      SizedBox(width: spacing.md),
+                      Expanded(
+                        child: Text(
+                          entry.navLabel(context),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TpTextStyles.of(context).md.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.88),
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: iconSizes.lg,
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.55),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -403,89 +498,73 @@ class _NarrowDetailPage extends StatelessWidget {
   const _NarrowDetailPage({
     required this.entry,
     required this.onBack,
-    required this.onClose,
   });
 
   final TpDialogNavEntry entry;
   final VoidCallback onBack;
-  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
-    final titleStyle = (textTheme.bodyLarge ?? const TextStyle()).copyWith(
-      fontWeight: FontWeight.w600,
-      height: 1.25,
-      color: cs.onSurface,
-    );
     final subtitle = entry.subtitle(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(spacing.sm, spacing.md, spacing.md, spacing.md),
-            child: Row(
-              children: [
-                TpIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                  compact: true,
-                  color: cs.onSurfaceVariant,
-                  onTap: onBack,
-                ),
-                SizedBox(width: spacing.xs),
-                Expanded(
-                  child: Text(
-                    entry.title(context),
-                    style: titleStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                TpIconButton(
-                  icon: Icons.close_rounded,
-                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                  compact: true,
-                  color: cs.onSurfaceVariant,
-                  onTap: onClose,
-                ),
-              ],
+    return ColoredBox(
+      color: cs.surfaceContainerLow,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ColoredBox(
+            color: cs.surfaceContainerLow,
+            child: TpDialogMobileNavBar(
+              title: entry.title(context),
+              onLeading: onBack,
             ),
           ),
-        ),
-        Expanded(
-          child: SafeArea(
-            top: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (subtitle.isNotEmpty)
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(spacing.lg, 0, spacing.lg, spacing.md),
-                    child: Text(
-                      subtitle,
-                      style: styles.mutedMd,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (subtitle.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        spacing.lg,
+                        spacing.sm,
+                        spacing.lg,
+                        spacing.md,
+                      ),
+                      child: Text(
+                        subtitle,
+                        style: styles.mutedMd,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        spacing.lg,
+                        0,
+                        spacing.lg,
+                        spacing.lg,
+                      ),
+                      child: Material(
+                        color: cs.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
+                        child: entry.bodyBuilder(context),
+                      ),
                     ),
                   ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(spacing.lg, 0, spacing.lg, spacing.lg),
-                    child: entry.bodyBuilder(context),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
