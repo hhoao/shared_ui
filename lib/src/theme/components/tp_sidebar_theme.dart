@@ -7,6 +7,8 @@ class TpSidebarTheme {
     this.width = 256,
     this.widthIcon = 48,
     this.widthMobile = 288,
+    this.widthMobileFraction = 0.8,
+    this.widthMobileOverride,
     this.animationDuration = const Duration(milliseconds: 200),
     this.floatingMargin = 8,
     this.floatingRadius = 12,
@@ -39,7 +41,19 @@ class TpSidebarTheme {
 
   final double width;
   final double widthIcon;
+
+  /// Legacy fixed mobile width kept for API stability.
+  ///
+  /// Not used by [resolveMobileDrawerWidth]; prefer [widthMobileFraction] or
+  /// [widthMobileOverride] for mobile drawer sizing.
   final double widthMobile;
+
+  /// Fraction of screen width for mobile drawers (default 0.8).
+  final double widthMobileFraction;
+
+  /// Optional fixed mobile drawer width; wins over [widthMobileFraction].
+  final double? widthMobileOverride;
+
   final Duration animationDuration;
   final double floatingMargin;
   final double floatingRadius;
@@ -51,10 +65,19 @@ class TpSidebarTheme {
   final Color? borderColor;
   final Color? insetBackgroundColor;
 
+  /// Shared by left drawer and host right overlay.
+  double resolveMobileDrawerWidth(double screenWidth) {
+    final override = widthMobileOverride;
+    if (override != null) return override;
+    return screenWidth * widthMobileFraction;
+  }
+
   TpSidebarTheme copyWith({
     double? width,
     double? widthIcon,
     double? widthMobile,
+    double? widthMobileFraction,
+    double? widthMobileOverride,
     Duration? animationDuration,
     double? floatingMargin,
     double? floatingRadius,
@@ -70,6 +93,8 @@ class TpSidebarTheme {
       width: width ?? this.width,
       widthIcon: widthIcon ?? this.widthIcon,
       widthMobile: widthMobile ?? this.widthMobile,
+      widthMobileFraction: widthMobileFraction ?? this.widthMobileFraction,
+      widthMobileOverride: widthMobileOverride ?? this.widthMobileOverride,
       animationDuration: animationDuration ?? this.animationDuration,
       floatingMargin: floatingMargin ?? this.floatingMargin,
       floatingRadius: floatingRadius ?? this.floatingRadius,
@@ -91,6 +116,8 @@ class TpSidebarTheme {
           width == other.width &&
           widthIcon == other.widthIcon &&
           widthMobile == other.widthMobile &&
+          widthMobileFraction == other.widthMobileFraction &&
+          widthMobileOverride == other.widthMobileOverride &&
           animationDuration == other.animationDuration &&
           floatingMargin == other.floatingMargin &&
           floatingRadius == other.floatingRadius &&
@@ -107,6 +134,8 @@ class TpSidebarTheme {
         width,
         widthIcon,
         widthMobile,
+        widthMobileFraction,
+        widthMobileOverride,
         animationDuration,
         floatingMargin,
         floatingRadius,
