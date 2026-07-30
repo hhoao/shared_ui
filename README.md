@@ -83,6 +83,10 @@ beside `TpSidebarInset` (or use `TpSidebarMenu` / `TpSidebarTrigger` inside).
 - **Mobile drawer:** below `mobileBreakpoint` (default `768`), the sidebar becomes a hidden
   overlay drawer opened by `TpSidebarTrigger` or edge drag. Close with
   `TpSidebarScope.maybeOf(context)?.setOpenMobile(false)` after navigation.
+- **Overlay ownership:** when several `TpSidebar`s share one provider (kept-alive home +
+  workspace tabs), only the foreground instance sets `overlayActive: true`. Losing
+  ownership (`true` → `false`) closes shared `openMobile`; already-inactive hosts never
+  mutate that flag.
 - **Mobile drawer width** (`TpSidebarTheme`):
   - `widthMobileFraction` — fraction of viewport width (default `0.8`).
   - `widthMobileOverride` — optional fixed px; wins over fraction when set.

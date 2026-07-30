@@ -25,6 +25,12 @@ class TpSidebar extends StatefulWidget {
   final TpSidebarTheme? themeOverride;
 
   /// When false on mobile, this instance does not host the root overlay drawer.
+  ///
+  /// Multiple [TpSidebar]s may share one [TpSidebarProvider] (e.g. kept-alive
+  /// home + workspace). Only the foreground instance should be `true`. Losing
+  /// ownership (`true` → `false`) closes shared [TpSidebarScope.openMobile];
+  /// already-inactive instances must not touch that flag — otherwise they
+  /// immediately close a drawer opened by the active host.
   final bool overlayActive;
   final Widget child;
 
@@ -46,7 +52,8 @@ class _TpSidebarState extends State<TpSidebar> {
   void didUpdateWidget(TpSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.overlayActive && !widget.overlayActive) {
-      _deactivateOverlayHost(TpSidebarScope.maybeOf(context));
+      // Only the instance that *loses* ownership may close shared openMobile.
+      _releaseOverlayOwnership(TpSidebarScope.maybeOf(context));
     }
     _scheduleOverlaySync();
   }
@@ -71,9 +78,20 @@ class _TpSidebarState extends State<TpSidebar> {
     }
   }
 
-  void _deactivateOverlayHost(TpSidebarScope? scope) {
-    // OverlayPortal leaves the tree on the next build — do not hide() after detach.
+  /// Clear local overlay bookkeeping when this host is not showing a portal.
+  ///
+  /// Do not call [OverlayPortalController.hide] here — when [overlayActive] is
+  /// false the portal leaves the tree on the next build, and hide-after-detach
+  /// is unsafe.
+  void _detachLocalOverlay() {
     _overlayShown = false;
+  }
+
+  /// Called when this instance loses overlay ownership (`overlayActive`
+  /// true → false). Closes the shared mobile drawer so the next route starts
+  /// closed.
+  void _releaseOverlayOwnership(TpSidebarScope? scope) {
+    _detachLocalOverlay();
     if (scope == null || !scope.openMobile) return;
     // Never setState the Provider during build / didUpdateWidget.
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -87,7 +105,7 @@ class _TpSidebarState extends State<TpSidebar> {
 
   void _ensureOverlayVisible(TpSidebarScope scope) {
     if (!widget.overlayActive) {
-      _deactivateOverlayHost(scope);
+      _detachLocalOverlay();
       return;
     }
     final show = scope.openMobile || scope.edgeOpenEnabled;
@@ -116,7 +134,8 @@ class _TpSidebarState extends State<TpSidebar> {
       }
 
       if (!widget.overlayActive) {
-        _deactivateOverlayHost(current);
+        // Stay inactive: never release shared openMobile owned by another host.
+        _detachLocalOverlay();
         return;
       }
 
@@ -250,7 +269,7 @@ class _TpSidebarState extends State<TpSidebar> {
     }
 
     if (!widget.overlayActive) {
-      _deactivateOverlayHost(scope);
+      _detachLocalOverlay();
       return _buildPanel(
         context: context,
         theme: theme,
