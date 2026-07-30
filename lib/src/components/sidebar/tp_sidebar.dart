@@ -74,9 +74,15 @@ class _TpSidebarState extends State<TpSidebar> {
   void _deactivateOverlayHost(TpSidebarScope? scope) {
     // OverlayPortal leaves the tree on the next build — do not hide() after detach.
     _overlayShown = false;
-    if (scope != null && scope.openMobile) {
-      scope.setOpenMobile(false);
-    }
+    if (scope == null || !scope.openMobile) return;
+    // Never setState the Provider during build / didUpdateWidget.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.overlayActive) return;
+      final current = TpSidebarScope.maybeOf(context);
+      if (current != null && current.openMobile) {
+        current.setOpenMobile(false);
+      }
+    });
   }
 
   void _ensureOverlayVisible(TpSidebarScope scope) {

@@ -89,4 +89,46 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('drawer-body'), findsNothing);
   });
+
+  testWidgets(
+    'deactivating overlayActive while open does not setState during build',
+    (tester) async {
+      FlutterErrorDetails? caught;
+      final previous = FlutterError.onError;
+      FlutterError.onError = (details) {
+        caught ??= details;
+        previous?.call(details);
+      };
+      addTearDown(() => FlutterError.onError = previous);
+
+      var overlayActive = true;
+      late StateSetter setParent;
+
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) {
+            setParent = setState;
+            return _wrapMobileStack(
+              openMobile: true,
+              stackChildren: [
+                TpSidebar(
+                  overlayActive: overlayActive,
+                  child: const Text('drawer-body'),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      setParent(() => overlayActive = false);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(caught, isNull);
+      expect(tester.takeException(), isNull);
+      expect(find.text('drawer-body'), findsNothing);
+    },
+  );
 }
