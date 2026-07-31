@@ -9,8 +9,9 @@ import 'package:flutter/material.dart';
 /// - [lg] emphasized chrome / search
 /// - [hero] empty-state / feature illustrations
 ///
-/// Prefer [BuildContext.tpIconSizes] at runtime; use [resolveIconMultiplier]
-/// when the host maps text-size prefs → [TpThemeData] `iconScale`.
+/// Prefer [BuildContext.tpIconSizes] for standalone toolbar icons; use
+/// [iconSizeForTextFontSize] beside labels; use [resolveIconMultiplier] for
+/// [TpThemeData] `iconScale` (OS baseline only).
 @immutable
 final class TpIconSizes {
   const TpIconSizes({
@@ -46,27 +47,33 @@ final class TpIconSizes {
   /// Empty-state / feature illustration.
   static const double heroBase = 38;
 
-  /// Global shrink on icon baselines (design tuning).
+  /// Optical tuning so [md] (~18) reads ~1.3× [bodyMedium] (14) at scale 1.0.
   static const double baselineScale = 1.32;
 
-  /// Portion of the **user** text-size delta (compact / comfortable / custom,
-  /// relative to the per-system auto baseline) applied to icon sizes. The OS
-  /// auto text baseline is not passed through — see [resolveIconMultiplier].
-  static const double userScaleTracking = 0.75;
+  /// [md] icon size paired to a resolved text [fontSize] whose design baseline
+  /// (multiplier 1.0) is [textBaseAtScale1] — keeps chrome glyphs proportional
+  /// when text size and interface zoom are adjusted independently.
+  static double iconSizeForTextFontSize(
+    double fontSize, {
+    required double textBaseAtScale1,
+  }) {
+    if (fontSize <= 0 || textBaseAtScale1 <= 0) {
+      return mdBase * baselineScale;
+    }
+    return fontSize * (mdBase * baselineScale) / textBaseAtScale1;
+  }
 
-  /// Maps effective text multiplier → icon multiplier for [TpThemeData.iconScale].
+  /// Maps OS auto text baseline → icon multiplier for [TpThemeData.iconScale].
   ///
-  /// Text uses [effectiveTextMultiplier] (includes OS auto baseline on high-DPI).
-  /// Icons keep a fixed baseline on screen and only pick up user preset changes,
-  /// damped by [userScaleTracking] and [baselineScale].
+  /// In-app **text size** adjusts [ThemeData.textTheme] only; **interface zoom**
+  /// scales the whole tree via [UiZoom]. Icons follow the OS baseline (mobile
+  /// accessibility / desktop DPI) here, and pair to adjacent labels via
+  /// [iconSizeForTextFontSize] where chrome must track label size.
   static double resolveIconMultiplier({
-    required double effectiveTextMultiplier,
     required double textBaseline,
   }) {
     final baseline = textBaseline <= 0 ? 1.0 : textBaseline;
-    final userRelative = effectiveTextMultiplier / baseline;
-    final userMapped = 1.0 + (userRelative - 1.0) * userScaleTracking;
-    return baselineScale * userMapped;
+    return baselineScale * baseline;
   }
 
   factory TpIconSizes.fromScale(double scale) => TpIconSizes(

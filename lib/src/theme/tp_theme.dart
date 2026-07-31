@@ -34,4 +34,14 @@ extension TpThemeContext on BuildContext {
   /// Resolved default icon color from [ThemeData.iconTheme].
   Color get tpIconColor =>
       IconTheme.of(this).color ?? Theme.of(this).colorScheme.tpIcon;
+
+  /// Icon size paired to a label [style] (see [TpIconSizes.iconSizeForTextFontSize]).
+  double tpIconSizeForText(
+    TextStyle style, {
+    required double textBaseAtScale1,
+  }) =>
+      TpIconSizes.iconSizeForTextFontSize(
+        style.fontSize ?? textBaseAtScale1,
+        textBaseAtScale1: textBaseAtScale1,
+      );
 }

@@ -11,33 +11,40 @@ void main() {
     expect(resolved.hero, TpIconSizes.heroBase);
   });
 
-  test('resolveIconMultiplier ignores OS text baseline', () {
+  test('resolveIconMultiplier tracks OS text baseline only', () {
     const osBaseline = 1.5;
-    final mapped = TpIconSizes.resolveIconMultiplier(
-      effectiveTextMultiplier: osBaseline,
-      textBaseline: osBaseline,
-    );
-    expect(mapped, TpIconSizes.baselineScale);
-    expect(mapped, lessThan(osBaseline));
+    final mapped = TpIconSizes.resolveIconMultiplier(textBaseline: osBaseline);
+    expect(mapped, TpIconSizes.baselineScale * osBaseline);
   });
 
-  test('resolveIconMultiplier dampens user preset delta', () {
+  test('resolveIconMultiplier ignores in-app text-size multiplier', () {
     const baseline = 1.0;
-    const comfy = 1.15;
-    final mapped = TpIconSizes.resolveIconMultiplier(
-      effectiveTextMultiplier: comfy,
-      textBaseline: baseline,
-    );
-    final linearMapped = TpIconSizes.baselineScale * comfy;
     expect(
-      mapped,
-      closeTo(
-        TpIconSizes.baselineScale *
-            (1.0 + (comfy - 1.0) * TpIconSizes.userScaleTracking),
-        0.001,
-      ),
+      TpIconSizes.resolveIconMultiplier(textBaseline: baseline),
+      TpIconSizes.baselineScale,
     );
-    expect(mapped, lessThan(linearMapped));
+  });
+
+  test('iconSizeForTextFontSize keeps md paired to bodyLarge at scale 1.0', () {
+    expect(
+      TpIconSizes.iconSizeForTextFontSize(
+        16,
+        textBaseAtScale1: 16,
+      ),
+      TpIconSizes.mdBase * TpIconSizes.baselineScale,
+    );
+  });
+
+  test('iconSizeForTextFontSize tracks resolved label fontSize', () {
+    const fontSize = 19.2;
+    final icon = TpIconSizes.iconSizeForTextFontSize(
+      fontSize,
+      textBaseAtScale1: 16,
+    );
+    expect(
+      icon / fontSize,
+      (TpIconSizes.mdBase * TpIconSizes.baselineScale) / 16,
+    );
   });
 
   test('iconTheme uses md × scale and tpIcon color', () {
