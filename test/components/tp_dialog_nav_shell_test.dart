@@ -104,6 +104,30 @@ void main() {
     expect(find.text('body-a'), findsNothing);
   });
 
+  testWidgets('wide: nav is surfaceContainerLow over surface body', (
+    tester,
+  ) async {
+    await _pumpSized(tester, const Size(1200, 800), _navShell());
+
+    final scheme = Theme.of(
+      tester.element(find.byType(TpDialogNavShell)),
+    ).colorScheme;
+
+    final navBox = tester
+        .widgetList<Container>(find.byType(Container))
+        .map((c) => c.decoration)
+        .whereType<BoxDecoration>()
+        .firstWhere((d) => d.color == scheme.surfaceContainerLow);
+    expect(navBox.color, scheme.surfaceContainerLow);
+
+    final bodyFill = tester
+        .widgetList<ColoredBox>(find.byType(ColoredBox))
+        .map((c) => c.color)
+        .where((c) => c == scheme.surface)
+        .toList();
+    expect(bodyFill, isNotEmpty);
+  });
+
   testWidgets('narrow: nav then detail; back; leading dismisses dialog', (
     tester,
   ) async {

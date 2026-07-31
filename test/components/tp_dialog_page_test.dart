@@ -106,6 +106,12 @@ void main() {
     final shellRect = tester.getRect(find.byType(TpDialogPageShell));
     expect(shellRect.width, lessThan(1200));
     expect(shellRect.width, closeTo(kTpDialogPageWideMaxWidth, 48));
+
+    final scheme = Theme.of(
+      tester.element(find.byType(TpDialog)),
+    ).colorScheme;
+    final dialog = tester.widget<Dialog>(find.byType(Dialog));
+    expect(dialog.backgroundColor, scheme.surface);
   });
 
   testWidgets('card+narrow still shows centered TpDialog', (tester) async {

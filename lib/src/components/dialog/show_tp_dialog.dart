@@ -30,9 +30,10 @@ Future<T?> showTpDialog<T>({
   bool useRootNavigator = true,
   RouteSettings? routeSettings,
   Color? barrierColor,
-  /// Optional dialog/page surface. Prefer leaving null so [TpDialog] /
-  /// fullscreen [Material] resolve [ColorScheme] live — a Theme-captured
-  /// [Color] freezes at open and will not follow theme toggles.
+  /// Optional dialog/page surface. Prefer leaving null so surfaces resolve
+  /// live from [ColorScheme] (page → [ColorScheme.surface], card [TpDialog]
+  /// → surfaceContainer). A Theme-captured [Color] freezes at open and will
+  /// not follow theme toggles.
   Color? backgroundColor,
   double? maxWidth,
   double? maxHeight,
@@ -76,11 +77,17 @@ Future<T?> showTpDialog<T>({
     builder: (dialogContext) {
       final content = builder(dialogContext);
       if (presentation == TpDialogPresentation.page) {
+        // Page canvases use [ColorScheme.surface] (live) so dual-pane hosts
+        // can paint a quieter nav rail on top — same default as narrow
+        // fullscreen Material. Card [TpDialog]s keep surfaceContainer.
+        final pageSurface =
+            backgroundColor ??
+            Theme.of(dialogContext).colorScheme.surface;
         return TpDialog(
           maxWidth: maxWidth ?? kTpDialogPageWideMaxWidth,
           maxHeight: maxHeight ?? kTpDialogPageWideMaxHeight,
           contentPadding: EdgeInsets.zero,
-          backgroundColor: backgroundColor,
+          backgroundColor: pageSurface,
           child: content,
         );
       }

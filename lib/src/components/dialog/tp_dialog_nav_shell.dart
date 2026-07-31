@@ -297,62 +297,69 @@ class _BodyPane extends StatelessWidget {
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          // Match pre-NavShell WorkspaceHubTitleBar / SplitShell insets
-          // (24–28), not denser tpSpacing.lg tops that felt cramped.
-          padding: const EdgeInsets.fromLTRB(24, 28, 16, 20),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: styles.lgSemiboldSnugColored(cs.onSurface),
-                    ),
-                    if (subtitle.isNotEmpty) ...[
-                      SizedBox(height: spacing.xs),
-                      Text(
-                        subtitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: styles.mutedMd,
-                      ),
-                    ],
-                  ],
+    // Page surface against the nav rail's surfaceContainerLow — same nesting
+    // as pre-NavShell settings (workspacePage vs workspaceSubtleSurface).
+    return ColoredBox(
+      color: cs.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            // Match pre-NavShell WorkspaceHubTitleBar / SplitShell insets
+            // (24–28), not denser tpSpacing.lg tops that felt cramped.
+            padding: const EdgeInsets.fromLTRB(24, 28, 16, 20),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: cs.outlineVariant.withValues(alpha: 0.5),
                 ),
               ),
-              SizedBox(width: spacing.sm),
-              TpIconButton(
-                icon: Icons.close_rounded,
-                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                compact: true,
-                color: cs.onSurfaceVariant,
-                onTap: onClose,
-              ),
-            ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: styles.lgSemiboldSnugColored(cs.onSurface),
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        SizedBox(height: spacing.xs),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: styles.mutedMd,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                TpIconButton(
+                  icon: Icons.close_rounded,
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  compact: true,
+                  color: cs.onSurfaceVariant,
+                  onTap: onClose,
+                ),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 28, 24),
-            child: child,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 28, 24),
+              child: child,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
