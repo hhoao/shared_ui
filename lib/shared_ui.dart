@@ -84,6 +84,7 @@ export 'src/theme/components/tp_separator_theme.dart';
 export 'src/theme/components/tp_sidebar_theme.dart';
 export 'src/theme/components/tp_textarea_theme.dart';
 export 'src/theme/components/tp_toast_theme.dart';
+export 'src/theme/tokens/tp_breakpoints.dart';
 export 'src/theme/tokens/tp_control_metrics.dart';
 export 'src/theme/tokens/tp_icon_sizes.dart';
 export 'src/theme/tokens/tp_spacing.dart';

@@ -73,6 +73,12 @@ import 'package:shared_ui/shared_ui.dart';
 
 Toast engine sources live under `lib/src/toast/engine/` and are **not** barrel-exported.
 
+## Breakpoints
+
+`TpBreakpoints` / `TpBreakpoint` provide Tailwind-aligned viewport width tokens (`sm` 640, `md` 768, `lg` 1024, `xl` 1280, `xxl` 1536) and predicates: `up` (mobile first, `width >= token`), `down` (`width < token`), `only` (half-open band `[token, next)`; `xxl` is `width >= 1536`).
+
+Shell hosts may still pass product-specific breakpoint widths (e.g. TeamPilot workspace shell `840` on `TpSidebarProvider` / dialogs). Do not replace those with `TpBreakpoints.md` blindly — use `TpBreakpoints` for component-level responsive layout inside a host-provided pane width.
+
 ## TpSidebar
 
 Composable workspace sidebar: wrap the shell in `TpSidebarProvider`, place `TpSidebar`
