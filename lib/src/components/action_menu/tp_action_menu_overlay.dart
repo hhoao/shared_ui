@@ -9,6 +9,17 @@ import '../popover/tp_anchor.dart';
 /// Closes the currently open floating context menu, if any.
 VoidCallback? _activeFloatingContextMenuCloser;
 
+/// Whether a [showTpActionMenuOverlay] panel is currently on screen.
+bool get isTpActionMenuOpen => _activeFloatingContextMenuCloser != null;
+
+/// Dismisses the open action menu, if any. Returns whether a menu was closed.
+bool dismissTpActionMenuIfOpen() {
+  final closer = _activeFloatingContextMenuCloser;
+  if (closer == null) return false;
+  closer();
+  return true;
+}
+
 /// Shows a context menu overlay that only hit-tests the menu panel itself.
 ///
 /// Pointer events outside the panel pass through to widgets below (e.g. terminal),
@@ -64,6 +75,13 @@ Future<T?> showTpActionMenuOverlay<T>({
     }
   };
 
+  bool escapeHandler(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+    if (event.logicalKey != LogicalKeyboardKey.escape) return false;
+    dismiss();
+    return true;
+  }
+
   entry = OverlayEntry(
     builder: (overlayContext) {
       return _FloatingContextMenuLayer(
@@ -79,9 +97,11 @@ Future<T?> showTpActionMenuOverlay<T>({
   );
 
   GestureBinding.instance.pointerRouter.addGlobalRoute(outsidePointerRoute);
+  HardwareKeyboard.instance.addHandler(escapeHandler);
   overlayState.insert(entry);
 
   return completer.future.whenComplete(() {
+    HardwareKeyboard.instance.removeHandler(escapeHandler);
     GestureBinding.instance.pointerRouter.removeGlobalRoute(
       outsidePointerRoute,
     );
