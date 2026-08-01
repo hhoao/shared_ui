@@ -136,4 +136,43 @@ void main() {
     // Smoke: inactive track should resolve against surfaceContainerHighest.
     expect(scheme.surfaceContainerHighest, isNot(equals(scheme.surface)));
   });
+
+  testWidgets('selected segment label stays white even when onPrimary is dark', (
+    tester,
+  ) async {
+    // Amber-like primary yields black onPrimary from Material contrast.
+    final scheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFFD4A06A),
+      brightness: Brightness.light,
+    ).copyWith(onPrimary: Colors.black, onSurface: const Color(0xFF1A1A1A));
+    expect(scheme.onPrimary, isNot(Colors.white));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: scheme,
+          textTheme: TextTheme(
+            labelLarge: TextStyle(fontSize: 14, color: scheme.onSurface),
+          ),
+        ),
+        home: TpTheme(
+          data: TpThemeData.fromColorScheme(scheme, scale: 1.0),
+          child: Scaffold(
+            body: TpSegmentedControl(
+              totalSwitches: 2,
+              initialLabelIndex: 0,
+              labels: const ['主页', '恢复'],
+              onToggle: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final activeColor = tester.widget<Text>(find.text('主页')).style?.color;
+    final inactiveColor = tester.widget<Text>(find.text('恢复')).style?.color;
+    expect(activeColor, Colors.white);
+    expect(inactiveColor, isNot(Colors.white));
+  });
 }

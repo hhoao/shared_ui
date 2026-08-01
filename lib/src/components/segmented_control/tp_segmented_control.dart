@@ -89,13 +89,26 @@ class TpSegmentedControl extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final tp = context.tpTheme;
-    final textStyle =
-        (theme.textTheme.labelLarge ??
-                theme.textTheme.bodyMedium ??
-                TextStyle(fontSize: tp.typography.bodySize))
-            .copyWith(height: 1.0);
+    // Build without color: TextStyle.copyWith cannot clear an inherited color
+    // (null keeps the old value), and toggle_switch prefers customTextStyles.color
+    // over activeFgColor when non-null.
+    final baseStyle =
+        theme.textTheme.labelLarge ??
+        theme.textTheme.bodyMedium ??
+        TextStyle(fontSize: tp.typography.bodySize);
+    final textStyle = TextStyle(
+      fontSize: baseStyle.fontSize ?? tp.typography.bodySize,
+      fontFamily: baseStyle.fontFamily,
+      fontFamilyFallback: baseStyle.fontFamilyFallback,
+      fontWeight: baseStyle.fontWeight,
+      letterSpacing: baseStyle.letterSpacing,
+      height: 1.0,
+    );
     final textBase = cs.onSurface;
     final inactiveFg = textBase.withValues(alpha: 0.72);
+    // Always white on the primary pill — Material onPrimary is black for some
+    // mid-light seeds (amber/forest).
+    const activeFg = Colors.white;
     final n = totalSwitches;
     final resolvedMinHeight = minHeight ?? tpSegmentedControlMinHeight;
     final resolvedMinWidth = minWidth ?? tpSegmentedControlMinSegmentWidth;
@@ -128,7 +141,7 @@ class TpSegmentedControl extends StatelessWidget {
         fontSize: fontSize,
         iconSize: iconSize,
         customTextStyles: List<TextStyle>.filled(n, textStyle),
-        activeFgColor: cs.onPrimary,
+        activeFgColor: activeFg,
         inactiveFgColor: inactiveFg,
         inactiveBgColor: cs.surfaceContainerHighest,
         dividerColor: Colors.transparent,
