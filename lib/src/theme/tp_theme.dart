@@ -43,5 +43,6 @@ extension TpThemeContext on BuildContext {
       TpIconSizes.iconSizeForTextFontSize(
         style.fontSize ?? textBaseAtScale1,
         textBaseAtScale1: textBaseAtScale1,
+        textBaseline: tpTheme.textBaseline,
       );
 }

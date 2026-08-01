@@ -24,6 +24,7 @@ class TpThemeData {
     required this.iconSizes,
     required this.typography,
     required this.control,
+    this.textBaseline = 1.0,
     this.dialog,
     this.input,
     this.textarea,
@@ -43,6 +44,9 @@ class TpThemeData {
     /// Button / input control metrics. Defaults to [scale]. Hosts that keep
     /// layout spacing fixed while text grows should pass the text multiplier.
     double? controlScale,
+    /// OS auto text baseline (desktop dpr path). Used to strip display scaling
+    /// from label-paired icon sizes — see [TpIconSizes.iconSizeForTextFontSize].
+    double textBaseline = 1.0,
     TpDialogTheme? dialog,
     TpInputTheme? input,
     TpTextareaTheme? textarea,
@@ -62,6 +66,7 @@ class TpThemeData {
       iconSizes: TpIconSizes.fromScale(icons),
       typography: TpTypography(scale: scale),
       control: TpControlMetrics.fromScale(controls),
+      textBaseline: textBaseline <= 0 ? 1.0 : textBaseline,
       dialog: dialog,
       input: input,
       textarea: textarea,
@@ -87,6 +92,9 @@ class TpThemeData {
   final TpIconSizes iconSizes;
   final TpTypography typography;
   final TpControlMetrics control;
+
+  /// OS auto text baseline used when pairing icons to label font sizes.
+  final double textBaseline;
 
   /// Optional dialog metrics override; resolved via [dialogTheme].
   final TpDialogTheme? dialog;
@@ -160,6 +168,7 @@ class TpThemeData {
           iconSizes == other.iconSizes &&
           typography == other.typography &&
           control == other.control &&
+          textBaseline == other.textBaseline &&
           dialogTheme == other.dialogTheme &&
           inputTheme == other.inputTheme &&
           textareaTheme == other.textareaTheme &&
@@ -178,6 +187,7 @@ class TpThemeData {
     iconSizes,
     typography,
     control,
+    textBaseline,
     dialogTheme,
     inputTheme,
     textareaTheme,
