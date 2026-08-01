@@ -69,6 +69,7 @@ import 'package:shared_ui/shared_ui.dart';
 | **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow`, `TpSidebar` |
 | **Deferred / keep-alive** | `TpDeferredMountShell`, `TpDeferredMountAfter`, `TpDeferredForegroundMount`, `TpKeepAliveLayer` — host progressive paint guide (TeamPilot: `docs/PERFORMANCE.md`) |
 | **Preference** | `TpPreferenceRow`, `TpPreferenceStack`, `TpSectionHeader`, `TpDisclosure`, `TpStatusBadge`, `TpCompactSelect` |
+| **File selection** | `showTpFileSelection`, `TpFileSelectionDeps`, `TpFileSelectionOptions`, `TpPickedEntry`, port adapters (`TpFilesystemPort`, `TpGalleryPort`, …) |
 | **Theme** | `TpTheme`, `TpThemeData`, `TpTextStyles`, `TpFontTheme`, `TpGlyphWarmup`, icon sizes (`sm`/`md`/`lg`/`hero`), spacing / typography / control metrics, per-component themes |
 
 Toast engine sources live under `lib/src/toast/engine/` and are **not** barrel-exported.
@@ -164,9 +165,61 @@ showTpDialog<void>(
 );
 ```
 
+## File selection (`showTpFileSelection`)
+
+Cross-platform file / directory / media picker UI. Host apps wire platform I/O through
+**port adapters**; `shared_ui` has **no** hard dependency on `photo_manager`,
+`permission_handler`, or `file_picker`.
+
+```dart
+final result = await showTpFileSelection(
+  context: context,
+  deps: TpFileSelectionDeps(
+    filesystem: myFilesystemAdapter,
+    permission: myPermissionAdapter,
+    gallery: myGalleryAdapter, // optional — gallery tab
+    desktop: myDesktopPickerAdapter, // optional — native desktop dialog
+    preview: myPreviewAdapter, // optional — image/video preview
+    strings: myStrings, // app l10n mapped into TpFileSelectionStrings
+    isDesktop: () => Platform.isLinux || Platform.isMacOS || Platform.isWindows,
+  ),
+  options: const TpFileSelectionOptions(
+    allowMultiple: true,
+    selectionMode: TpSelectionMode.files,
+    allowedExtensions: ['pdf', 'png'],
+  ),
+);
+// null = user cancelled; non-null list = confirmed selection
+```
+
+**Return type:** `Future<List<TpPickedEntry>?>`. Each `TpPickedEntry` carries `path`,
+`kind` (`TpPickedKind.file` / `directory`), and optional `displayName` / `mimeType`.
+
+**`TpFileSelectionDeps` ports**
+
+| Port | Required | Role |
+|------|----------|------|
+| `TpFilesystemPort` (`filesystem`) | yes | Browse roots, list directories, optional full-disk search (`searchFiles`) |
+| `TpPermissionPort` (`permission`) | yes | Storage / gallery permission prompts (`ensureStorageAccess`, `ensureGalleryAccess`) |
+| `TpFileSelectionStrings` (`strings`) | yes | All user-visible labels — map from app ARB / l10n |
+| `bool Function()` (`isDesktop`) | yes | Desktop vs mobile routing |
+| `TpGalleryPort` (`gallery`) | optional | Photo / video gallery tab; omit to hide gallery |
+| `TpDesktopPickerPort` (`desktop`) | optional | Native OS picker on desktop; when set and `isDesktop()` is true, `showTpFileSelection` short-circuits to `pickFiles` / `pickDirectory` without pushing the full-page UI |
+| `TpMediaPreviewPort` (`preview`) | optional | In-tab image / video preview; omit to disable preview actions |
+
+**Desktop routing:** when `isDesktop()` returns true and `desktop` is non-null, the entry
+point delegates to the native picker and never mounts `TpFileSelectionPage`. Mobile (or
+desktop without `desktop`) opens the full filesystem / gallery page via `Navigator.push`.
+
+**Tests:** `TpFileSelectionStrings.english()` supplies English placeholders; port fakes
+live in `test/components/file_selection/fake_file_selection_ports.dart`.
+
+Sources: `lib/src/components/file_selection/` (ports, models, `show_tp_file_selection.dart`,
+`TpFileSelectionPage`, tabs).
+
 ## Layout
 
-- `lib/src/components/` — `Tp*` widgets by category
+- `lib/src/components/` — `Tp*` widgets by category (including `file_selection/`)
 - `lib/src/deferred/` — progressive mount / keep-alive primitives
 - `lib/src/theme/` — `TpTheme` / `TpThemeData`, tokens, component themes
 - `lib/src/toast/engine/` — private toast overlay engine (not public API)
