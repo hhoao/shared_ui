@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../button/tp_button.dart';
-import '../../dialog/show_tp_dialog.dart';
 import '../../dialog/tp_dialog.dart';
 import '../../icon_button/tp_icon_button.dart';
 import '../../segmented_control/tp_segmented_control.dart';
@@ -126,7 +125,7 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
   }
 
   Future<void> _showTabChangeDialog(TpFileSelectionTab target) async {
-    await showTpDialog<void>(
+    await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return TpDialog(
@@ -206,7 +205,7 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
   final _filesystemTabKey = GlobalKey<TpFilesystemTabState>();
 
   void _handlePathNotFound(String path) {
-    showTpDialog<void>(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
