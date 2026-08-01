@@ -102,6 +102,9 @@ void main() {
 
     expect(find.byType(Dialog), findsOneWidget);
     expect(find.byType(TpDialog), findsOneWidget);
+    expect(find.byType(TpDialogHeader), findsOneWidget);
+    expect(find.byType(TpDialogMobileNavBar), findsNothing);
+    expect(find.byIcon(Icons.close_rounded), findsOneWidget);
 
     final shellRect = tester.getRect(find.byType(TpDialogPageShell));
     expect(shellRect.width, lessThan(1200));
@@ -112,6 +115,156 @@ void main() {
     ).colorScheme;
     final dialog = tester.widget<Dialog>(find.byType(Dialog));
     expect(dialog.backgroundColor, scheme.surface);
+  });
+
+  testWidgets('narrow PageShell uses mobile nav, not desktop header', (
+    tester,
+  ) async {
+    await _pumpSized(
+      tester,
+      const Size(400, 800),
+      Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () {
+              showTpDialog<void>(
+                context: context,
+                presentation: TpDialogPresentation.page,
+                mobileBreakpoint: 768,
+                builder: (ctx) => const TpDialogPageShell(
+                  title: 'Narrow',
+                  child: Text('body'),
+                ),
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TpDialogMobileNavBar), findsOneWidget);
+    expect(find.byType(TpDialogHeader), findsNothing);
+    expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+  });
+
+  testWidgets('wide fillBody:false shrink-wraps intrinsic child', (
+    tester,
+  ) async {
+    await _pumpSized(
+      tester,
+      const Size(1200, 900),
+      Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () {
+              showTpDialog<void>(
+                context: context,
+                presentation: TpDialogPresentation.page,
+                mobileBreakpoint: 768,
+                maxWidth: 720,
+                maxHeight: 800,
+                builder: (ctx) => TpDialogPageShell(
+                  title: 'Short',
+                  fillBody: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      SizedBox(height: 80, child: Text('short')),
+                    ],
+                  ),
+                ),
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TpDialogHeader), findsOneWidget);
+    final shellRect = tester.getRect(find.byType(TpDialogPageShell));
+    expect(shellRect.height, lessThan(400));
+  });
+
+  testWidgets('wide fillBody:true allows host Expanded without assert', (
+    tester,
+  ) async {
+    await _pumpSized(
+      tester,
+      const Size(1200, 900),
+      Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () {
+              showTpDialog<void>(
+                context: context,
+                presentation: TpDialogPresentation.page,
+                mobileBreakpoint: 768,
+                maxHeight: 600,
+                builder: (ctx) => const TpDialogPageShell(
+                  title: 'Fill',
+                  fillBody: true,
+                  child: Column(
+                    children: [
+                      Expanded(child: Text('fill')),
+                      Text('footer'),
+                    ],
+                  ),
+                ),
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('fill'), findsOneWidget);
+    expect(find.text('footer'), findsOneWidget);
+    final shellRect = tester.getRect(find.byType(TpDialogPageShell));
+    expect(shellRect.height, greaterThan(400));
+  });
+
+  testWidgets('wide header is inset from dialog edge', (tester) async {
+    await _pumpSized(
+      tester,
+      const Size(1200, 800),
+      Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () {
+              showTpDialog<void>(
+                context: context,
+                presentation: TpDialogPresentation.page,
+                mobileBreakpoint: 768,
+                builder: (ctx) => const TpDialogPageShell(
+                  title: 'Inset Title',
+                  child: Text('body'),
+                ),
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final dialogLeft = tester.getRect(find.byType(Dialog)).left;
+    final titleLeft = tester.getRect(find.text('Inset Title')).left;
+    expect(titleLeft - dialogLeft, greaterThanOrEqualTo(24));
   });
 
   testWidgets('card+narrow still shows centered TpDialog', (tester) async {

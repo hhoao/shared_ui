@@ -127,7 +127,13 @@ large management surfaces.
 - **`TpDialogPresentation.page`** — below `mobileBreakpoint`, `showGeneralDialog` mounts a
   zero-inset fullscreen `Material` surface; on wide, wraps content in a constrained `TpDialog`.
 - **Chrome ownership:** `showTpDialog` does **not** add an app bar. Callers choose:
-  - **`TpDialogPageShell`** — simple pages: title row + close + body (wrap explicitly).
+  - **`TpDialogPageShell`** — simple pages on **narrow and wide**: mobile nav on narrow;
+    `TpDialogHeader` + theme content padding on wide. Pass the same `mobileBreakpoint` as
+    `showTpDialog`. Use `fillBody: true` when the child uses vertical `Expanded` (lists /
+    pinned footers); default shrink-wrap requires an intrinsic-height child
+    (`Column(min)`). Do not use an outer `SingleChildScrollView` on wide — it expands
+    to `maxHeight`. Scroll on narrow Expanded body, or use `fillBody: true` with an
+    inner scroll region.
   - **`TpDialogNavShell`** — dual-pane nav + detail; owns narrow nav/detail bars.
     **Never** wrap `TpDialogNavShell` in `TpDialogPageShell`.
 
@@ -139,6 +145,8 @@ showTpDialog<void>(
   mobileBreakpoint: 840,
   builder: (ctx) => TpDialogPageShell(
     title: 'Automations',
+    mobileBreakpoint: 840,
+    fillBody: true, // list / Expanded child
     child: AutomationsBody(),
   ),
 );
