@@ -1,9 +1,6 @@
 /// Shared height / padding for [TpTabStrip] surfaces.
 class TpTabStripMetrics {
-  const TpTabStripMetrics({
-    required this.height,
-    this.horizontalPadding = 6,
-  });
+  const TpTabStripMetrics({required this.height, this.horizontalPadding = 0});
 
   /// Strip / title-bar row height.
   final double height;
