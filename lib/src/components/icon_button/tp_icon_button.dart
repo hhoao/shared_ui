@@ -11,6 +11,9 @@ class TpIconButton extends StatelessWidget {
   /// Dense toolbar preset (file tree header, terminal tabs, etc.).
   static const double kCompactSize = 28;
 
+  /// Mobile title-bar / drawer controls — Material minimum tap target.
+  static const double kMobileTapSize = 48;
+
   const TpIconButton({
     super.key,
     this.icon,
@@ -24,6 +27,7 @@ class TpIconButton extends StatelessWidget {
     this.color,
     this.backgroundColor,
     this.enabled = true,
+    this.selected = false,
   }) : assert(icon != null || iconWidget != null);
 
   final IconData? icon;
@@ -37,6 +41,7 @@ class TpIconButton extends StatelessWidget {
   final Color? color;
   final Color? backgroundColor;
   final bool enabled;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +53,20 @@ class TpIconButton extends StatelessWidget {
     final Color effectiveColor;
     if (!enabled) {
       effectiveColor = cs.onSurface.withValues(alpha: 0.38);
+    } else if (color != null) {
+      effectiveColor = color!;
+    } else if (selected) {
+      effectiveColor = cs.primary;
     } else {
-      effectiveColor = color ?? cs.onSurface;
+      effectiveColor = cs.onSurface;
     }
+
+    final Color? fill = backgroundColor ??
+        (selected ? cs.primary.withValues(alpha: 0.16) : null);
+
+    final Border? border = selected
+        ? Border.all(color: cs.primary.withValues(alpha: 0.28))
+        : null;
     final radius = BorderRadius.circular(borderRadius);
 
     Widget iconChild =
@@ -62,7 +78,11 @@ class TpIconButton extends StatelessWidget {
     Widget ink = Ink(
       width: size,
       height: size,
-      decoration: BoxDecoration(borderRadius: radius, color: backgroundColor),
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        color: fill,
+        border: border,
+      ),
       child: InkWell(
         borderRadius: radius,
         hoverColor: effectiveColor.withValues(alpha: 0.12),

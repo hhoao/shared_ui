@@ -9,17 +9,32 @@ class TpSidebarTrigger extends StatelessWidget {
     super.key,
     this.icon,
     this.tooltip,
+    this.size = TpIconButton.kDefaultSize,
+    this.selected = false,
   });
 
   final Widget? icon;
   final String? tooltip;
+  final double size;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
+    if (icon != null) {
+      return TpIconButton(
+        iconWidget: icon,
+        onTap: TpSidebarScope.of(context).toggleSidebar,
+        tooltip: tooltip,
+        size: size,
+        selected: selected,
+      );
+    }
     return TpIconButton(
-      iconWidget: icon ?? const Icon(Icons.menu),
+      icon: selected ? Icons.menu_open : Icons.menu,
       onTap: TpSidebarScope.of(context).toggleSidebar,
       tooltip: tooltip,
+      size: size,
+      selected: selected,
     );
   }
 }
