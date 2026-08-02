@@ -76,103 +76,95 @@ class _TpTabChipState extends State<TpTabChip> {
     return Tooltip(
       message: widget.tooltip ?? widget.title,
       waitDuration: const Duration(milliseconds: 500),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onTap,
-          onSecondaryTapDown: widget.onSecondaryTapDown,
-          onLongPress: widget.onLongPress,
-          child: Material(
-            color: active
-                ? cs.surfaceContainerHigh
-                : _hovered
-                ? cs.onSurface.withValues(alpha: 0.05)
-                : Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(
-                color: active
-                    ? cs.outlineVariant.withValues(alpha: 0.7)
-                    : Colors.transparent,
-              ),
+      child: TpHover(
+        onTap: widget.onTap,
+        onSecondaryTapDown: widget.onSecondaryTapDown,
+        onLongPress: widget.onLongPress,
+        backgroundColor: active ? cs.surfaceContainerHigh : null,
+        hoverColor: active
+            ? cs.surfaceContainerHigh
+            : cs.onSurface.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        onHoverChanged: (hovered) => setState(() => _hovered = hovered),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: active
+                  ? cs.outlineVariant.withValues(alpha: 0.7)
+                  : Colors.transparent,
             ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: widget.onTap,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: widget.maxWidth),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: 10,
-                    right: 6,
-                    top: 6,
-                    bottom: 6,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: widget.maxWidth),
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: 10,
+                right: 6,
+                top: 6,
+                bottom: 6,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 3,
+                    height: context.tpIconSizes.md,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: barColor,
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 3,
-                        height: context.tpIconSizes.md,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: barColor,
-                            borderRadius: BorderRadius.circular(1.5),
-                          ),
-                        ),
+                  const SizedBox(width: 8),
+                  if (widget.working)
+                    SizedBox(
+                      width: context.tpIconSizes.sm,
+                      height: context.tpIconSizes.sm,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: iconColor,
                       ),
-                      const SizedBox(width: 8),
-                      if (widget.working)
-                        SizedBox(
-                          width: context.tpIconSizes.sm,
-                          height: context.tpIconSizes.sm,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: iconColor,
-                          ),
-                        )
-                      else if (widget.leading != null)
-                        _TpTabChromeSlot(
-                          visible: _showChrome,
-                          child: IconTheme(
-                            data: IconThemeData(
-                              color: iconColor,
-                              size: context.tpIconSizes.md,
-                            ),
-                            child: widget.leading!,
-                          ),
+                    )
+                  else if (widget.leading != null)
+                    _TpTabChromeSlot(
+                      visible: _showChrome,
+                      child: IconTheme(
+                        data: IconThemeData(
+                          color: iconColor,
+                          size: context.tpIconSizes.md,
                         ),
-                      const SizedBox(width: 12),
-                      Flexible(
-                        child: Text(
-                          widget.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: widget.preview
-                              ? titleStyle.copyWith(
-                                  fontStyle: FontStyle.italic,
-                                )
-                              : titleStyle,
-                        ),
+                        child: widget.leading!,
                       ),
-                      if (widget.actions != null)
-                        _TpTabChromeSlot(
-                          visible: _showChrome,
-                          child: widget.actions!,
-                        ),
-                      _TpTabChromeSlot(
-                        visible: _showChrome,
-                        child: _TpTabCloseButton(
-                          active: active,
-                          onTap: widget.onClose,
-                        ),
-                      ),
-                    ],
+                    ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: widget.preview
+                          ? titleStyle.copyWith(
+                              fontStyle: FontStyle.italic,
+                            )
+                          : titleStyle,
+                    ),
                   ),
-                ),
+                  if (widget.actions != null)
+                    _TpTabChromeSlot(
+                      visible: _showChrome,
+                      child: widget.actions!,
+                    ),
+                  _TpTabChromeSlot(
+                    visible: _showChrome,
+                    child: _TpTabCloseButton(
+                      active: active,
+                      onTap: widget.onClose,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

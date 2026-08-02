@@ -17,9 +17,16 @@ class TpHoverRow extends StatefulWidget {
     this.showTrailingOnMobile = true,
     this.height,
     this.hoverColor,
+    this.backgroundColor,
     this.onTap,
+    this.onSecondaryTap,
+    this.onSecondaryTapDown,
+    this.onLongPress,
     this.padding = const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
+    this.cursor,
+    this.forceHover = false,
+    this.enabled = true,
     this.onHoverChanged,
   });
 
@@ -34,9 +41,18 @@ class TpHoverRow extends StatefulWidget {
   final bool showTrailingOnMobile;
   final double? height;
   final Color? hoverColor;
+  final Color? backgroundColor;
   final VoidCallback? onTap;
+  final VoidCallback? onSecondaryTap;
+  final GestureTapDownCallback? onSecondaryTapDown;
+  final VoidCallback? onLongPress;
   final EdgeInsetsGeometry padding;
   final BorderRadius borderRadius;
+  final MouseCursor? cursor;
+
+  /// Keeps the hover fill visible (e.g. while an anchored menu is open).
+  final bool forceHover;
+  final bool enabled;
   final ValueChanged<bool>? onHoverChanged;
 
   @override
@@ -60,9 +76,16 @@ class _TpHoverRowState extends State<TpHoverRow> {
   Widget build(BuildContext context) {
     return TpHover(
       hoverColor: widget.hoverColor,
+      backgroundColor: widget.backgroundColor,
       padding: widget.padding,
       borderRadius: widget.borderRadius,
       onTap: widget.onTap,
+      onSecondaryTap: widget.onSecondaryTap,
+      onSecondaryTapDown: widget.onSecondaryTapDown,
+      onLongPress: widget.onLongPress,
+      cursor: widget.cursor,
+      forceHover: widget.forceHover,
+      enabled: widget.enabled,
       onHoverChanged: (hovered) {
         setState(() => _hovered = hovered);
         widget.onHoverChanged?.call(hovered);
