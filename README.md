@@ -78,6 +78,19 @@ Toast engine sources live under `lib/src/toast/engine/` and are **not** barrel-e
 
 `TpBreakpoints` / `TpBreakpoint` provide Tailwind-aligned viewport width tokens (`sm` 640, `md` 768, `lg` 1024, `xl` 1280, `xxl` 1536) and predicates: `up` (mobile first, `width >= token`), `down` (`width < token`), `only` (half-open band `[token, next)`; `xxl` is `width >= 1536`).
 
+**Width-scaled insets:** `TpWidthScale` / `TpScaledEdgeInsets` / `TpScaledDouble` accept any non-empty subset of `sm`/`md`/`lg`/`xl`/`xxl` — omit unused stops and they lerp between neighbors (one stop = constant). Wrap a surface in `TpWidthValueHost<T>` and read with `TpWidthValueScope.of<T>(context)`.
+
+```dart
+// Minimal: two stops
+const pad = TpScaledEdgeInsets(
+  sm: EdgeInsets.all(8),
+  xxl: EdgeInsets.all(28),
+);
+
+// Or pin a single stop
+const gap = TpScaledDouble(lg: 20);
+```
+
 Shell hosts may still pass product-specific breakpoint widths (e.g. TeamPilot workspace shell `840` on `TpSidebarProvider` / dialogs). Do not replace those with `TpBreakpoints.md` blindly — use `TpBreakpoints` for component-level responsive layout inside a host-provided pane width.
 
 ## TpSidebar

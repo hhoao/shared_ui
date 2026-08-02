@@ -111,6 +111,7 @@ export 'src/theme/tokens/tp_control_metrics.dart';
 export 'src/theme/tokens/tp_icon_sizes.dart';
 export 'src/theme/tokens/tp_spacing.dart';
 export 'src/theme/tokens/tp_typography.dart';
+export 'src/theme/tokens/tp_width_scale.dart';
 export 'src/theme/tp_font_theme.dart';
 export 'src/theme/tp_glyph_warmup.dart';
 export 'src/theme/tp_text_styles.dart';
