@@ -347,6 +347,14 @@ final class TpTextStyles {
       withUi(mdSemibold),
       withUi(mdBold),
       withUi(mdRelaxed),
+      withUi(mdRelaxed.copyWith(fontWeight: FontWeight.w700)),
+      withUi(mdRelaxed.copyWith(fontStyle: FontStyle.italic)),
+      withUi(
+        mdRelaxed.copyWith(
+          fontWeight: FontWeight.w700,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
       withUi(mdSemiboldTightSnug),
       withUi(mdBoldTightSnug),
       withUi(mdBoldSpread),

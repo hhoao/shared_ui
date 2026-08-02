@@ -33,12 +33,12 @@ MaterialApp(
   },
 );
 
-// Boot warmup (host supplies glyphs charset):
+// Boot warmup — short probe per TextStyle fingerprint (not a charset dump):
 final styles = TpGlyphWarmup.dedupeByShapeKey([
   ...TpTextStyles(theme).stylesForWarmup(),
   ...hostExtras,
 ]);
-TpGlyphWarmup.shapeAll(styles: styles, glyphs: warmupGlyphs);
+TpGlyphWarmup.shapeAll(styles: styles); // defaults to TpGlyphWarmup.styleProbe
 ```
 
 In `pubspec.yaml`:

@@ -13,11 +13,16 @@ typedef TpTextStyleShapeKey = ({
 
 /// Pure glyph-shaping helpers for boot warmup.
 ///
-/// Hosts supply the glyph charset (often generated from l10n) and any extra
-/// styles (markdown, outline input). Semantic UI styles come from
-/// [TpTextStyles.stylesForWarmup].
+/// Warm **TextStyle fingerprints** (family / size / weight / style), not an
+/// unbounded content charset. Hosts pass styles from `stylesForWarmup`; use
+/// [styleProbe] as the layout sample — enough to open each style's path.
 abstract final class TpGlyphWarmup {
   TpGlyphWarmup._();
+
+  /// Fixed short sample for [shape] / [shapeAll] — Latin + one CJK + punct.
+  ///
+  /// Do not expand this into l10n dumps; arbitrary UI/Markdown text is infinite.
+  static const String styleProbe = 'Ag中.';
 
   static TpTextStyleShapeKey shapeKey(TextStyle style) => (
     family: style.fontFamily,
@@ -39,25 +44,52 @@ abstract final class TpGlyphWarmup {
   }
 
   /// Lays out [glyphs] once with [style] to populate the glyph cache.
+  ///
+  /// Pass [strutStyle] when the live UI uses forced strut (e.g. markdown
+  /// preview) so first paint does not pay a cold strut layout path.
   static void shape({
     required TextStyle style,
-    required String glyphs,
+    String glyphs = styleProbe,
     double maxWidth = 1200,
+    StrutStyle? strutStyle,
+  }) {
+    shapeRich(
+      text: TextSpan(text: glyphs, style: style),
+      maxWidth: maxWidth,
+      strutStyle: strutStyle,
+    );
+  }
+
+  /// Lays out a rich [text] tree (mixed families / weights) once.
+  ///
+  /// Covers paths a single-style [shape] cannot: e.g. markdown strong text
+  /// wrapping an inline mono code span under [forceStrutHeight].
+  static void shapeRich({
+    required InlineSpan text,
+    double maxWidth = 1200,
+    StrutStyle? strutStyle,
   }) {
     final painter = TextPainter(
-      text: TextSpan(text: glyphs, style: style),
+      text: text,
       textDirection: TextDirection.ltr,
+      strutStyle: strutStyle,
     )..layout(maxWidth: maxWidth);
     painter.dispose();
   }
 
   static void shapeAll({
     required Iterable<TextStyle> styles,
-    required String glyphs,
+    String glyphs = styleProbe,
     double maxWidth = 1200,
+    StrutStyle? Function(TextStyle style)? strutFor,
   }) {
     for (final style in styles) {
-      shape(style: style, glyphs: glyphs, maxWidth: maxWidth);
+      shape(
+        style: style,
+        glyphs: glyphs,
+        maxWidth: maxWidth,
+        strutStyle: strutFor?.call(style),
+      );
     }
   }
 }
