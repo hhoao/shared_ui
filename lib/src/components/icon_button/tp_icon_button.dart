@@ -14,6 +14,15 @@ class TpIconButton extends StatelessWidget {
   /// Mobile title-bar / drawer controls — Material minimum tap target.
   static const double kMobileTapSize = 48;
 
+  /// Vertical padding used by home title-bar chips (home pill / workspace tabs).
+  static const double kChromeChipVerticalPadding = 6;
+
+  /// Hit target matching home title-bar tab chip outer height
+  /// (`md` icon + chip padding + 1px border each side). Use for back / menu /
+  /// bell / settings chrome so controls align with tabs.
+  static double chromeAlignedSize(BuildContext context) =>
+      context.tpIconSizes.md + 2 * kChromeChipVerticalPadding + 2;
+
   const TpIconButton({
     super.key,
     this.icon,

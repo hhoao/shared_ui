@@ -62,8 +62,8 @@ class TpDialogMobileNavBar extends StatelessWidget {
                   TpIconButton(
                     icon: Icons.chevron_left_rounded,
                     tooltip: leadingTooltip ?? l10n.backButtonTooltip,
-                    compact: true,
-                    iconSize: iconSizes.lg,
+                    size: TpIconButton.chromeAlignedSize(context),
+                    iconSize: iconSizes.md,
                     color: cs.onSurface,
                     onTap: onLeading,
                   ),
