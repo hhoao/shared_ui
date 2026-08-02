@@ -116,6 +116,34 @@ void main() {
     );
   });
 
+  testWidgets('TpSidebarTrigger selected uses menu_open and selected chrome', (
+    tester,
+  ) async {
+    final scheme = ColorScheme.fromSeed(seedColor: Colors.teal);
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(400, 800)),
+        child: MaterialApp(
+          theme: ThemeData(colorScheme: scheme, useMaterial3: true),
+          home: TpTheme(
+            data: TpThemeData.fromColorScheme(scheme, scale: 1.0),
+            child: TpSidebarProvider(
+              defaultOpen: false,
+              child: const Scaffold(
+                body: TpSidebarTrigger(selected: true),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.menu_open), findsOneWidget);
+    final button = tester.widget<TpIconButton>(find.byType(TpIconButton));
+    expect(button.selected, isTrue);
+    expect(button.icon, Icons.menu_open);
+  });
+
   testWidgets('Rail drag resizes expanded sidebar width', (tester) async {
     final scheme = ColorScheme.fromSeed(seedColor: Colors.teal);
     await tester.pumpWidget(
