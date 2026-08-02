@@ -9,6 +9,7 @@ export 'src/components/button/tp_button.dart';
 export 'src/components/card/tp_action_row.dart';
 export 'src/components/card/tp_card.dart';
 export 'src/components/card/tp_card_header.dart';
+export 'src/components/chrome/tp_mobile_chrome.dart';
 export 'src/components/date_range/calendar_date_utils.dart';
 export 'src/components/date_range/tp_date_range_picker.dart';
 export 'src/components/date_range/tp_range_calendar.dart';
