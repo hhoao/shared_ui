@@ -4,8 +4,12 @@ import 'tp_tab_strip_metrics.dart';
 
 /// Horizontal tab strip with optional drag-reorder.
 ///
-/// [inStripTrailing] scrolls with tabs but is excluded from [onReorder] indices.
+/// [inStripTrailing] scrolls with tabs but is excluded from reorder indices.
 /// [trailing] sits outside the scroll viewport (pane actions, clear, etc.).
+///
+/// When [onReorder] is set, a single [CustomScrollView] owns horizontal
+/// scrolling and reorder — nested scroll views must not wrap the list or they
+/// steal drag gestures.
 class TpTabStrip extends StatelessWidget {
   const TpTabStrip({
     required this.itemCount,
@@ -28,7 +32,7 @@ class TpTabStrip extends StatelessWidget {
   /// Stable keys for reorderable items. Defaults to [ValueKey] of the index.
   final Key Function(int index)? itemKey;
 
-  /// Material [ReorderableListView.onReorder] semantics. Null ⇒ scroll only.
+  /// [ReorderableListView.onReorderItem] semantics. Null ⇒ scroll only.
   final ReorderCallback? onReorder;
 
   final Widget? leading;
@@ -62,7 +66,13 @@ class TpTabStrip extends StatelessWidget {
         mainAxisSize: fillWidth ? MainAxisSize.max : MainAxisSize.min,
         children: [
           if (leading != null) ...[leading!, const SizedBox(width: 2)],
-          if (fillWidth) Expanded(child: scroll) else scroll,
+          // Flexible (not a bare child) so the scroll region gets a bounded
+          // max width — Row gives non-flex children unbounded main-axis max,
+          // which made fillWidth:false content lay out full-bleed then overflow.
+          if (fillWidth)
+            Expanded(child: scroll)
+          else
+            Flexible(fit: FlexFit.loose, child: scroll),
           if (trailing != null) trailing!,
         ],
       ),
@@ -70,57 +80,44 @@ class TpTabStrip extends StatelessWidget {
   }
 
   Widget _buildScrollRegion(BuildContext context) {
-    final tabs = onReorder == null
-        ? _scrollOnlyTabs(context)
-        : _reorderableTabs(context);
-
-    final scroll = SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    if (onReorder == null) {
+      return ListView(
+        scrollDirection: Axis.horizontal,
+        shrinkWrap: !fillWidth,
         children: [
-          tabs,
+          for (var i = 0; i < itemCount; i++) itemBuilder(context, i),
           if (inStripTrailing != null) ...[
             const SizedBox(width: 2),
             inStripTrailing!,
           ],
         ],
-      ),
-    );
+      );
+    }
 
-    if (fillWidth) return scroll;
-    // Shrink-wrap so empty title chrome can receive pan / double-tap.
-    return Align(
-      alignment: Alignment.centerLeft,
-      widthFactor: 1,
-      child: scroll,
-    );
-  }
-
-  Widget _scrollOnlyTabs(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < itemCount; i++) itemBuilder(context, i),
-      ],
-    );
-  }
-
-  Widget _reorderableTabs(BuildContext context) {
-    return ReorderableListView.builder(
-      shrinkWrap: true,
+    // One scrollable owns both reorder + horizontal scroll (and the + button).
+    return CustomScrollView(
       scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
-      buildDefaultDragHandles: false,
-      onReorder: onReorder!,
-      itemCount: itemCount,
-      itemBuilder: (context, index) {
-        return ReorderableDelayedDragStartListener(
-          key: _keyFor(index),
-          index: index,
-          child: itemBuilder(context, index),
-        );
-      },
+      shrinkWrap: !fillWidth,
+      slivers: [
+        SliverReorderableList(
+          itemCount: itemCount,
+          onReorderItem: onReorder!,
+          itemBuilder: (context, index) {
+            return ReorderableDragStartListener(
+              key: _keyFor(index),
+              index: index,
+              child: itemBuilder(context, index),
+            );
+          },
+        ),
+        if (inStripTrailing != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: inStripTrailing,
+            ),
+          ),
+      ],
     );
   }
 }
