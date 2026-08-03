@@ -10,6 +10,7 @@ class TpHover extends StatefulWidget {
     required this.child,
     this.hoverColor,
     this.backgroundColor,
+    this.border,
     this.onTap,
     this.onSecondaryTap,
     this.onSecondaryTapDown,
@@ -31,6 +32,10 @@ class TpHover extends StatefulWidget {
 
   /// Idle fill behind [child]. Transparent when null.
   final Color? backgroundColor;
+
+  /// Drawn on the same decoration as [backgroundColor] / hover fill so the
+  /// stroke sits on the outer edge (not inside [padding]).
+  final BoxBorder? border;
   final VoidCallback? onTap;
   final VoidCallback? onSecondaryTap;
   final GestureTapDownCallback? onSecondaryTapDown;
@@ -97,6 +102,7 @@ class _TpHoverState extends State<TpHover> {
       decoration: BoxDecoration(
         color: _showHover ? hoverFill : idleColor,
         borderRadius: widget.borderRadius,
+        border: widget.border,
       ),
       child: widget.child,
     );

@@ -81,6 +81,30 @@ void main() {
     expect(deco.color, const Color(0xFF112233));
   });
 
+  testWidgets('border is painted on the outer decoration with padding', (
+    tester,
+  ) async {
+    const border = Border.fromBorderSide(
+      BorderSide(color: Color(0xFFAA00FF), width: 2),
+    );
+    await tester.pumpWidget(
+      wrap(
+        TpHover(
+          backgroundColor: const Color(0xFF112233),
+          border: border,
+          padding: const EdgeInsets.all(12),
+          child: const SizedBox(width: 40, height: 20),
+        ),
+      ),
+    );
+    final box = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer),
+    );
+    final deco = box.decoration! as BoxDecoration;
+    expect(deco.border, border);
+    expect(box.padding, const EdgeInsets.all(12));
+  });
+
   testWidgets('onHoverChanged and hover fill', (tester) async {
     final events = <bool>[];
     await tester.pumpWidget(
