@@ -139,4 +139,66 @@ void main() {
     await tester.tap(find.byIcon(Icons.close));
     expect(closed, isTrue);
   });
+
+  testWidgets('working defaults to CircularProgressIndicator', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        TpTabChip(
+          title: 'Tab',
+          active: true,
+          working: true,
+          onTap: () {},
+          onClose: () {},
+          leading: const Icon(Icons.terminal),
+        ),
+      ),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.terminal), findsNothing);
+  });
+
+  testWidgets('workingIndicator replaces default spinner when working', (
+    tester,
+  ) async {
+    const markerKey = Key('custom-working');
+    await tester.pumpWidget(
+      wrap(
+        TpTabChip(
+          title: 'Tab',
+          active: true,
+          working: true,
+          workingIndicator: const SizedBox(key: markerKey, width: 12, height: 12),
+          onTap: () {},
+          onClose: () {},
+          leading: const Icon(Icons.terminal),
+        ),
+      ),
+    );
+
+    expect(find.byKey(markerKey), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byIcon(Icons.terminal), findsNothing);
+  });
+
+  testWidgets('workingIndicator is ignored when not working', (tester) async {
+    const markerKey = Key('custom-working');
+    await tester.pumpWidget(
+      wrap(
+        TpTabChip(
+          title: 'Tab',
+          active: true,
+          working: false,
+          forceShowChrome: true,
+          workingIndicator: const SizedBox(key: markerKey, width: 12, height: 12),
+          onTap: () {},
+          onClose: () {},
+          leading: const Icon(Icons.terminal),
+        ),
+      ),
+    );
+
+    expect(find.byKey(markerKey), findsNothing);
+    expect(find.byIcon(Icons.terminal), findsOneWidget);
+  });
 }

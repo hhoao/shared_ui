@@ -8,6 +8,8 @@ import '../hover/tp_hover.dart';
 /// Presentation-only tab chip for [TpTabStrip] hosts.
 ///
 /// No domain types — hosts pass [title], [leading], [working], and menu hooks.
+/// When [working] is true, [workingIndicator] replaces [leading] if provided;
+/// otherwise a Material [CircularProgressIndicator] is shown.
 class TpTabChip extends StatefulWidget {
   const TpTabChip({
     required this.title,
@@ -16,6 +18,7 @@ class TpTabChip extends StatefulWidget {
     required this.onClose,
     this.leading,
     this.working = false,
+    this.workingIndicator,
     this.preview = false,
     this.accentColor,
     this.maxWidth = 200,
@@ -33,6 +36,10 @@ class TpTabChip extends StatefulWidget {
   final VoidCallback onClose;
   final Widget? leading;
   final bool working;
+
+  /// Optional host-supplied status glyph shown while [working] is true
+  /// (e.g. a product-specific spinner). Falls back to [CircularProgressIndicator].
+  final Widget? workingIndicator;
   final bool preview;
   final Color? accentColor;
   final double maxWidth;
@@ -120,14 +127,15 @@ class _TpTabChipState extends State<TpTabChip> {
                   ),
                   const SizedBox(width: 8),
                   if (widget.working)
-                    SizedBox(
-                      width: context.tpIconSizes.sm,
-                      height: context.tpIconSizes.sm,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: iconColor,
-                      ),
-                    )
+                    widget.workingIndicator ??
+                        SizedBox(
+                          width: context.tpIconSizes.sm,
+                          height: context.tpIconSizes.sm,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: iconColor,
+                          ),
+                        )
                   else if (widget.leading != null)
                     _TpTabChromeSlot(
                       visible: _showChrome,
