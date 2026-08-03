@@ -131,16 +131,26 @@ class _TpSelectWithCustomInputState extends State<TpSelectWithCustomInput> {
   }
 
   Widget _buildCustomActions(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final iconSize = context.tpIconSizes.sm;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextButton(
-          onPressed: _cancelCustom,
-          child: Text(widget.cancelLabel),
+        TpIconButton(
+          icon: Icons.close,
+          tooltip: widget.cancelLabel,
+          size: TpIconButton.kCompactSize,
+          iconSize: iconSize,
+          onTap: _cancelCustom,
         ),
-        FilledButton(
-          onPressed: _canConfirm ? _confirmCustom : null,
-          child: Text(widget.confirmLabel),
+        TpIconButton(
+          icon: Icons.check,
+          tooltip: widget.confirmLabel,
+          color: cs.primary,
+          size: TpIconButton.kCompactSize,
+          iconSize: iconSize,
+          enabled: _canConfirm,
+          onTap: _canConfirm ? _confirmCustom : null,
         ),
       ],
     );
@@ -169,7 +179,7 @@ class _TpSelectWithCustomInputState extends State<TpSelectWithCustomInput> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(child: _buildCustomInput()),
-          SizedBox(width: spacing.sm),
+          SizedBox(width: spacing.xs),
           _buildCustomActions(context),
         ],
       );
