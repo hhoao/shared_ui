@@ -112,6 +112,12 @@ class TpButton extends StatelessWidget {
     };
 
     return geometry.copyWith(
+      mouseCursor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return SystemMouseCursors.basic;
+        }
+        return SystemMouseCursors.click;
+      }),
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
           return scheme.onSurface.withValues(alpha: 0.12);
