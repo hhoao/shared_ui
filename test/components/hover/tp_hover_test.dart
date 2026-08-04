@@ -81,6 +81,40 @@ void main() {
     expect(deco.color, const Color(0xFF112233));
   });
 
+  testWidgets(
+    'transparent idle keeps hover RGB so color animation does not flash dark',
+    (tester) async {
+      const hover = Color(0xFF445566);
+      await tester.pumpWidget(
+        wrap(
+          TpHover(
+            backgroundColor: Colors.transparent,
+            hoverColor: hover,
+            duration: const Duration(milliseconds: 100),
+            onTap: () {},
+            child: const SizedBox(width: 40, height: 20),
+          ),
+        ),
+      );
+
+      final box = tester.widget<AnimatedContainer>(
+        find.byType(AnimatedContainer),
+      );
+      final idle = (box.decoration! as BoxDecoration).color!;
+      expect(idle.a, 0);
+      expect(idle.r, hover.r);
+      expect(idle.g, hover.g);
+      expect(idle.b, hover.b);
+
+      // Same RGB + alpha fade: mid-lerp stays on the hover hue (not black).
+      final mid = Color.lerp(idle, hover, 0.5)!;
+      expect(mid.r, closeTo(hover.r, 0.02));
+      expect(mid.g, closeTo(hover.g, 0.02));
+      expect(mid.b, closeTo(hover.b, 0.02));
+      expect(mid.a, closeTo(0.5, 0.02));
+    },
+  );
+
   testWidgets('border is painted on the outer decoration with padding', (
     tester,
   ) async {

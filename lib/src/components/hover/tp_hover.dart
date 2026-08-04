@@ -80,6 +80,15 @@ class _TpHoverState extends State<TpHover> {
 
   bool get _showHover => widget.enabled && (_hovered || widget.forceHover);
 
+  /// Fully transparent idle must share [hoverFill]'s RGB so [Color.lerp]
+  /// fades opacity instead of interpolating from black.
+  static Color _animationIdleColor(Color idleColor, Color hoverFill) {
+    if (idleColor.a == 0) {
+      return hoverFill.withValues(alpha: 0);
+    }
+    return idleColor;
+  }
+
   void _setHovered(bool value) {
     if (_hovered == value) return;
     setState(() => _hovered = value);
@@ -88,8 +97,13 @@ class _TpHoverState extends State<TpHover> {
 
   @override
   Widget build(BuildContext context) {
-    final idleColor = widget.backgroundColor ?? Colors.transparent;
     final hoverFill = widget.hoverColor ?? TpHover.defaultHoverColor(context);
+    // AnimatedContainer lerps ARGB channels. Colors.transparent is
+    // 0x00000000, so mid-tweens flash dark; keep hover RGB at alpha 0 instead.
+    final idleColor = _animationIdleColor(
+      widget.backgroundColor ?? Colors.transparent,
+      hoverFill,
+    );
     final cursor =
         widget.cursor ??
         (_interactive ? SystemMouseCursors.click : SystemMouseCursors.basic);
