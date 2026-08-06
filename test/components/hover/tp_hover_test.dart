@@ -115,6 +115,46 @@ void main() {
     },
   );
 
+  testWidgets(
+    'fill color-family change applies instantly (no cross-RGB lerp)',
+    (tester) async {
+      // A long duration means any RGB lerp would still be mid-animation on the
+      // first frame; the fill must already show the new color.
+      const duration = Duration(seconds: 30);
+      await tester.pumpWidget(
+        wrap(
+          TpHover(
+            backgroundColor: const Color(0xFF112233),
+            hoverColor: const Color(0xFF445566),
+            duration: duration,
+            onTap: () {},
+            child: const SizedBox(width: 40, height: 20),
+          ),
+        ),
+      );
+      // Selection-style change: a different RGB fill.
+      await tester.pumpWidget(
+        wrap(
+          TpHover(
+            backgroundColor: const Color(0xFFAABBCC),
+            hoverColor: const Color(0xFF445566),
+            duration: duration,
+            onTap: () {},
+            child: const SizedBox(width: 40, height: 20),
+          ),
+        ),
+      );
+      await tester.pump(); // first frame after the change
+      final box = tester.widget<AnimatedContainer>(
+        find.byType(AnimatedContainer),
+      );
+      expect(
+        (box.decoration! as BoxDecoration).color,
+        const Color(0xFFAABBCC),
+      );
+    },
+  );
+
   testWidgets('border is painted on the outer decoration with padding', (
     tester,
   ) async {
@@ -136,7 +176,18 @@ void main() {
     );
     final deco = box.decoration! as BoxDecoration;
     expect(deco.border, border);
-    expect(box.padding, const EdgeInsets.all(12));
+    // Padding lives on the Padding sibling that insets the child (the fill
+    // layer covers the full box including padding). AnimatedContainer also
+    // emits an internal zero Padding, so match on the value.
+    final padding = tester.widget<Padding>(
+      find.descendant(
+        of: find.byType(TpHover),
+        matching: find.byWidgetPredicate(
+          (w) => w is Padding && w.padding == const EdgeInsets.all(12),
+        ),
+      ),
+    );
+    expect(padding.padding, const EdgeInsets.all(12));
   });
 
   testWidgets('onHoverChanged and hover fill', (tester) async {

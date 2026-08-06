@@ -4,6 +4,13 @@ import 'package:flutter/material.dart';
 ///
 /// Provides click cursor when interactive, animated hover fill, and optional
 /// press scale. Prefer this over a bare [GestureDetector] for onTap-only UI.
+///
+/// The fill animates only the hover tint's alpha (same RGB as [hoverColor]),
+/// so hover fades stay clean. When the fill's color family changes — e.g. a
+/// caller flips [backgroundColor] to a selected/active fill — it is applied
+/// instantly: lerping between two different RGB colors paints muddy
+/// intermediate frames (a transparent hover tint → opaque selected fill reads
+/// as a bright flash on click).
 class TpHover extends StatefulWidget {
   const TpHover({
     super.key,
@@ -98,27 +105,47 @@ class _TpHoverState extends State<TpHover> {
   @override
   Widget build(BuildContext context) {
     final hoverFill = widget.hoverColor ?? TpHover.defaultHoverColor(context);
-    // AnimatedContainer lerps ARGB channels. Colors.transparent is
-    // 0x00000000, so mid-tweens flash dark; keep hover RGB at alpha 0 instead.
+    // Keep the idle fill on the hover RGB at alpha 0 so the hover fade only
+    // interpolates alpha. Colors.transparent is 0x00000000; a plain
+    // transparent idle would make mid-tweens flash dark.
     final idleColor = _animationIdleColor(
       widget.backgroundColor ?? Colors.transparent,
       hoverFill,
     );
+    final Color fill = _showHover ? hoverFill : idleColor;
     final cursor =
         widget.cursor ??
         (_interactive ? SystemMouseCursors.click : SystemMouseCursors.basic);
 
-    Widget content = AnimatedContainer(
+    Widget content = Container(
       width: widget.width,
       height: widget.height,
-      duration: widget.duration,
-      padding: widget.padding,
-      decoration: BoxDecoration(
-        color: _showHover ? hoverFill : idleColor,
-        borderRadius: widget.borderRadius,
-        border: widget.border,
+      child: Stack(
+        children: [
+          // Fill + border behind the child. Keyed by RGB (alpha masked off) so
+          // a fill color-family change — selection / active state — replaces
+          // this layer instantly instead of Color.lerp-ing through muddy
+          // intermediate colors (transparent hover tint → opaque selected fill
+          // reads as a bright flash). Alpha-only changes (hover fade) keep the
+          // key and animate. The child stays a Stack sibling so its State is
+          // not recreated by fill changes.
+          Positioned.fill(
+            child: AnimatedContainer(
+              key: ValueKey<int>(fill.toARGB32() & 0x00FFFFFF),
+              duration: widget.duration,
+              decoration: BoxDecoration(
+                color: fill,
+                borderRadius: widget.borderRadius,
+                border: widget.border,
+              ),
+            ),
+          ),
+          Padding(
+            padding: widget.padding ?? EdgeInsets.zero,
+            child: widget.child,
+          ),
+        ],
       ),
-      child: widget.child,
     );
 
     if (widget.pressScale != 1.0) {
