@@ -15,6 +15,9 @@ enum TpPressableShape { rounded, stadium, circle }
 ///
 /// Touch (Android / iOS): `Material` + `InkWell` ripple (no hover paint).
 ///
+/// The child is centered within the surface (use a full-size child or
+/// `Positioned` / `Align` inside it for custom placement).
+///
 /// Prefer this over a bare [GestureDetector] or [InkWell] for tappable UI.
 class TpHover extends StatefulWidget {
   const TpHover({
@@ -201,6 +204,10 @@ class _TpHoverState extends State<TpHover> {
       width: widget.width,
       height: widget.height,
       child: Stack(
+        // Center the child within the surface. A child that hugs its content
+        // (icon, min-size row) would otherwise be pinned to the top-left when
+        // the surface is stretched / fixed-size (e.g. status-bar pills).
+        alignment: Alignment.center,
         children: [
           // Fill + border behind the child. Keyed by RGB (alpha masked off) so
           // a fill color-family change replaces this layer instantly instead of
@@ -295,9 +302,17 @@ class _TpHoverState extends State<TpHover> {
           canRequestFocus: widget.canRequestFocus,
           splashColor: widget.splashColor,
           hoverColor: Colors.transparent,
-          child: Padding(
-            padding: widget.padding ?? EdgeInsets.zero,
-            child: widget.child,
+          // Mirror the desktop path: center a content-hugging child when the
+          // surface is stretched / fixed-size (Stack centers without expanding
+          // the child, so a pill keeps hugging its content horizontally).
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Padding(
+                padding: widget.padding ?? EdgeInsets.zero,
+                child: widget.child,
+              ),
+            ],
           ),
         ),
       ),

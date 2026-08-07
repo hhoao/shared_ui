@@ -426,4 +426,40 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets(
+    'centers a content-hugging child when the surface is stretched (status-bar pill)',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              height: 24,
+              child: TpHover(
+                onTap: () {},
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.memory, size: 13),
+                    const SizedBox(width: 6),
+                    const Text('512 MB', style: TextStyle(height: 1.0)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final boxRect = tester.getRect(find.byType(TpHover));
+      final textRect = tester.getRect(find.text('512 MB'));
+      // Vertical center of the content equals the surface center — the child
+      // must not be pinned to the top-left of the stretched box.
+      expect(textRect.center.dy, closeTo(boxRect.center.dy, 0.5));
+      // Width still hugs content (centering must not expand the pill).
+      expect(textRect.width, lessThan(boxRect.width));
+    },
+  );
 }
