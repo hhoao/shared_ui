@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/tp_theme.dart';
+import '../hover/tp_hover.dart';
 
 /// Compact icon control for toolbars and list rows: square hit target, rounded
 /// ink splash (AppFlowy-style).
@@ -84,24 +85,17 @@ class TpIconButton extends StatelessWidget {
       iconChild = Opacity(opacity: 0.38, child: iconChild);
     }
 
-    Widget ink = Ink(
+    Widget ink = TpHover(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        color: fill,
-        border: border,
-      ),
-      child: InkWell(
-        borderRadius: radius,
-        hoverColor: effectiveColor.withValues(alpha: 0.12),
-        splashColor: effectiveColor.withValues(alpha: 0.2),
-        mouseCursor: enabled && onTap != null
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
-        onTap: enabled ? onTap : null,
-        child: Center(child: iconChild),
-      ),
+      borderRadius: radius,
+      backgroundColor: fill,
+      border: border,
+      hoverColor: effectiveColor.withValues(alpha: 0.12),
+      splashColor: effectiveColor.withValues(alpha: 0.2),
+      enabled: enabled,
+      onTap: enabled ? onTap : null,
+      child: Center(child: iconChild),
     );
 
     if (tooltip != null && tooltip!.isNotEmpty) {

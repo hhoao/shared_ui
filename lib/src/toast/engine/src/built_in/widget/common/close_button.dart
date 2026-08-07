@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_ui/src/toast/engine/src/utils/toast_theme_utils.dart';
 
+import '../../../../../../components/hover/tp_hover.dart';
+
 /// Signature for a function that builds a custom close button widget.
 ///
 /// [context] The build context.
@@ -151,9 +153,9 @@ class _DefaultCloseButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(5),
         child: Builder(
           builder: (context) {
-            return InkWell(
-              onTap: onCloseTap,
+            return TpHover(
               borderRadius: BorderRadius.circular(5),
+              onTap: onCloseTap,
               child: Icon(
                 toastStyle.closeIcon,
                 color: toastStyle.closeIconColor,

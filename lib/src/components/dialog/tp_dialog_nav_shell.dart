@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/tp_text_styles.dart';
 import '../../theme/tp_theme.dart';
+import '../hover/tp_hover.dart';
 import '../icon_button/tp_icon_button.dart';
 import 'tp_dialog_mobile_nav_bar.dart';
 
@@ -238,38 +239,35 @@ class _NavTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: _itemGap),
-      child: Material(
-        color: selected ? cs.primaryContainer : Colors.transparent,
+      child: TpHover(
+        backgroundColor: selected ? cs.primaryContainer : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: SizedBox(
-            height: _height,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: _horizontalPadding,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: iconSizes.md,
-                    color: selected ? selectedFg : muted,
-                  ),
-                  const SizedBox(width: _iconLabelGap),
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: styles.md.copyWith(
-                        color: selected ? selectedFg : normalFg,
-                      ),
+        onTap: onTap,
+        child: SizedBox(
+          height: _height,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: _horizontalPadding,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: iconSizes.md,
+                  color: selected ? selectedFg : muted,
+                ),
+                const SizedBox(width: _iconLabelGap),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: styles.md.copyWith(
+                      color: selected ? selectedFg : normalFg,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -459,40 +457,37 @@ class _NarrowNavCard extends StatelessWidget {
                 endIndent: spacing.lg,
                 color: cs.outlineVariant.withValues(alpha: 0.45),
               ),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => onSelect(index),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: spacing.lg,
-                    vertical: spacing.md + 2,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        entry.icon,
-                        size: iconSizes.md,
-                        color: cs.onSurface,
-                      ),
-                      SizedBox(width: spacing.md),
-                      Expanded(
-                        child: Text(
-                          entry.navLabel(context),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TpTextStyles.of(context).md.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.88),
-                          ),
+            TpHover(
+              onTap: () => onSelect(index),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: spacing.lg,
+                  vertical: spacing.md + 2,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      entry.icon,
+                      size: iconSizes.md,
+                      color: cs.onSurface,
+                    ),
+                    SizedBox(width: spacing.md),
+                    Expanded(
+                      child: Text(
+                        entry.navLabel(context),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TpTextStyles.of(context).md.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.88),
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: iconSizes.lg,
-                        color: cs.onSurfaceVariant.withValues(alpha: 0.55),
-                      ),
-                    ],
-                  ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: iconSizes.lg,
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.55),
+                    ),
+                  ],
                 ),
               ),
             ),
