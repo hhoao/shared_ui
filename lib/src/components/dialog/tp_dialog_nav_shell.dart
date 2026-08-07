@@ -241,6 +241,14 @@ class _NavTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: _itemGap),
       child: TpHover(
         backgroundColor: selected ? cs.primaryContainer : Colors.transparent,
+        // Desktop hover fill is a strict ternary (hoverColor : backgroundColor),
+        // so blend the hover tint over the resting fill instead of letting it
+        // replace the primaryContainer selection highlight (mirrors the
+        // workspace_hub_shell / sidebar_session_tile composite fix).
+        hoverColor: Color.alphaBlend(
+          cs.onSurface.withValues(alpha: 0.06),
+          selected ? cs.primaryContainer : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: SizedBox(
