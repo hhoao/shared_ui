@@ -1,7 +1,26 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' as ft show testWidgets;
 import 'package:shared_ui/shared_ui.dart';
+
+/// shared_ui tests default to the desktop platform so [TpHover] renders its
+/// desktop (GestureDetector + hover + cursor) path. A suite-wide override in
+/// `flutter_test_config.dart` cannot be used (see the note there), so every
+/// test here runs under `TargetPlatform.linux`; touch tests opt into
+/// `TargetPlatform.android` inside their body. The override is always cleared
+/// in a `finally` so flutter_test's debug-variable invariant is satisfied.
+void testWidgets(String description, WidgetTesterCallback callback) {
+  ft.testWidgets(description, (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await callback(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+}
 
 void main() {
   Widget wrap(Widget child) {
@@ -295,5 +314,134 @@ void main() {
       ),
     );
     expect(find.byType(AnimatedScale), findsOneWidget);
+  });
+
+  group('adaptive touch path', () {
+    testWidgets('renders InkWell (ripple) on touch platforms', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      await tester.pumpWidget(
+        wrap(TpHover(onTap: () {}, child: const Text('t'))),
+      );
+      expect(find.byType(InkWell), findsOneWidget);
+      // No animated hover fill on touch.
+      expect(find.byType(AnimatedContainer), findsNothing);
+    });
+
+    testWidgets('desktop path keeps GestureDetector fill, no InkWell', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(TpHover(onTap: () {}, child: const Text('t'))),
+      );
+      expect(find.byType(InkWell), findsNothing);
+      expect(find.byType(AnimatedContainer), findsOneWidget);
+    });
+  });
+
+  group('shape', () {
+    testWidgets('circle derives circular radius for desktop fill', (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          TpHover(
+            shape: TpPressableShape.circle,
+            width: 36,
+            height: 36,
+            onTap: () {},
+            child: const SizedBox(width: 20, height: 20),
+          ),
+        ),
+      );
+      final box = tester.widget<AnimatedContainer>(find.byType(AnimatedContainer));
+      final deco = box.decoration! as BoxDecoration;
+      expect(deco.borderRadius, BorderRadius.circular(18));
+    });
+
+    testWidgets('touch path circle uses CircleBorder', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      await tester.pumpWidget(
+        wrap(
+          TpHover(
+            shape: TpPressableShape.circle,
+            width: 36,
+            height: 36,
+            onTap: () {},
+            child: const SizedBox(width: 20, height: 20),
+          ),
+        ),
+      );
+      final material = tester.widget<Material>(
+        find.descendant(
+          of: find.byType(TpHover),
+          matching: find.byType(Material),
+        ),
+      );
+      expect(material.shape, isA<CircleBorder>());
+    });
+
+    testWidgets('stadium touch path uses StadiumBorder', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      await tester.pumpWidget(
+        wrap(TpHover(shape: TpPressableShape.stadium, onTap: () {}, child: const Text('x'))),
+      );
+      final material = tester.widget<Material>(
+        find.descendant(
+          of: find.byType(TpHover),
+          matching: find.byType(Material),
+        ),
+      );
+      expect(material.shape, isA<StadiumBorder>());
+    });
+  });
+
+  group('tap passthrough', () {
+    testWidgets('onTapDown and onTapUp deliver details', (tester) async {
+      TapDownDetails? down;
+      TapUpDetails? up;
+      var cancelled = false;
+      await tester.pumpWidget(
+        wrap(
+          TpHover(
+            onTapDown: (d) => down = d,
+            onTapUp: (d) => up = d,
+            onTapCancel: () => cancelled = true,
+            onTap: () {},
+            child: const SizedBox(width: 80, height: 40),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(TpHover));
+      expect(down, isNotNull);
+      expect(up, isNotNull);
+      expect(cancelled, isFalse);
+    });
+  });
+
+  testWidgets('canRequestFocus=false keeps focus out of the tap surface', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        TpHover(
+          canRequestFocus: false,
+          onTap: () {},
+          child: const Text('x'),
+        ),
+      ),
+    );
+    await tester.tap(find.byType(TpHover));
+    // The MaterialApp route's ModalScope FocusScope holds primary focus; the
+    // TpHover tap surface (canRequestFocus: false) must not claim it.
+    final primary = tester.binding.focusManager.primaryFocus;
+    expect(primary, isNotNull);
+    expect(
+      find.ancestor(
+        of: find.byElementPredicate((Element e) => identical(e, primary!.context)),
+        matching: find.byType(TpHover),
+      ),
+      findsNothing,
+    );
   });
 }

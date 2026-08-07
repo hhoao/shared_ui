@@ -2,7 +2,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' as ft show testWidgets;
 import 'package:shared_ui/shared_ui.dart';
+
+/// shared_ui tests default to the desktop platform so [TpHover] renders its
+/// desktop path. See `tp_hover_test.dart` for why this is a per-test shim
+/// rather than a suite-wide `flutter_test_config.dart` override.
+void testWidgets(String description, WidgetTesterCallback callback) {
+  ft.testWidgets(description, (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await callback(tester);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+}
 
 void main() {
   Widget wrap(Widget child) {

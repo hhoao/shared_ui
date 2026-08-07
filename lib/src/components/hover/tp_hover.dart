@@ -1,16 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// Subtle hover / press wrapper for interactive rows, chips, and chrome.
+/// Shape of the [TpHover] pressable surface.
 ///
-/// Provides click cursor when interactive, animated hover fill, and optional
-/// press scale. Prefer this over a bare [GestureDetector] for onTap-only UI.
+/// On desktop this drives the [BorderRadius] of the animated fill; on touch it
+/// drives the [ShapeBorder] of the [Material] that hosts the [InkWell] ripple.
+enum TpPressableShape { rounded, stadium, circle }
+
+/// Platform-adaptive pressable surface — the single tap/hover primitive.
 ///
-/// The fill animates only the hover tint's alpha (same RGB as [hoverColor]),
-/// so hover fades stay clean. When the fill's color family changes — e.g. a
-/// caller flips [backgroundColor] to a selected/active fill — it is applied
-/// instantly: lerping between two different RGB colors paints muddy
-/// intermediate frames (a transparent hover tint → opaque selected fill reads
-/// as a bright flash on click).
+/// Desktop (Linux / macOS / Windows / web): `GestureDetector` + animated
+/// hover/active fill (alpha-only fade) + hand cursor when interactive (arrow
+/// when disabled), with keyboard `Focus` and `Semantics`.
+///
+/// Touch (Android / iOS): `Material` + `InkWell` ripple (no hover paint).
+///
+/// Prefer this over a bare [GestureDetector] or [InkWell] for tappable UI.
 class TpHover extends StatefulWidget {
   const TpHover({
     super.key,
@@ -22,6 +27,9 @@ class TpHover extends StatefulWidget {
     this.onSecondaryTap,
     this.onSecondaryTapDown,
     this.onLongPress,
+    this.onTapDown,
+    this.onTapUp,
+    this.onTapCancel,
     this.padding,
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
     this.duration = const Duration(milliseconds: 120),
@@ -32,6 +40,9 @@ class TpHover extends StatefulWidget {
     this.height,
     this.enabled = true,
     this.pressScale = 1.0,
+    this.shape = TpPressableShape.rounded,
+    this.canRequestFocus = true,
+    this.splashColor,
   });
 
   final Widget child;
@@ -47,6 +58,12 @@ class TpHover extends StatefulWidget {
   final VoidCallback? onSecondaryTap;
   final GestureTapDownCallback? onSecondaryTapDown;
   final VoidCallback? onLongPress;
+
+  /// Fired on pointer down (menu rows that select immediately). When unset and
+  /// [pressScale] != 1.0, a press-scale bookkeeping callback is installed.
+  final GestureTapDownCallback? onTapDown;
+  final GestureTapUpCallback? onTapUp;
+  final GestureTapCancelCallback? onTapCancel;
   final EdgeInsetsGeometry? padding;
   final BorderRadius borderRadius;
   final Duration duration;
@@ -61,6 +78,14 @@ class TpHover extends StatefulWidget {
 
   /// Scale applied while the pointer is down. `1.0` disables press feedback.
   final double pressScale;
+  final TpPressableShape shape;
+
+  /// Desktop path: whether the tap surface can take keyboard focus. Mirror of
+  /// [InkWell.canRequestFocus] for call sites that must keep focus elsewhere.
+  final bool canRequestFocus;
+
+  /// Touch path: the [InkWell] splash color (defaults to theme splash).
+  final Color? splashColor;
 
   /// Default sidebar row hover tint.
   static Color defaultHoverColor(BuildContext context) {
@@ -78,12 +103,18 @@ class _TpHoverState extends State<TpHover> {
   var _hovered = false;
   var _pressed = false;
 
+  static bool get _isTouchPlatform =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
   bool get _interactive =>
       widget.enabled &&
       (widget.onTap != null ||
           widget.onSecondaryTap != null ||
           widget.onSecondaryTapDown != null ||
-          widget.onLongPress != null);
+          widget.onLongPress != null ||
+          widget.onTapDown != null);
 
   bool get _showHover => widget.enabled && (_hovered || widget.forceHover);
 
@@ -102,12 +133,61 @@ class _TpHoverState extends State<TpHover> {
     widget.onHoverChanged?.call(value);
   }
 
+  BorderRadius get _desktopRadius {
+    return switch (widget.shape) {
+      TpPressableShape.rounded => widget.borderRadius,
+      TpPressableShape.stadium =>
+        BorderRadius.circular((widget.height ?? 999) / 2),
+      TpPressableShape.circle =>
+        BorderRadius.circular(((widget.width ?? widget.height) ?? 0) / 2),
+    };
+  }
+
+  ShapeBorder get _touchShape {
+    final side = widget.border?.top ?? BorderSide.none;
+    return switch (widget.shape) {
+      TpPressableShape.rounded =>
+        RoundedRectangleBorder(borderRadius: widget.borderRadius, side: side),
+      TpPressableShape.stadium => StadiumBorder(side: side),
+      TpPressableShape.circle => CircleBorder(side: side),
+    };
+  }
+
+  GestureTapDownCallback? get _onTapDown {
+    final custom = widget.onTapDown;
+    if (custom != null) return custom;
+    if (widget.pressScale != 1.0) {
+      return (_) => setState(() => _pressed = true);
+    }
+    return null;
+  }
+
+  GestureTapUpCallback? get _onTapUp {
+    final custom = widget.onTapUp;
+    if (custom != null) return custom;
+    if (widget.pressScale != 1.0) {
+      return (_) => setState(() => _pressed = false);
+    }
+    return null;
+  }
+
+  GestureTapCancelCallback? get _onTapCancel {
+    final custom = widget.onTapCancel;
+    if (custom != null) return custom;
+    if (widget.pressScale != 1.0) {
+      return () => setState(() => _pressed = false);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isTouchPlatform) return _buildTouch(context);
+    return _buildDesktop(context);
+  }
+
+  Widget _buildDesktop(BuildContext context) {
     final hoverFill = widget.hoverColor ?? TpHover.defaultHoverColor(context);
-    // Keep the idle fill on the hover RGB at alpha 0 so the hover fade only
-    // interpolates alpha. Colors.transparent is 0x00000000; a plain
-    // transparent idle would make mid-tweens flash dark.
     final idleColor = _animationIdleColor(
       widget.backgroundColor ?? Colors.transparent,
       hoverFill,
@@ -123,19 +203,15 @@ class _TpHoverState extends State<TpHover> {
       child: Stack(
         children: [
           // Fill + border behind the child. Keyed by RGB (alpha masked off) so
-          // a fill color-family change — selection / active state — replaces
-          // this layer instantly instead of Color.lerp-ing through muddy
-          // intermediate colors (transparent hover tint → opaque selected fill
-          // reads as a bright flash). Alpha-only changes (hover fade) keep the
-          // key and animate. The child stays a Stack sibling so its State is
-          // not recreated by fill changes.
+          // a fill color-family change replaces this layer instantly instead of
+          // Color.lerp-ing through muddy intermediates.
           Positioned.fill(
             child: AnimatedContainer(
               key: ValueKey<int>(fill.toARGB32() & 0x00FFFFFF),
               duration: widget.duration,
               decoration: BoxDecoration(
                 color: fill,
-                borderRadius: widget.borderRadius,
+                borderRadius: _desktopRadius,
                 border: widget.border,
               ),
             ),
@@ -161,31 +237,85 @@ class _TpHoverState extends State<TpHover> {
       content = GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
         onSecondaryTap: widget.onSecondaryTap,
         onSecondaryTapDown: widget.onSecondaryTapDown,
         onLongPress: widget.onLongPress,
-        onTapDown: widget.pressScale != 1.0
-            ? (_) => setState(() => _pressed = true)
-            : null,
-        onTapUp: widget.pressScale != 1.0
-            ? (_) => setState(() => _pressed = false)
-            : null,
-        onTapCancel: widget.pressScale != 1.0
-            ? () => setState(() => _pressed = false)
-            : null,
+        child: content,
+      );
+    }
+
+    content = Semantics(
+      button: _interactive,
+      enabled: widget.enabled,
+      onTap: widget.onTap != null
+          ? () => widget.onTap!()
+          : null,
+      child: content,
+    );
+
+    return Focus(
+      canRequestFocus: _interactive && widget.canRequestFocus,
+      child: MouseRegion(
+        onEnter: (_) {
+          if (widget.enabled) _setHovered(true);
+        },
+        onExit: (_) {
+          _setHovered(false);
+          if (_pressed) setState(() => _pressed = false);
+        },
+        cursor: cursor,
+        child: content,
+      ),
+    );
+  }
+
+  Widget _buildTouch(BuildContext context) {
+    final shape = _touchShape;
+    final fill = widget.backgroundColor ?? Colors.transparent;
+
+    Widget content = SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: Material(
+        color: fill,
+        shape: shape,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: widget.onTap,
+          onTapDown: _onTapDown,
+          onTapUp: _onTapUp,
+          onTapCancel: _onTapCancel,
+          onSecondaryTap: widget.onSecondaryTap,
+          onSecondaryTapDown: widget.onSecondaryTapDown,
+          onLongPress: widget.onLongPress,
+          customBorder: shape,
+          canRequestFocus: widget.canRequestFocus,
+          splashColor: widget.splashColor,
+          hoverColor: Colors.transparent,
+          child: Padding(
+            padding: widget.padding ?? EdgeInsets.zero,
+            child: widget.child,
+          ),
+        ),
+      ),
+    );
+
+    if (widget.pressScale != 1.0) {
+      content = AnimatedScale(
+        scale: _pressed && _interactive ? widget.pressScale : 1.0,
+        duration: widget.duration,
+        curve: Curves.easeOut,
         child: content,
       );
     }
 
     return MouseRegion(
-      onEnter: (_) {
-        if (widget.enabled) _setHovered(true);
-      },
-      onExit: (_) {
-        _setHovered(false);
-        if (_pressed) setState(() => _pressed = false);
-      },
-      cursor: cursor,
+      cursor:
+          widget.cursor ??
+          (_interactive ? SystemMouseCursors.click : SystemMouseCursors.basic),
       child: content,
     );
   }
