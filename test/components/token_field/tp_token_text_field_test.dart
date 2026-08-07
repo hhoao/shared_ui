@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
+import '../../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() {

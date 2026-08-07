@@ -1,23 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_test/flutter_test.dart' as ft show testWidgets;
+import '../../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
-
-/// shared_ui tests default to the desktop platform so [TpHover] renders its
-/// desktop path. See `tp_hover_test.dart` for why this is a per-test shim
-/// rather than a suite-wide `flutter_test_config.dart` override.
-void testWidgets(String description, WidgetTesterCallback callback) {
-  ft.testWidgets(description, (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
-    try {
-      await callback(tester);
-    } finally {
-      debugDefaultTargetPlatformOverride = null;
-    }
-  });
-}
 
 void main() {
   Widget wrap(Widget child) {
@@ -34,29 +19,24 @@ void main() {
   }
 
   testWidgets('trailing appears after mouse enter on desktop', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
-    try {
-      await tester.pumpWidget(
-        wrap(
-          const TpHoverRow(
-            trailing: Text('actions'),
-            child: Text('label'),
-          ),
+    await tester.pumpWidget(
+      wrap(
+        const TpHoverRow(
+          trailing: Text('actions'),
+          child: Text('label'),
         ),
-      );
-      expect(find.text('actions'), findsNothing);
+      ),
+    );
+    expect(find.text('actions'), findsNothing);
 
-      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await gesture.addPointer(location: Offset.zero);
-      addTearDown(gesture.removePointer);
-      await tester.pump();
-      await gesture.moveTo(tester.getCenter(find.byType(TpHoverRow)));
-      await tester.pumpAndSettle();
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: Offset.zero);
+    addTearDown(gesture.removePointer);
+    await tester.pump();
+    await gesture.moveTo(tester.getCenter(find.byType(TpHoverRow)));
+    await tester.pumpAndSettle();
 
-      expect(find.text('actions'), findsOneWidget);
-    } finally {
-      debugDefaultTargetPlatformOverride = null;
-    }
+    expect(find.text('actions'), findsOneWidget);
   });
 
   testWidgets('forceShowTrailing shows trailing without hover', (tester) async {

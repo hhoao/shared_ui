@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import '../../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 Widget _wrapMobile({
@@ -34,7 +34,7 @@ Widget _wrapMobile({
 }
 
 void main() {
-  testWidgets('drag from left edge past midpoint opens drawer', (tester) async {
+  testWidgetsTouch('drag from left edge past midpoint opens drawer', (tester) async {
     await tester.pumpWidget(
       _wrapMobile(
         child: const TpSidebar(child: Text('drawer-body')),
@@ -47,7 +47,7 @@ void main() {
     expect(find.text('drawer-body'), findsOneWidget);
   });
 
-  testWidgets('drag below midpoint from open snaps back open', (tester) async {
+  testWidgetsTouch('drag below midpoint from open snaps back open', (tester) async {
     await tester.pumpWidget(
       _wrapMobile(
         child: const TpSidebar(child: Text('drawer-body')),
@@ -73,7 +73,7 @@ void main() {
     expect(find.text('drawer-body'), findsOneWidget);
   });
 
-  testWidgets('drag past midpoint from open closes drawer', (tester) async {
+  testWidgetsTouch('drag past midpoint from open closes drawer', (tester) async {
     const drawerWidth = 320;
 
     await tester.pumpWidget(
@@ -99,7 +99,7 @@ void main() {
     expect(find.text('drawer-body'), findsNothing);
   });
 
-  testWidgets('system back closes open drawer without claiming route pop',
+  testWidgetsTouch('system back closes open drawer without claiming route pop',
       (tester) async {
     await tester.pumpWidget(
       _wrapMobile(
@@ -123,7 +123,7 @@ void main() {
     expect(handled, isA<bool>());
   });
 
-  testWidgets('edge drag does nothing when edgeOpenEnabled is false',
+  testWidgetsTouch('edge drag does nothing when edgeOpenEnabled is false',
       (tester) async {
     await tester.pumpWidget(
       _wrapMobile(
@@ -138,7 +138,7 @@ void main() {
     expect(find.text('drawer-body'), findsNothing);
   });
 
-  testWidgets('widthMobileOverride keeps fixed drawer width', (tester) async {
+  testWidgetsTouch('widthMobileOverride keeps fixed drawer width', (tester) async {
     await tester.pumpWidget(
       _wrapMobile(
         child: TpSidebar(
@@ -161,7 +161,7 @@ void main() {
     expect(panel.width, closeTo(288, 0.5));
   });
 
-  testWidgets('tap scrim closes open drawer', (tester) async {
+  testWidgetsTouch('tap scrim closes open drawer', (tester) async {
     await tester.pumpWidget(
       _wrapMobile(
         child: const TpSidebar(child: Text('drawer-body')),

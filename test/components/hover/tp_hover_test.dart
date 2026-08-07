@@ -1,26 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_test/flutter_test.dart' as ft show testWidgets;
+import '../../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
-
-/// shared_ui tests default to the desktop platform so [TpHover] renders its
-/// desktop (GestureDetector + hover + cursor) path. A suite-wide override in
-/// `flutter_test_config.dart` cannot be used (see the note there), so every
-/// test here runs under `TargetPlatform.linux`; touch tests opt into
-/// `TargetPlatform.android` inside their body. The override is always cleared
-/// in a `finally` so flutter_test's debug-variable invariant is satisfied.
-void testWidgets(String description, WidgetTesterCallback callback) {
-  ft.testWidgets(description, (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
-    try {
-      await callback(tester);
-    } finally {
-      debugDefaultTargetPlatformOverride = null;
-    }
-  });
-}
 
 void main() {
   Widget wrap(Widget child) {

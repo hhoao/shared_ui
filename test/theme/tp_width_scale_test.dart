@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
+import '../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() {
