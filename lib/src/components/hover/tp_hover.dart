@@ -27,6 +27,7 @@ class TpHover extends StatefulWidget {
     this.backgroundColor,
     this.border,
     this.onTap,
+    this.onDoubleTap,
     this.onSecondaryTap,
     this.onSecondaryTapDown,
     this.onLongPress,
@@ -58,6 +59,11 @@ class TpHover extends StatefulWidget {
   /// stroke sits on the outer edge (not inside [padding]).
   final BoxBorder? border;
   final VoidCallback? onTap;
+
+  /// Fired when the surface is double-tapped. When both [onTap] and
+  /// [onDoubleTap] are set, a single tap only fires after the double-tap
+  /// window (kDoubleTapTimeout) expires.
+  final VoidCallback? onDoubleTap;
   final VoidCallback? onSecondaryTap;
   final GestureTapDownCallback? onSecondaryTapDown;
   final VoidCallback? onLongPress;
@@ -114,6 +120,7 @@ class _TpHoverState extends State<TpHover> {
   bool get _interactive =>
       widget.enabled &&
       (widget.onTap != null ||
+          widget.onDoubleTap != null ||
           widget.onSecondaryTap != null ||
           widget.onSecondaryTapDown != null ||
           widget.onLongPress != null ||
@@ -244,6 +251,7 @@ class _TpHoverState extends State<TpHover> {
       content = GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
         onTapDown: _onTapDown,
         onTapUp: _onTapUp,
         onTapCancel: _onTapCancel,
@@ -292,6 +300,7 @@ class _TpHoverState extends State<TpHover> {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: widget.onTap,
+          onDoubleTap: widget.onDoubleTap,
           onTapDown: _onTapDown,
           onTapUp: _onTapUp,
           onTapCancel: _onTapCancel,
