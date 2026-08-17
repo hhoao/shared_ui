@@ -75,4 +75,30 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('truncates a long description inside a short grid cell', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          width: 266,
+          height: 274,
+          child: TpCatalogCardShell(
+            title: 'Reviewer',
+            source: 'TeamPilot built-in',
+            description:
+                'A long builtin persona description that used to overflow '
+                'fixed catalog grid cells because the shell laid out the full '
+                'paragraph without a line limit. Extra sentences keep coming '
+                'so the card body would exceed the 300px main axis extent.',
+            metadata: const SizedBox(height: 48, width: double.infinity),
+            action: const SizedBox(height: 36, width: 80),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
 }

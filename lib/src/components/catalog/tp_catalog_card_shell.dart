@@ -35,64 +35,95 @@ class TpCatalogCardShell extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textStyles = TpTextStyles.of(context);
 
-    return TpCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final header = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (leading != null) ...[
+          Padding(
+            padding: EdgeInsets.only(right: spacing.sm),
+            child: leading,
+          ),
+        ],
+        Expanded(
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.start,
+            spacing: spacing.sm,
+            runSpacing: spacing.xs,
             children: [
-              if (leading != null) ...[
-                Padding(
-                  padding: EdgeInsets.only(right: spacing.sm),
-                  child: leading,
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 120),
+                child: Text(
+                  title,
+                  style: textStyles.mdSemiboldColored(scheme.onSurface),
                 ),
-              ],
-              Expanded(
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.start,
-                  spacing: spacing.sm,
-                  runSpacing: spacing.xs,
-                  children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 120),
-                      child: Text(
-                        title,
-                        style: textStyles.mdSemiboldColored(scheme.onSurface),
-                      ),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 240),
-                      child: Text(
-                        source,
-                        style: textStyles.smColored(
-                          scheme.onSurface.withValues(alpha: 0.65),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 240),
+                child: Text(
+                  source,
+                  style: textStyles.smColored(
+                    scheme.onSurface.withValues(alpha: 0.65),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          if (description.trim().isNotEmpty) ...[
-            SizedBox(height: spacing.sm),
-            Text(
-              description,
-              style: textStyles.smRelaxedColored(
-                scheme.onSurface.withValues(alpha: 0.78),
+        ),
+      ],
+    );
+
+    final trimmedDescription = description.trim();
+    final middleChildren = <Widget>[
+      if (trimmedDescription.isNotEmpty) ...[
+        SizedBox(height: spacing.sm),
+        Text(
+          trimmedDescription,
+          style: textStyles.smRelaxedColored(
+            scheme.onSurface.withValues(alpha: 0.78),
+          ),
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+      if (body != null) ...[SizedBox(height: spacing.md), body!],
+    ];
+
+    final footer = <Widget>[
+      SizedBox(height: spacing.md),
+      metadata,
+      SizedBox(height: spacing.md),
+      Align(alignment: AlignmentDirectional.centerEnd, child: action),
+    ];
+
+    return TpCard(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (!constraints.hasBoundedHeight) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [header, ...middleChildren, ...footer],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              header,
+              Expanded(
+                child: middleChildren.isEmpty
+                    ? const SizedBox.shrink()
+                    : ListView(
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: middleChildren,
+                      ),
               ),
-            ),
-          ],
-          if (body != null) ...[SizedBox(height: spacing.md), body!],
-          SizedBox(height: spacing.md),
-          metadata,
-          SizedBox(height: spacing.md),
-          Align(alignment: AlignmentDirectional.centerEnd, child: action),
-        ],
+              ...footer,
+            ],
+          );
+        },
       ),
     );
   }
