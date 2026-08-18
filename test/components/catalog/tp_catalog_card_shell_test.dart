@@ -101,4 +101,27 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('does not overflow a 160px-tall landing-picker cell', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          width: 266,
+          height: 160,
+          child: TpCatalogCardShell(
+            title: 'Research Squad',
+            source: 'o/r/squad',
+            description: 'deep research',
+            metadata: const SizedBox(height: 72, width: double.infinity),
+            action: const SizedBox(height: 40, width: 80),
+            body: const SizedBox(height: 40, width: double.infinity),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
 }

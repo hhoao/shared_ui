@@ -101,26 +101,26 @@ class TpCatalogCardShell extends StatelessWidget {
     return TpCard(
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final children = [header, ...middleChildren, ...footer];
           if (!constraints.hasBoundedHeight) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [header, ...middleChildren, ...footer],
+              children: children,
             );
           }
+          // Header + metadata + action can exceed a short grid cell (the
+          // landing picker used to give discovery cards 186px). Keep the
+          // column in an Expanded ListView so the shell never overflows.
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              header,
               Expanded(
-                child: middleChildren.isEmpty
-                    ? const SizedBox.shrink()
-                    : ListView(
-                        padding: EdgeInsets.zero,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: middleChildren,
-                      ),
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: children,
+                ),
               ),
-              ...footer,
             ],
           );
         },
