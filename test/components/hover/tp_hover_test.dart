@@ -191,6 +191,40 @@ void main() {
     expect(padding.padding, const EdgeInsets.all(12));
   });
 
+  testWidgets(
+    'translucent hoverColor composites over backgroundColor instead of replacing it',
+    (tester) async {
+      // Selected git rows / armed icon buttons pass an opaque resting fill and
+      // a low-alpha hover tint. Replacing the fill with the tint alone makes
+      // the selection/accent color vanish on hover.
+      const resting = Color(0xFF112233);
+      const tint = Color(0x1EFFFFFF);
+      await tester.pumpWidget(
+        wrap(
+          TpHover(
+            backgroundColor: resting,
+            hoverColor: tint,
+            onTap: () {},
+            child: const SizedBox(width: 40, height: 20),
+          ),
+        ),
+      );
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await tester.pump();
+      await gesture.moveTo(tester.getCenter(find.byType(TpHover)));
+      await tester.pumpAndSettle();
+      final box = tester.widget<AnimatedContainer>(
+        find.byType(AnimatedContainer),
+      );
+      expect(
+        (box.decoration! as BoxDecoration).color,
+        Color.alphaBlend(tint, resting),
+      );
+    },
+  );
+
   testWidgets('onHoverChanged and hover fill', (tester) async {
     final events = <bool>[];
     await tester.pumpWidget(

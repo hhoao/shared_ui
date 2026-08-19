@@ -10,7 +10,9 @@ enum TpPressableShape { rounded, stadium, circle }
 /// Platform-adaptive pressable surface — the single tap/hover primitive.
 ///
 /// Desktop (Linux / macOS / Windows / web): `GestureDetector` + animated
-/// hover/active fill (alpha-only fade) + hand cursor when interactive (arrow
+/// hover/active fill. [hoverColor] is composited over [backgroundColor] (not
+/// swapped in), so selected/armed fills stay visible. Transparent idle shares
+/// the hover RGB for an alpha-only fade. Hand cursor when interactive (arrow
 /// when disabled), with keyboard `Focus` and `Semantics`.
 ///
 /// Touch (Android / iOS): `Material` + `InkWell` ripple (no hover paint).
@@ -50,6 +52,10 @@ class TpHover extends StatefulWidget {
   });
 
   final Widget child;
+
+  /// Hover tint composited over [backgroundColor]. A translucent value (the
+  /// default) keeps the resting fill; an opaque value still covers it. Null
+  /// uses [defaultHoverColor].
   final Color? hoverColor;
 
   /// Idle fill behind [child]. Transparent when null.
@@ -198,11 +204,10 @@ class _TpHoverState extends State<TpHover> {
 
   Widget _buildDesktop(BuildContext context) {
     final hoverFill = widget.hoverColor ?? TpHover.defaultHoverColor(context);
-    final idleColor = _animationIdleColor(
-      widget.backgroundColor ?? Colors.transparent,
-      hoverFill,
-    );
-    final Color fill = _showHover ? hoverFill : idleColor;
+    final resting = widget.backgroundColor ?? Colors.transparent;
+    final hoveredFill = Color.alphaBlend(hoverFill, resting);
+    final idleColor = _animationIdleColor(resting, hoveredFill);
+    final Color fill = _showHover ? hoveredFill : idleColor;
     final cursor =
         widget.cursor ??
         (_interactive ? SystemMouseCursors.click : SystemMouseCursors.basic);
