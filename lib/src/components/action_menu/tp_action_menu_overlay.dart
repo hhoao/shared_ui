@@ -44,12 +44,17 @@ Future<T?> showTpActionMenuOverlay<T>({
   final completer = Completer<T?>();
   final menuKey = GlobalKey();
   late OverlayEntry entry;
+  var entryInserted = false;
   var entryRemoved = false;
 
   void removeEntry() {
-    if (entryRemoved || !entry.mounted) return;
-    entry.remove();
+    // Do not gate on `entry.mounted`: a same-frame insert → dismiss (e.g. two
+    // nested onSecondaryTapDown handlers both hit the kPressTimeout deadline)
+    // removes the entry before its widget has built, when `mounted` is still
+    // false. Guard on whether we inserted instead, so the entry cannot orphan.
+    if (!entryInserted || entryRemoved) return;
     entryRemoved = true;
+    entry.remove();
   }
 
   void complete(T? value) {
@@ -99,6 +104,7 @@ Future<T?> showTpActionMenuOverlay<T>({
   GestureBinding.instance.pointerRouter.addGlobalRoute(outsidePointerRoute);
   HardwareKeyboard.instance.addHandler(escapeHandler);
   overlayState.insert(entry);
+  entryInserted = true;
 
   return completer.future.whenComplete(() {
     HardwareKeyboard.instance.removeHandler(escapeHandler);
