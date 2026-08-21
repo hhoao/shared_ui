@@ -24,7 +24,7 @@ TpCatalogMetricView _metric(String label, String? value, IconData icon) {
 }
 
 void main() {
-  testWidgets('renders four metric slots and a dash for missing values', (
+  testWidgets('renders compact adoption and rating without label text', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -32,23 +32,15 @@ void main() {
         TpCatalogMetadataRow(
           adoption: _metric('Installs', '128', Icons.download),
           rating: _metric('Rating', null, Icons.star),
-          updated: _metric('Updated', 'Yesterday', Icons.update),
-          published: _metric('Published', '2026-08-18', Icons.event),
         ),
       ),
     );
 
-    expect(find.text('Installs'), findsOneWidget);
     expect(find.text('128'), findsOneWidget);
-    expect(find.text('Rating'), findsOneWidget);
     expect(find.text('—'), findsOneWidget);
-    expect(find.text('Updated'), findsOneWidget);
-    expect(find.text('Yesterday'), findsOneWidget);
-    expect(find.text('Published'), findsOneWidget);
-    expect(find.text('2026-08-18'), findsOneWidget);
+    expect(find.text('Installs'), findsNothing);
+    expect(find.text('Rating'), findsNothing);
     expect(find.byIcon(Icons.download), findsOneWidget);
     expect(find.byIcon(Icons.star), findsOneWidget);
-    expect(find.byIcon(Icons.update), findsOneWidget);
-    expect(find.byIcon(Icons.event), findsOneWidget);
   });
 }

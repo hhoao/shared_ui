@@ -19,39 +19,32 @@ class TpCatalogMetricView {
   final String missingValueTooltip;
 }
 
-/// Four-slot metadata row shared by public catalog cards.
+/// Compact adoption + rating footer shared by public catalog cards.
 class TpCatalogMetadataRow extends StatelessWidget {
   const TpCatalogMetadataRow({
     super.key,
     required this.adoption,
     required this.rating,
-    required this.updated,
-    required this.published,
   });
 
   final TpCatalogMetricView adoption;
   final TpCatalogMetricView rating;
-  final TpCatalogMetricView updated;
-  final TpCatalogMetricView published;
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.tpSpacing;
-    return Wrap(
-      spacing: spacing.md,
-      runSpacing: spacing.sm,
+    return Row(
       children: [
-        _TpCatalogMetricTile(metric: adoption),
-        _TpCatalogMetricTile(metric: rating),
-        _TpCatalogMetricTile(metric: updated),
-        _TpCatalogMetricTile(metric: published),
+        Flexible(child: _TpCatalogMetricChip(metric: adoption)),
+        SizedBox(width: spacing.md),
+        Flexible(child: _TpCatalogMetricChip(metric: rating)),
       ],
     );
   }
 }
 
-class _TpCatalogMetricTile extends StatelessWidget {
-  const _TpCatalogMetricTile({required this.metric});
+class _TpCatalogMetricChip extends StatelessWidget {
+  const _TpCatalogMetricChip({required this.metric});
 
   final TpCatalogMetricView metric;
 
@@ -64,45 +57,25 @@ class _TpCatalogMetricTile extends StatelessWidget {
     final value = metric.value ?? '—';
     final valueText = Text(
       value,
-      maxLines: 2,
+      maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: textStyles.smMediumColored(scheme.onSurface),
     );
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 88, maxWidth: 180),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            metric.icon,
-            size: context.tpIconSizes.sm,
-            color: scheme.onSurface.withValues(alpha: 0.68),
-          ),
-          SizedBox(width: spacing.xs),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  metric.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: textStyles.xsColored(
-                    scheme.onSurface.withValues(alpha: 0.65),
-                  ),
-                ),
-                isMissing
-                    ? Tooltip(
-                        message: metric.missingValueTooltip,
-                        child: valueText,
-                      )
-                    : valueText,
-              ],
-            ),
-          ),
-        ],
-      ),
+    final row = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          metric.icon,
+          size: context.tpIconSizes.sm,
+          color: scheme.onSurface.withValues(alpha: 0.68),
+        ),
+        SizedBox(width: spacing.xs),
+        Flexible(child: valueText),
+      ],
     );
+
+    if (!isMissing) return row;
+    return Tooltip(message: metric.missingValueTooltip, child: row);
   }
 }
