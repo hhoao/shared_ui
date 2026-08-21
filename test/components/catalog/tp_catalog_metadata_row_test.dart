@@ -42,5 +42,7 @@ void main() {
     expect(find.text('Rating'), findsNothing);
     expect(find.byIcon(Icons.download), findsOneWidget);
     expect(find.byIcon(Icons.star), findsOneWidget);
+    expect(find.bySemanticsLabel('Installs 128'), findsOneWidget);
+    expect(find.bySemanticsLabel('Rating —'), findsOneWidget);
   });
 }

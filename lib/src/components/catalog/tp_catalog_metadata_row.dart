@@ -55,6 +55,9 @@ class _TpCatalogMetricChip extends StatelessWidget {
     final textStyles = TpTextStyles.of(context);
     final isMissing = metric.value == null;
     final value = metric.value ?? '—';
+    final semanticsLabel = isMissing
+        ? '${metric.label} —'
+        : '${metric.label} $value';
     final valueText = Text(
       value,
       maxLines: 1,
@@ -62,17 +65,22 @@ class _TpCatalogMetricChip extends StatelessWidget {
       style: textStyles.smMediumColored(scheme.onSurface),
     );
 
-    final row = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          metric.icon,
-          size: context.tpIconSizes.sm,
-          color: scheme.onSurface.withValues(alpha: 0.68),
+    final row = Semantics(
+      label: semanticsLabel,
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              metric.icon,
+              size: context.tpIconSizes.sm,
+              color: scheme.onSurface.withValues(alpha: 0.68),
+            ),
+            SizedBox(width: spacing.xs),
+            Flexible(child: valueText),
+          ],
         ),
-        SizedBox(width: spacing.xs),
-        Flexible(child: valueText),
-      ],
+      ),
     );
 
     if (!isMissing) return row;
