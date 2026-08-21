@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../theme/tp_text_styles.dart';
 import '../../theme/tp_theme.dart';
-import '../card/tp_card.dart';
 
 /// Shared install-oriented frame for public catalog entries.
 ///
-/// The shell owns only layout. Resource-specific details and actions are
+/// Owns border + hover chrome. Resource-specific details and actions are
 /// supplied by the caller so this package remains independent of app models
 /// and localization.
-class TpCatalogCardShell extends StatelessWidget {
+class TpCatalogCardShell extends StatefulWidget {
   const TpCatalogCardShell({
     super.key,
     required this.title,
@@ -19,6 +18,10 @@ class TpCatalogCardShell extends StatelessWidget {
     required this.action,
     this.leading,
     this.body,
+    this.onTap,
+    this.enabled = true,
+    this.selected = false,
+    this.accentColor,
   });
 
   final String title;
@@ -29,19 +32,42 @@ class TpCatalogCardShell extends StatelessWidget {
   final Widget? leading;
   final Widget? body;
 
+  /// Optional whole-card tap. Hover chrome still applies when null.
+  final VoidCallback? onTap;
+  final bool enabled;
+  final bool selected;
+
+  /// When set, hover border uses this accent (Team / Expert hubs).
+  final Color? accentColor;
+
+  @override
+  State<TpCatalogCardShell> createState() => _TpCatalogCardShellState();
+}
+
+class _TpCatalogCardShellState extends State<TpCatalogCardShell> {
+  static const _radius = 14.0;
+  bool _hovered = false;
+
   @override
   Widget build(BuildContext context) {
     final spacing = context.tpSpacing;
     final scheme = Theme.of(context).colorScheme;
     final textStyles = TpTextStyles.of(context);
+    final interactive = widget.enabled && widget.onTap != null;
+
+    final borderColor = widget.selected
+        ? scheme.primary.withValues(alpha: 0.65)
+        : _hovered
+        ? (widget.accentColor ?? scheme.primary).withValues(alpha: 0.55)
+        : scheme.outlineVariant;
 
     final header = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (leading != null) ...[
+        if (widget.leading != null) ...[
           Padding(
             padding: EdgeInsets.only(right: spacing.sm),
-            child: leading,
+            child: widget.leading,
           ),
         ],
         Expanded(
@@ -54,14 +80,14 @@ class TpCatalogCardShell extends StatelessWidget {
               ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 120),
                 child: Text(
-                  title,
+                  widget.title,
                   style: textStyles.mdSemiboldColored(scheme.onSurface),
                 ),
               ),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 240),
                 child: Text(
-                  source,
+                  widget.source,
                   style: textStyles.smColored(
                     scheme.onSurface.withValues(alpha: 0.65),
                   ),
@@ -75,7 +101,7 @@ class TpCatalogCardShell extends StatelessWidget {
       ],
     );
 
-    final trimmedDescription = description.trim();
+    final trimmedDescription = widget.description.trim();
     final middleChildren = <Widget>[
       if (trimmedDescription.isNotEmpty) ...[
         SizedBox(height: spacing.sm),
@@ -88,42 +114,72 @@ class TpCatalogCardShell extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
-      if (body != null) ...[SizedBox(height: spacing.md), body!],
+      if (widget.body != null) ...[
+        SizedBox(height: spacing.md),
+        widget.body!,
+      ],
     ];
 
     final footer = <Widget>[
       SizedBox(height: spacing.md),
-      metadata,
+      widget.metadata,
       SizedBox(height: spacing.md),
-      Align(alignment: AlignmentDirectional.centerEnd, child: action),
+      Align(alignment: AlignmentDirectional.centerEnd, child: widget.action),
     ];
 
-    return TpCard(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final children = [header, ...middleChildren, ...footer];
-          if (!constraints.hasBoundedHeight) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
-            );
-          }
-          // Header + metadata + action can exceed a short grid cell (the
-          // landing picker used to give discovery cards 186px). Keep the
-          // column in an Expanded ListView so the shell never overflows.
+    final body = LayoutBuilder(
+      builder: (context, constraints) {
+        final children = [header, ...middleChildren, ...footer];
+        if (!constraints.hasBoundedHeight) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: children,
-                ),
-              ),
-            ],
+            children: children,
           );
-        },
+        }
+        // Keep content top-aligned in fixed grid cells; clip instead of
+        // stretching blank space through an Expanded filler.
+        return ClipRect(
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
+            ),
+          ),
+        );
+      },
+    );
+
+    return MouseRegion(
+      onEnter: (_) {
+        if (!widget.enabled) return;
+        setState(() => _hovered = true);
+      },
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: interactive ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: interactive ? widget.onTap : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(_radius),
+            border: Border.all(color: borderColor),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.10),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : null,
+          ),
+          clipBehavior: Clip.antiAlias,
+          padding: EdgeInsets.all(spacing.md),
+          child: body,
+        ),
       ),
     );
   }

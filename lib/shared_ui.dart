@@ -10,6 +10,8 @@ export 'src/components/card/tp_action_row.dart';
 export 'src/components/card/tp_card.dart';
 export 'src/components/card/tp_card_header.dart';
 export 'src/components/catalog/tp_catalog_card_shell.dart';
+export 'src/components/catalog/tp_catalog_discovery_header.dart';
+export 'src/components/catalog/tp_catalog_list_card.dart';
 export 'src/components/catalog/tp_catalog_metadata_row.dart';
 export 'src/components/catalog/tp_catalog_sort_control.dart';
 export 'src/components/catalog/tp_catalog_source_warning.dart';

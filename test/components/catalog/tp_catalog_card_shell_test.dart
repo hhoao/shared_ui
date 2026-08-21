@@ -102,6 +102,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('draws an outlined border at rest', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        const TpCatalogCardShell(
+          title: 'Bordered',
+          source: 'src',
+          description: 'desc',
+          metadata: SizedBox(),
+          action: SizedBox(),
+        ),
+      ),
+    );
+
+    final container = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+    expect(decoration.border, isA<Border>());
+    expect((decoration.border! as Border).top.width, greaterThan(0));
+  });
+
   testWidgets('does not overflow a 160px-tall landing-picker cell', (
     tester,
   ) async {
