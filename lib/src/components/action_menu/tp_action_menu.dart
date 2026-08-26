@@ -903,6 +903,11 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
   void initState() {
     super.initState();
     widget.coordinator.addListener(_syncWithCoordinator);
+    _popover.addListener(_onPopoverStateChanged);
+  }
+
+  void _onPopoverStateChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -917,6 +922,7 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
   @override
   void dispose() {
     _hoverTimer?.cancel();
+    _popover.removeListener(_onPopoverStateChanged);
     widget.coordinator.removeListener(_syncWithCoordinator);
     _capturedFocus = null;
     _rowFocus.dispose();

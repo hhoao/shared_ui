@@ -266,6 +266,40 @@ void main() {
       expect(find.text('B-child'), findsOneWidget);
     });
 
+    testWidgets('closing a submenu clears the parent row highlight', (
+      tester,
+    ) async {
+      TpActionMenuSpec branch(String label) => TpActionMenuSpec.submenu(
+        value: label,
+        label: label,
+        icon: Icons.folder,
+        children: [
+          TpActionMenuSpec.item(
+            value: '$label-child',
+            label: '$label-child',
+            icon: Icons.eco,
+          ),
+        ],
+      );
+      await pumpHost(tester, [branch('A'), branch('B')]);
+      await tester.tap(find.text('A'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TpActionMenuItem>(find.widgetWithText(TpActionMenuItem, 'A'))
+            .highlighted,
+        isTrue,
+      );
+      await tester.tap(find.text('B'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TpActionMenuItem>(find.widgetWithText(TpActionMenuItem, 'A'))
+            .highlighted,
+        isFalse,
+      );
+    });
+
     testWidgets('hover intent opens after delay', (tester) async {
       final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await gesture.addPointer(location: Offset.zero);
