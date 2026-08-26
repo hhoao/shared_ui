@@ -408,5 +408,51 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('keyboard escape closes one open submenu level', (
+      tester,
+    ) async {
+      final picked = <Object?>[];
+      await pumpHost(tester, specs(withSubmenu: true), onSelected: picked.add);
+      await tester.tap(find.text('Branch'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leaf'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('Leaf'), findsNothing);
+      expect(find.text('Plain'), findsOneWidget);
+    });
+
+    testWidgets(
+      'keyboard arrow-right reopens submenu from focused parent row',
+      (tester) async {
+        await pumpHost(tester, specs(withSubmenu: true));
+        await tester.tap(find.text('Branch'));
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(find.text('Leaf'), findsNothing);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+        expect(find.text('Leaf'), findsOneWidget);
+      },
+    );
+
+    testWidgets('keyboard enter activates focused leaf row', (tester) async {
+      final picked = <Object?>[];
+      await pumpHost(tester, specs(withSubmenu: true), onSelected: picked.add);
+      await tester.tap(find.text('Branch'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(find.text('Leaf'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(picked, ['leaf']);
+      expect(find.text('Leaf'), findsNothing);
+      expect(find.text('Plain'), findsNothing);
+    });
   });
 }

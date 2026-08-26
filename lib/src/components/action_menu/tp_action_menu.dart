@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../theme/tp_text_styles.dart';
 import '../../theme/tp_theme.dart';
@@ -228,96 +229,114 @@ class _TpActionMenuItemState extends State<TpActionMenuItem> {
       fg.withValues(alpha: widget.enabled ? 0.45 : 0.35),
     );
 
-    Widget row = MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      cursor: widget.enabled && widget.onTap != null
-          ? SystemMouseCursors.click
-          : SystemMouseCursors.basic,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.enabled ? _handleTap : null,
-        child: Container(
-          constraints: const BoxConstraints(
-            minHeight: TpActionMenuMetrics.itemHeight,
+    Widget row = Shortcuts(
+      shortcuts: const {
+        SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+        SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+      },
+      child: Actions(
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap?.call();
+              return null;
+            },
           ),
-          margin: const EdgeInsets.symmetric(
-            horizontal: TpActionMenuMetrics.itemHorizontalMargin,
-          ),
-          padding: const EdgeInsets.only(
-            left: TpActionMenuMetrics.itemPaddingLeft,
-            right: TpActionMenuMetrics.itemPaddingRight,
-          ),
-          decoration: BoxDecoration(
-            color:
-                (_hovered || widget.highlighted) &&
-                    widget.enabled &&
-                    widget.onTap != null
-                ? hoverFill
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              SizedBox(
-                width: TpActionMenuMetrics.iconSize(context),
-                height: TpActionMenuMetrics.iconSize(context),
-                child: Center(
-                  child:
-                      widget.iconWidget ??
-                      Icon(
-                        widget.icon,
-                        size: TpActionMenuMetrics.iconSize(context),
-                        color: fg,
+        },
+        child: Focus(
+          child: MouseRegion(
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            cursor: widget.enabled && widget.onTap != null
+                ? SystemMouseCursors.click
+                : SystemMouseCursors.basic,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.enabled ? _handleTap : null,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: TpActionMenuMetrics.itemHeight,
+                ),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: TpActionMenuMetrics.itemHorizontalMargin,
+                ),
+                padding: const EdgeInsets.only(
+                  left: TpActionMenuMetrics.itemPaddingLeft,
+                  right: TpActionMenuMetrics.itemPaddingRight,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      (_hovered || widget.highlighted) &&
+                          widget.enabled &&
+                          widget.onTap != null
+                      ? hoverFill
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    SizedBox(
+                      width: TpActionMenuMetrics.iconSize(context),
+                      height: TpActionMenuMetrics.iconSize(context),
+                      child: Center(
+                        child:
+                            widget.iconWidget ??
+                            Icon(
+                              widget.icon,
+                              size: TpActionMenuMetrics.iconSize(context),
+                              color: fg,
+                            ),
                       ),
+                    ),
+                    SizedBox(width: TpActionMenuMetrics.iconGap),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: widget.subtitleSuffix != null
+                          ? Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    widget.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    softWrap: false,
+                                    style: labelStyle,
+                                  ),
+                                ),
+                                SizedBox(width: context.tpSpacing.lg),
+                                Text(
+                                  widget.subtitleSuffix!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: false,
+                                  style: suffixStyle,
+                                ),
+                              ],
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: false,
+                                  style: labelStyle,
+                                ),
+                                if (widget.subtitle != null) widget.subtitle!,
+                              ],
+                            ),
+                    ),
+                    if (widget.trailing != null) ...[
+                      const SizedBox(width: 8),
+                      widget.trailing!,
+                    ],
+                  ],
                 ),
               ),
-              SizedBox(width: TpActionMenuMetrics.iconGap),
-              Flexible(
-                fit: FlexFit.loose,
-                child: widget.subtitleSuffix != null
-                    ? Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              softWrap: false,
-                              style: labelStyle,
-                            ),
-                          ),
-                          SizedBox(width: context.tpSpacing.lg),
-                          Text(
-                            widget.subtitleSuffix!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
-                            style: suffixStyle,
-                          ),
-                        ],
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
-                            style: labelStyle,
-                          ),
-                          if (widget.subtitle != null) widget.subtitle!,
-                        ],
-                      ),
-              ),
-              if (widget.trailing != null) ...[
-                const SizedBox(width: 8),
-                widget.trailing!,
-              ],
-            ],
+            ),
           ),
         ),
       ),
@@ -712,12 +731,18 @@ class _TpActionMenuSubmenuPanel extends StatefulWidget {
     required this.searchable,
     required this.rootMenuController,
     required this.onSelect,
+    required this.onDismiss,
+    required this.panelScope,
+    this.autofocusFirstRow = false,
   });
 
   final List<TpActionMenuSpec> children;
   final bool searchable;
   final TpActionMenuController rootMenuController;
   final ValueChanged<Object?> onSelect;
+  final VoidCallback onDismiss;
+  final FocusScopeNode panelScope;
+  final bool autofocusFirstRow;
 
   @override
   State<_TpActionMenuSubmenuPanel> createState() =>
@@ -726,6 +751,27 @@ class _TpActionMenuSubmenuPanel extends StatefulWidget {
 
 class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
   String _query = '';
+
+  bool get _showsSearchField =>
+      widget.searchable &&
+      widget.children.length > TpActionMenuMetrics.searchThreshold;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _showsSearchField) return;
+      final scope = widget.panelScope;
+      if (widget.autofocusFirstRow) {
+        final descendants = scope.traversalDescendants.toList(growable: false);
+        if (descendants.isNotEmpty) {
+          descendants.first.requestFocus();
+          return;
+        }
+      }
+      scope.requestFocus();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -738,49 +784,60 @@ class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
     final showSearch =
         widget.searchable &&
         widget.children.length > TpActionMenuMetrics.searchThreshold;
-    return IntrinsicWidth(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (showSearch)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
-                child: TextField(
-                  autofocus: true,
-                  onChanged: (v) => setState(() => _query = v),
-                  style: TpTextStyles.of(context).md,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    prefixIcon: Icon(
-                      Icons.search,
-                      size: TpActionMenuMetrics.iconSize(context),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): widget.onDismiss,
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): widget.onDismiss,
+      },
+      child: FocusScope(
+        node: widget.panelScope,
+        child: IntrinsicWidth(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (showSearch)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+                    child: TextField(
+                      autofocus: true,
+                      onChanged: (v) => setState(() => _query = v),
+                      style: TpTextStyles.of(context).md,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: TpActionMenuMetrics.iconSize(context),
+                        ),
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
-                    border: const OutlineInputBorder(),
+                  ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: FocusTraversalGroup(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: visible.isEmpty
+                            ? [const SizedBox(height: 4)]
+                            : buildTpActionMenuChildren(
+                                context: context,
+                                specs: visible,
+                                menuController: widget.rootMenuController,
+                                onSelect: widget.onSelect,
+                              ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: visible.isEmpty
-                      ? [const SizedBox(height: 4)]
-                      : buildTpActionMenuChildren(
-                          context: context,
-                          specs: visible,
-                          menuController: widget.rootMenuController,
-                          onSelect: widget.onSelect,
-                        ),
-                ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -810,7 +867,10 @@ class TpActionMenuSubmenuItem extends StatefulWidget {
 
 class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
   final _popover = TpPopoverController();
+  final _rowFocus = FocusNode(debugLabel: 'tp-submenu-row');
+  final _panelScope = FocusScopeNode(debugLabel: 'tp-submenu-panel-scope');
   Timer? _hoverTimer;
+  bool _focusPanelNextFrame = false;
 
   static const _hoverIntentDelay = Duration(milliseconds: 150);
 
@@ -833,26 +893,41 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
   void dispose() {
     _hoverTimer?.cancel();
     widget.coordinator.removeListener(_syncWithCoordinator);
+    _rowFocus.dispose();
+    _panelScope.dispose();
     super.dispose();
   }
 
   void _syncWithCoordinator() {
     if (widget.coordinator.openId != widget.id && _popover.isOpen) {
+      _focusPanelNextFrame = false;
       _popover.hide();
     }
   }
 
   bool get _isOpen => _popover.isOpen;
 
-  void _openNow() {
+  void _openNow({bool focusPanel = false}) {
     if (_isOpen) return;
+    setState(() => _focusPanelNextFrame = focusPanel);
     widget.coordinator.open(widget.id);
     widget.spec.onOpen?.call();
     _popover.show();
   }
 
+  void _openViaKeyboard() {
+    _openNow(focusPanel: true);
+  }
+
+  void _dismissViaKeyboard() {
+    _focusPanelNextFrame = false;
+    widget.coordinator.close(widget.id);
+    _rowFocus.requestFocus();
+  }
+
   void _toggle() {
     if (_isOpen) {
+      _focusPanelNextFrame = false;
       widget.coordinator.close(widget.id);
     } else {
       _openNow();
@@ -900,23 +975,36 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
         searchable: spec.searchable,
         rootMenuController: widget.rootMenuController,
         onSelect: widget.onSelect,
+        onDismiss: _dismissViaKeyboard,
+        panelScope: _panelScope,
+        autofocusFirstRow: _focusPanelNextFrame,
       ),
-      child: MouseRegion(
-        onEnter: (_) {
-          if (!spec.enabled) return;
-          _hoverTimer?.cancel();
-          _hoverTimer = Timer(_hoverIntentDelay, _openNow);
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.arrowRight): spec.enabled
+              ? _openViaKeyboard
+              : () {},
         },
-        onExit: (_) => _hoverTimer?.cancel(),
-        child: TpActionMenuItem(
-          icon: spec.icon,
-          iconWidget: spec.iconWidget,
-          label: spec.label ?? '',
-          subtitle: spec.subtitle,
-          enabled: spec.enabled,
-          highlighted: _popover.isOpen,
-          onTap: spec.enabled ? _toggle : null,
-          trailing: _submenuTrailing(context, spec),
+        child: Focus(
+          focusNode: _rowFocus,
+          child: MouseRegion(
+            onEnter: (_) {
+              if (!spec.enabled) return;
+              _hoverTimer?.cancel();
+              _hoverTimer = Timer(_hoverIntentDelay, _openNow);
+            },
+            onExit: (_) => _hoverTimer?.cancel(),
+            child: TpActionMenuItem(
+              icon: spec.icon,
+              iconWidget: spec.iconWidget,
+              label: spec.label ?? '',
+              subtitle: spec.subtitle,
+              enabled: spec.enabled,
+              highlighted: _popover.isOpen,
+              onTap: spec.enabled ? _toggle : null,
+              trailing: _submenuTrailing(context, spec),
+            ),
+          ),
         ),
       ),
     );
