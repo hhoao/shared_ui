@@ -454,5 +454,172 @@ void main() {
       expect(find.text('Leaf'), findsNothing);
       expect(find.text('Plain'), findsNothing);
     });
+
+    List<TpActionMenuSpec> searchableSpecs() => [
+      TpActionMenuSpec.item(value: 'plain', label: 'Plain', icon: Icons.star),
+      TpActionMenuSpec.submenu(
+        value: 'models',
+        label: 'Models',
+        icon: Icons.memory,
+        searchable: true,
+        children: [
+          for (var i = 0; i < 11; i++)
+            TpActionMenuSpec.item(
+              value: 'model-$i',
+              label: 'model-$i',
+              icon: Icons.memory,
+            ),
+        ],
+      ),
+    ];
+
+    Widget wrapWithFields(
+      List<TpActionMenuSpec> specs, {
+      required FocusNode fieldFocus,
+    }) => wrap(
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(focusNode: fieldFocus),
+          TpActionMenuButton(specs: specs, onSelected: (_) {}),
+        ],
+      ),
+    );
+
+    Future<TestGesture> hoverGesture(WidgetTester tester) async {
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      return gesture;
+    }
+
+    Future<void> hoverTo(
+      WidgetTester tester,
+      TestGesture gesture,
+      Finder rowFinder,
+    ) async {
+      await gesture.moveTo(tester.getCenter(rowFinder));
+      await tester.pump(const Duration(milliseconds: 40));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('arrow-left in search field moves caret and keeps panel open', (
+      tester,
+    ) async {
+      await pumpHost(tester, searchableSpecs());
+      await tester.tap(find.text('Models'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'model');
+      await tester.pumpAndSettle();
+      final editable = tester.state<EditableTextState>(
+        find.byType(EditableText).first,
+      );
+      expect(editable.widget.controller.selection.baseOffset, 5);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      expect(find.text('model-1'), findsOneWidget);
+      expect(editable.widget.controller.selection.baseOffset, 4);
+    });
+
+    testWidgets('escape still closes the searchable panel level', (
+      tester,
+    ) async {
+      await pumpHost(tester, searchableSpecs());
+      await tester.tap(find.text('Models'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'model');
+      await tester.pumpAndSettle();
+      expect(find.text('model-1'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('model-1'), findsNothing);
+      expect(find.text('Plain'), findsOneWidget);
+    });
+
+    testWidgets(
+      'closing cascade restores focus taken from a background field',
+      (tester) async {
+        final bgFocus = FocusNode(debugLabel: 'bg-field');
+        addTearDown(bgFocus.dispose);
+        await tester.pumpWidget(
+          wrapWithFields(specs(withSubmenu: true), fieldFocus: bgFocus),
+        );
+        await tester.tap(find.byIcon(Icons.more_horiz));
+        await tester.pumpAndSettle();
+        bgFocus.requestFocus();
+        await tester.pump();
+        expect(FocusManager.instance.primaryFocus, same(bgFocus));
+        final gesture = await hoverGesture(tester);
+        await hoverTo(tester, gesture, find.text('Branch'));
+        expect(find.text('Leaf'), findsOneWidget);
+        expect(FocusManager.instance.primaryFocus, isNot(same(bgFocus)));
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(find.text('Leaf'), findsNothing);
+        expect(find.text('Plain'), findsOneWidget);
+        expect(FocusManager.instance.primaryFocus, same(bgFocus));
+      },
+    );
+
+    testWidgets(
+      'sibling switch hands off restore duty; escape on new branch restores',
+      (tester) async {
+        final bgFocus = FocusNode(debugLabel: 'bg-field');
+        addTearDown(bgFocus.dispose);
+        TpActionMenuSpec branch(String label) => TpActionMenuSpec.submenu(
+          value: label,
+          label: label,
+          icon: Icons.folder,
+          children: [
+            TpActionMenuSpec.item(
+              value: '$label-child',
+              label: '$label-child',
+              icon: Icons.eco,
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          wrapWithFields([branch('A'), branch('B')], fieldFocus: bgFocus),
+        );
+        await tester.tap(find.byIcon(Icons.more_horiz));
+        await tester.pumpAndSettle();
+        bgFocus.requestFocus();
+        await tester.pump();
+        expect(FocusManager.instance.primaryFocus, same(bgFocus));
+        final gesture = await hoverGesture(tester);
+        await hoverTo(tester, gesture, find.text('A'));
+        expect(find.text('A-child'), findsOneWidget);
+        expect(FocusManager.instance.primaryFocus, isNot(same(bgFocus)));
+        await hoverTo(tester, gesture, find.text('B'));
+        expect(find.text('A-child'), findsNothing);
+        expect(find.text('B-child'), findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(find.text('B-child'), findsNothing);
+        expect(FocusManager.instance.primaryFocus, same(bgFocus));
+      },
+    );
+
+    testWidgets('keyboard-open focuses the search field so escape closes it', (
+      tester,
+    ) async {
+      await pumpHost(tester, searchableSpecs());
+      await tester.tap(find.text('Models'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('model-0'), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      final editable = tester.state<EditableTextState>(
+        find.byType(EditableText).first,
+      );
+      expect(editable.widget.focusNode.hasFocus, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('model-0'), findsNothing);
+      expect(find.text('Plain'), findsOneWidget);
+    });
   });
 }

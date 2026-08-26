@@ -595,6 +595,7 @@ double estimateTpActionMenuHeight({
 /// giving each panel level its own mutually-exclusive open slot.
 class TpActionMenuSubmenuCoordinator extends ChangeNotifier {
   Object? _openId;
+  FocusNode? _handedOffCapture;
 
   Object? get openId => _openId;
 
@@ -608,6 +609,16 @@ class TpActionMenuSubmenuCoordinator extends ChangeNotifier {
     if (_openId != id) return;
     _openId = null;
     notifyListeners();
+  }
+
+  void stashHandedOffCapture(FocusNode? node) {
+    _handedOffCapture = node;
+  }
+
+  FocusNode? takeHandedOffCapture() {
+    final node = _handedOffCapture;
+    _handedOffCapture = null;
+    return node;
   }
 }
 
@@ -750,6 +761,7 @@ class _TpActionMenuSubmenuPanel extends StatefulWidget {
 }
 
 class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
+  final _searchFocus = FocusNode(debugLabel: 'tp-submenu-search');
   String _query = '';
 
   bool get _showsSearchField =>
@@ -760,7 +772,11 @@ class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _showsSearchField) return;
+      if (!mounted) return;
+      if (_showsSearchField) {
+        if (widget.autofocusFirstRow) _searchFocus.requestFocus();
+        return;
+      }
       final scope = widget.panelScope;
       if (widget.autofocusFirstRow) {
         final descendants = scope.traversalDescendants.toList(growable: false);
@@ -771,6 +787,12 @@ class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
       }
       scope.requestFocus();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchFocus.dispose();
+    super.dispose();
   }
 
   @override
@@ -787,7 +809,8 @@ class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): widget.onDismiss,
-        const SingleActivator(LogicalKeyboardKey.arrowLeft): widget.onDismiss,
+        if (!_showsSearchField)
+          const SingleActivator(LogicalKeyboardKey.arrowLeft): widget.onDismiss,
       },
       child: FocusScope(
         node: widget.panelScope,
@@ -804,6 +827,7 @@ class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
                     child: TextField(
+                      focusNode: _searchFocus,
                       autofocus: true,
                       onChanged: (v) => setState(() => _query = v),
                       style: TpTextStyles.of(context).md,
@@ -871,6 +895,7 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
   final _panelScope = FocusScopeNode(debugLabel: 'tp-submenu-panel-scope');
   Timer? _hoverTimer;
   bool _focusPanelNextFrame = false;
+  FocusNode? _capturedFocus;
 
   static const _hoverIntentDelay = Duration(milliseconds: 150);
 
@@ -893,6 +918,7 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
   void dispose() {
     _hoverTimer?.cancel();
     widget.coordinator.removeListener(_syncWithCoordinator);
+    _capturedFocus = null;
     _rowFocus.dispose();
     _panelScope.dispose();
     super.dispose();
@@ -901,6 +927,8 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
   void _syncWithCoordinator() {
     if (widget.coordinator.openId != widget.id && _popover.isOpen) {
       _focusPanelNextFrame = false;
+      widget.coordinator.stashHandedOffCapture(_capturedFocus);
+      _capturedFocus = null;
       _popover.hide();
     }
   }
@@ -912,7 +940,49 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
     setState(() => _focusPanelNextFrame = focusPanel);
     widget.coordinator.open(widget.id);
     widget.spec.onOpen?.call();
+    _capturedFocus =
+        widget.coordinator.takeHandedOffCapture() ?? _liveCaptureCandidate();
     _popover.show();
+  }
+
+  FocusNode? _liveCaptureCandidate() {
+    final current = FocusManager.instance.primaryFocus;
+    if (current == null || current == FocusManager.instance.rootScope) {
+      return null;
+    }
+    for (
+      FocusNode? scope = _rowFocus.enclosingScope;
+      scope != null;
+      scope = scope.enclosingScope
+    ) {
+      if (identical(scope, current)) {
+        return null;
+      }
+    }
+    return current;
+  }
+
+  bool _focusIsOwnedByOpenPanel(FocusNode current) {
+    if (identical(current, FocusManager.instance.rootScope)) return true;
+    return identical(current, _panelScope) ||
+        identical(current, _rowFocus) ||
+        current.ancestors.contains(_panelScope);
+  }
+
+  bool _restoreCapturedFocusIfOwned() {
+    final captured = _capturedFocus;
+    _capturedFocus = null;
+    if (captured == null ||
+        !captured.canRequestFocus ||
+        captured.context == null) {
+      return false;
+    }
+    final current = FocusManager.instance.primaryFocus;
+    if (current != null && !_focusIsOwnedByOpenPanel(current)) {
+      return false;
+    }
+    captured.requestFocus();
+    return true;
   }
 
   void _openViaKeyboard() {
@@ -921,13 +991,16 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
 
   void _dismissViaKeyboard() {
     _focusPanelNextFrame = false;
+    if (!_restoreCapturedFocusIfOwned()) {
+      _rowFocus.requestFocus();
+    }
     widget.coordinator.close(widget.id);
-    _rowFocus.requestFocus();
   }
 
   void _toggle() {
     if (_isOpen) {
       _focusPanelNextFrame = false;
+      _restoreCapturedFocusIfOwned();
       widget.coordinator.close(widget.id);
     } else {
       _openNow();
