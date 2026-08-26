@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../support/tp_test_widgets.dart';
@@ -167,4 +168,120 @@ void main() {
       expect(isTpActionMenuOpen, isTrue);
     },
   );
+
+  group('submenu', () {
+    List<TpActionMenuSpec> specs({required bool withSubmenu}) => [
+      TpActionMenuSpec.item(value: 'plain', label: 'Plain', icon: Icons.star),
+      if (withSubmenu)
+        TpActionMenuSpec.submenu(
+          value: 'branch',
+          label: 'Branch',
+          icon: Icons.folder,
+          children: [
+            TpActionMenuSpec.item(
+              value: 'leaf',
+              label: 'Leaf',
+              icon: Icons.eco,
+            ),
+          ],
+        ),
+    ];
+
+    Widget wrapWithButton(
+      List<TpActionMenuSpec> specs, {
+      void Function(Object?)? onSelected,
+    }) => wrap(
+      TpActionMenuButton(specs: specs, onSelected: onSelected ?? (_) {}),
+    );
+
+    Future<void> pumpHost(
+      WidgetTester tester,
+      List<TpActionMenuSpec> specs, {
+      void Function(Object?)? onSelected,
+    }) async {
+      await tester.pumpWidget(wrapWithButton(specs, onSelected: onSelected));
+      await tester.tap(find.byIcon(Icons.more_horiz));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('tap opens submenu and shows child', (tester) async {
+      var onOpened = 0;
+      await pumpHost(tester, [
+        TpActionMenuSpec.submenu(
+          value: 'branch',
+          label: 'Branch',
+          icon: Icons.folder,
+          onOpen: () => onOpened++,
+          children: [
+            TpActionMenuSpec.item(
+              value: 'leaf',
+              label: 'Leaf',
+              icon: Icons.eco,
+            ),
+          ],
+        ),
+      ]);
+      await tester.tap(find.text('Branch'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leaf'), findsOneWidget);
+      expect(onOpened, 1);
+    });
+
+    testWidgets('selecting a leaf fires onSelect and closes everything', (
+      tester,
+    ) async {
+      final picked = <Object?>[];
+      await pumpHost(tester, specs(withSubmenu: true), onSelected: picked.add);
+      await tester.tap(find.text('Branch'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Leaf'));
+      await tester.pumpAndSettle();
+      expect(picked, ['leaf']);
+      expect(find.text('Leaf'), findsNothing);
+      expect(find.text('Plain'), findsNothing);
+    });
+
+    testWidgets('opening a sibling submenu closes the previously open branch', (
+      tester,
+    ) async {
+      TpActionMenuSpec branch(String label) => TpActionMenuSpec.submenu(
+        value: label,
+        label: label,
+        icon: Icons.folder,
+        children: [
+          TpActionMenuSpec.item(
+            value: '$label-child',
+            label: '$label-child',
+            icon: Icons.eco,
+          ),
+        ],
+      );
+      await pumpHost(tester, [branch('A'), branch('B')]);
+      await tester.tap(find.text('A'));
+      await tester.pumpAndSettle();
+      expect(find.text('A-child'), findsOneWidget);
+      await tester.tap(find.text('B'));
+      await tester.pumpAndSettle();
+      expect(find.text('A-child'), findsNothing);
+      expect(find.text('B-child'), findsOneWidget);
+    });
+
+    testWidgets('hover intent opens after delay', (tester) async {
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await pumpHost(tester, specs(withSubmenu: true));
+      await tester.tap(find.text('Branch'));
+      await tester.pumpAndSettle();
+      // close again to test hover path from scratch
+      await tester.tap(find.text('Branch'));
+      await tester.pumpAndSettle();
+      await gesture.moveTo(tester.getCenter(find.text('Branch')));
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(find.text('Leaf'), findsNothing);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+      expect(find.text('Leaf'), findsOneWidget);
+    });
+  });
 }
