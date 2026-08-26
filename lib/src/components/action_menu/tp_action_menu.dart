@@ -777,6 +777,30 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
     }
   }
 
+  static Widget _submenuTrailing(BuildContext context, TpActionMenuSpec spec) {
+    final chevron = Icon(
+      Icons.chevron_right_rounded,
+      size: TpActionMenuMetrics.iconSize(context),
+      color: TpTextStyles.of(context).md.color?.withValues(alpha: 0.45),
+    );
+    if (!spec.selected) return chevron;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.check,
+          size: TpActionMenuMetrics.iconSize(context),
+          color:
+              (TpTextStyles.of(context).md.color ??
+                      Theme.of(context).colorScheme.onSurface)
+                  .withValues(alpha: 0.7),
+        ),
+        const SizedBox(width: 4),
+        chevron,
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final spec = widget.spec;
@@ -808,6 +832,7 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
       ),
       child: MouseRegion(
         onEnter: (_) {
+          if (!spec.enabled) return;
           _hoverTimer?.cancel();
           _hoverTimer = Timer(_hoverIntentDelay, _openNow);
         },
@@ -820,11 +845,7 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
           enabled: spec.enabled,
           highlighted: _popover.isOpen,
           onTap: spec.enabled ? _toggle : null,
-          trailing: Icon(
-            Icons.chevron_right_rounded,
-            size: TpActionMenuMetrics.iconSize(context),
-            color: TpTextStyles.of(context).md.color?.withValues(alpha: 0.45),
-          ),
+          trailing: _submenuTrailing(context, spec),
         ),
       ),
     );

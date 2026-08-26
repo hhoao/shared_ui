@@ -283,5 +283,71 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Leaf'), findsOneWidget);
     });
+
+    testWidgets('disabled submenu does not open on hover or tap', (
+      tester,
+    ) async {
+      final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await gesture.addPointer(location: Offset.zero);
+      addTearDown(gesture.removePointer);
+      await pumpHost(tester, [
+        TpActionMenuSpec.submenu(
+          value: 'branch',
+          label: 'Branch',
+          icon: Icons.folder,
+          enabled: false,
+          children: [
+            TpActionMenuSpec.item(
+              value: 'leaf',
+              label: 'Leaf',
+              icon: Icons.eco,
+            ),
+          ],
+        ),
+      ]);
+      await tester.tap(find.text('Branch'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leaf'), findsNothing);
+      await gesture.moveTo(tester.getCenter(find.text('Branch')));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+      expect(find.text('Leaf'), findsNothing);
+    });
+
+    testWidgets('selected submenu shows checkmark alongside chevron', (
+      tester,
+    ) async {
+      await pumpHost(tester, [
+        TpActionMenuSpec.submenu(
+          value: 'branch',
+          label: 'Branch',
+          icon: Icons.folder,
+          selected: true,
+          children: [
+            TpActionMenuSpec.item(
+              value: 'leaf',
+              label: 'Leaf',
+              icon: Icons.eco,
+            ),
+          ],
+        ),
+      ]);
+      final branchRow = find.ancestor(
+        of: find.text('Branch'),
+        matching: find.byType(TpActionMenuItem),
+      );
+      expect(branchRow, findsOneWidget);
+      expect(
+        find.descendant(of: branchRow, matching: find.byIcon(Icons.check)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: branchRow,
+          matching: find.byIcon(Icons.chevron_right_rounded),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }
