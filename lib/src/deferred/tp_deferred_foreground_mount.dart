@@ -54,12 +54,13 @@ class _TpDeferredForegroundMountState extends State<TpDeferredForegroundMount> {
   }
 
   void _scheduleShow() {
-    SchedulerBinding.instance.scheduleFrameCallback((_) {
+    // endOfFrame 会主动请求一帧并等它结束。此前用 scheduleFrameCallback
+    // 叠加 postFrameCallback 的两层延迟依赖「后续恰好还有帧产生」：面板
+    // 静止时（如切换到已打开的浮动工作区的第二个标签）该帧可能永远不到，
+    // 内容直到窗口 resize 强制产帧才挂载。
+    WidgetsBinding.instance.endOfFrame.then((_) {
       if (!mounted || !widget.active || _showChild) return;
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !widget.active) return;
-        setState(() => _showChild = true);
-      });
+      setState(() => _showChild = true);
     });
   }
 
