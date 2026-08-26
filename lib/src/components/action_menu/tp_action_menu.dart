@@ -292,8 +292,7 @@ class _TpActionMenuItemState extends State<TpActionMenuItem> {
                       ),
                       SizedBox(width: TpActionMenuMetrics.iconGap),
                     ],
-                    Flexible(
-                      fit: FlexFit.loose,
+                    Expanded(
                       child: widget.subtitleSuffix != null
                           ? Row(
                               children: [

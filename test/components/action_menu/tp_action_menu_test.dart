@@ -316,6 +316,33 @@ void main() {
       expect(find.text('B-child'), findsOneWidget);
     });
 
+    testWidgets('submenu chevrons align to the panel right edge regardless of label width',
+        (tester) async {
+      await pumpHost(tester, [
+        TpActionMenuSpec.submenu(
+          value: 'short',
+          label: 'Short',
+          icon: Icons.folder,
+          children: [
+            TpActionMenuSpec.item(value: 's', label: 'S', icon: Icons.eco),
+          ],
+        ),
+        TpActionMenuSpec.submenu(
+          value: 'long',
+          label: 'A very much longer label that exceeds the short one',
+          icon: Icons.folder,
+          children: [
+            TpActionMenuSpec.item(value: 'l', label: 'L', icon: Icons.eco),
+          ],
+        ),
+      ]);
+      final chevrons = find.byIcon(Icons.chevron_right_rounded);
+      expect(chevrons, findsNWidgets(2));
+      final rightShort = tester.getRect(chevrons.at(0)).right;
+      final rightLong = tester.getRect(chevrons.at(1)).right;
+      expect(rightShort - rightLong, closeTo(0, 0.5));
+    });
+
     testWidgets('closing a submenu clears the parent row highlight', (
       tester,
     ) async {
