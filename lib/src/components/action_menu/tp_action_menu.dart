@@ -51,6 +51,7 @@ abstract final class TpActionMenuMetrics {
   }
 
   static const double itemHeight = 34;
+  static const int searchThreshold = 10;
   static const double itemHorizontalMargin = 6;
   static const double itemPaddingLeft = 6;
   static const double itemPaddingRight = 6;
@@ -705,6 +706,87 @@ List<Widget> buildTpActionMenuChildren({
   ];
 }
 
+class _TpActionMenuSubmenuPanel extends StatefulWidget {
+  const _TpActionMenuSubmenuPanel({
+    required this.children,
+    required this.searchable,
+    required this.rootMenuController,
+    required this.onSelect,
+  });
+
+  final List<TpActionMenuSpec> children;
+  final bool searchable;
+  final TpActionMenuController rootMenuController;
+  final ValueChanged<Object?> onSelect;
+
+  @override
+  State<_TpActionMenuSubmenuPanel> createState() =>
+      _TpActionMenuSubmenuPanelState();
+}
+
+class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final needle = _query.trim().toLowerCase();
+    final visible = needle.isEmpty
+        ? widget.children
+        : widget.children
+              .where((s) => (s.label ?? '').toLowerCase().contains(needle))
+              .toList(growable: false);
+    final showSearch =
+        widget.searchable &&
+        widget.children.length > TpActionMenuMetrics.searchThreshold;
+    return IntrinsicWidth(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (showSearch)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+                child: TextField(
+                  autofocus: true,
+                  onChanged: (v) => setState(() => _query = v),
+                  style: TpTextStyles.of(context).md,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: TpActionMenuMetrics.iconSize(context),
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: visible.isEmpty
+                      ? [const SizedBox(height: 4)]
+                      : buildTpActionMenuChildren(
+                          context: context,
+                          specs: visible,
+                          menuController: widget.rootMenuController,
+                          onSelect: widget.onSelect,
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class TpActionMenuSubmenuItem extends StatefulWidget {
   const TpActionMenuSubmenuItem({
     super.key,
@@ -813,22 +895,11 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
         overlayAlignment: Alignment.centerRight,
         offset: Offset(-4, 0),
       ),
-      popover: (ctx) => IntrinsicWidth(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(ctx).height * 0.6,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: buildTpActionMenuChildren(
-              context: ctx,
-              specs: spec.children!,
-              menuController: widget.rootMenuController,
-              onSelect: widget.onSelect,
-            ),
-          ),
-        ),
+      popover: (ctx) => _TpActionMenuSubmenuPanel(
+        children: spec.children!,
+        searchable: spec.searchable,
+        rootMenuController: widget.rootMenuController,
+        onSelect: widget.onSelect,
       ),
       child: MouseRegion(
         onEnter: (_) {

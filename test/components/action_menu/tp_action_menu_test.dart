@@ -314,6 +314,65 @@ void main() {
       expect(find.text('Leaf'), findsNothing);
     });
 
+    testWidgets('searchable submenu filters items by query', (tester) async {
+      await pumpHost(tester, [
+        TpActionMenuSpec.submenu(
+          value: 'models',
+          label: 'Models',
+          icon: Icons.memory,
+          searchable: true,
+          children: [
+            for (var i = 0; i < 11; i++)
+              TpActionMenuSpec.item(
+                value: 'model-$i',
+                label: 'model-$i',
+                icon: Icons.memory,
+              ),
+          ],
+        ),
+      ]);
+      await tester.tap(find.text('Models'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'model-1');
+      await tester.pumpAndSettle();
+      expect(find.text('model-10'), findsOneWidget);
+      expect(find.text('model-2'), findsNothing);
+    });
+
+    testWidgets('tall submenu scrolls and stays clamped in viewport', (
+      tester,
+    ) async {
+      await pumpHost(tester, [
+        TpActionMenuSpec.submenu(
+          value: 'big',
+          label: 'Big',
+          icon: Icons.list,
+          children: [
+            for (var i = 0; i < 40; i++)
+              TpActionMenuSpec.item(
+                value: 'row-$i',
+                label: 'Row $i',
+                icon: Icons.label,
+              ),
+          ],
+        ),
+      ]);
+      await tester.tap(find.text('Big'));
+      await tester.pumpAndSettle();
+      final viewport = tester.getRect(find.byType(SingleChildScrollView));
+      expect(
+        tester.getTopLeft(find.text('Row 39')).dy,
+        greaterThan(viewport.bottom),
+      );
+      await tester.scrollUntilVisible(find.text('Row 39'), 200);
+      await tester.pump();
+      expect(find.text('Row 39'), findsOneWidget);
+      final revealed = tester.getRect(find.text('Row 39'));
+      expect(revealed.top, greaterThanOrEqualTo(viewport.top));
+      expect(revealed.bottom, lessThanOrEqualTo(viewport.bottom));
+    });
+
     testWidgets('selected submenu shows checkmark alongside chevron', (
       tester,
     ) async {
