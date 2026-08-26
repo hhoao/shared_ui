@@ -227,4 +227,56 @@ void main() {
       expect(seen['username'], 'hello');
     });
   });
+
+  group('TpForm field registry', () {
+    testWidgets(
+      'keeps newer registration when replaced field disposes late',
+      (tester) async {
+        final formKey = GlobalKey<TpFormState>();
+
+        TpFormField<String> field(String keyTag) => TpFormField<String>(
+          key: Key('field-$keyTag'),
+          id: 'host',
+          initialValue: 'a.example.com',
+          validator: (value) =>
+              (value == null || value.trim().isEmpty) ? 'required' : null,
+          builder: (state) => TextField(
+            focusNode: state.focusNode,
+            onChanged: state.didChange,
+            controller: TextEditingController(text: state.value ?? ''),
+            decoration: const InputDecoration(),
+          ),
+        );
+
+        Future<void> pumpWith(Widget child) async {
+          await tester.pumpWidget(wrap(TpForm(key: formKey, child: child)));
+          await tester.pumpAndSettle();
+          // Let inactive elements finalize so a late dispose runs.
+          await tester.pump();
+        }
+
+        await pumpWith(Column(children: [field('first')]));
+        final firstState = formKey.currentState!.fields['host'];
+        expect(firstState, isNotNull);
+
+        await pumpWith(Column(children: [field('second')]));
+
+        final registryState = formKey.currentState!.fields['host'];
+        expect(registryState, isNotNull);
+        expect(registryState, isNot(same(firstState)));
+
+        formKey.currentState!.setFieldValue('host', 'b.example.com');
+        await tester.pump();
+        expect(formKey.currentState!.value['host'], 'b.example.com');
+
+        expect(
+          () => formKey.currentState!.setFieldError('host', 'unreachable'),
+          returnsNormally,
+        );
+        await tester.pump();
+        expect(find.text('unreachable'), findsOneWidget);
+        expect(formKey.currentState!.fields['host']!.hasError, isTrue);
+      },
+    );
+  });
 }

@@ -197,11 +197,15 @@ class TpFormState extends State<TpForm> {
     String id,
     TpFormFieldState<TpFormField<dynamic>, dynamic> field,
   ) {
-    _fields.remove(id);
-    _toValueTransformers.remove(id);
-    _fromValueTransformers.remove(id);
-    if (widget.clearValueOnUnregister) {
-      removeFieldValue(id);
+    // A same-id replacement can register before the replaced field's late
+    // dispose runs; only tear down when this field still owns the id.
+    if (_fields[id] == field) {
+      _fields.remove(id);
+      _toValueTransformers.remove(id);
+      _fromValueTransformers.remove(id);
+      if (widget.clearValueOnUnregister) {
+        removeFieldValue(id);
+      }
     }
   }
 
