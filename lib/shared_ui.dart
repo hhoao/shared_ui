@@ -79,6 +79,7 @@ export 'src/components/segmented_control/tp_segmented_picker.dart';
 export 'src/components/select/tp_compact_select.dart';
 export 'src/components/select/tp_select.dart';
 export 'src/components/select/tp_select_decoration.dart';
+export 'src/components/select/tp_select_form_field.dart';
 export 'src/components/select/tp_select_item_filter.dart';
 export 'src/components/select/tp_select_menu_item_button.dart';
 export 'src/components/select/tp_select_search_field.dart';
