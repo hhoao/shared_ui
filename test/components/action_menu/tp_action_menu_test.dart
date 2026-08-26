@@ -37,6 +37,56 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('leaf menu rows may omit icons', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        TpActionMenuPanel(
+          children: [
+            TpActionMenuItem(label: 'No icon leaf', onTap: () {}),
+          ],
+        ),
+      ),
+    );
+    expect(find.text('No icon leaf'), findsOneWidget);
+    await tester.tap(find.text('No icon leaf'));
+    await tester.pump();
+  });
+
+  testWidgets('scroll block confines many rows to a fixed height', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TpActionMenuButton(
+              specs: [
+                TpActionMenuSpec.scroll(
+                  maxHeight: 120,
+                  children: [
+                    for (var i = 0; i < 10; i++)
+                      TpActionMenuSpec.item(
+                        value: 's$i',
+                        label: 'Scroll $i',
+                        icon: Icons.check,
+                      ),
+                  ],
+                ),
+              ],
+              onSelected: (_) {},
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.tap(find.byIcon(Icons.more_horiz));
+    await tester.pumpAndSettle();
+    final scrollable = find.byType(SingleChildScrollView);
+    expect(scrollable, findsOneWidget);
+    expect(tester.getSize(scrollable).height, 120);
+  });
+
   testWidgets('Escape dismisses open action menu', (tester) async {
     await tester.pumpWidget(
       wrap(

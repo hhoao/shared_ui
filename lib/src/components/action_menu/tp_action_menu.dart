@@ -180,7 +180,7 @@ class TpActionMenuItem extends StatefulWidget {
     this.highlighted = false,
     this.menuController,
     this.tooltip,
-  }) : assert(icon != null || iconWidget != null);
+  });
 
   final IconData? icon;
   final Widget? iconWidget;
@@ -276,20 +276,22 @@ class _TpActionMenuItemState extends State<TpActionMenuItem> {
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    SizedBox(
-                      width: TpActionMenuMetrics.iconSize(context),
-                      height: TpActionMenuMetrics.iconSize(context),
-                      child: Center(
-                        child:
-                            widget.iconWidget ??
-                            Icon(
-                              widget.icon,
-                              size: TpActionMenuMetrics.iconSize(context),
-                              color: fg,
-                            ),
+                    if (widget.icon != null || widget.iconWidget != null) ...[
+                      SizedBox(
+                        width: TpActionMenuMetrics.iconSize(context),
+                        height: TpActionMenuMetrics.iconSize(context),
+                        child: Center(
+                          child:
+                              widget.iconWidget ??
+                              Icon(
+                                widget.icon,
+                                size: TpActionMenuMetrics.iconSize(context),
+                                color: fg,
+                              ),
+                        ),
                       ),
-                    ),
-                    SizedBox(width: TpActionMenuMetrics.iconGap),
+                      SizedBox(width: TpActionMenuMetrics.iconGap),
+                    ],
                     Flexible(
                       fit: FlexFit.loose,
                       child: widget.subtitleSuffix != null
@@ -639,7 +641,9 @@ class TpActionMenuSpec {
       tooltip = null,
       children = null,
       searchable = false,
-      onOpen = null;
+      onOpen = null,
+      scrollChildren = null,
+      maxHeight = null;
 
   const TpActionMenuSpec.item({
     this.value,
@@ -654,11 +658,12 @@ class TpActionMenuSpec {
     this.selected = false,
     this.onAction,
     this.tooltip,
-  }) : assert(icon != null || iconWidget != null),
-       isDivider = false,
+  }) : isDivider = false,
        children = null,
        searchable = false,
-       onOpen = null;
+       onOpen = null,
+       scrollChildren = null,
+       maxHeight = null;
 
   const TpActionMenuSpec.submenu({
     this.value,
@@ -671,13 +676,36 @@ class TpActionMenuSpec {
     this.searchable = false,
     required this.children,
     this.onOpen,
-  }) : assert(icon != null || iconWidget != null),
-       isDivider = false,
+  }) : isDivider = false,
        subtitleSuffix = null,
        trailing = null,
        destructive = false,
        onAction = null,
-       tooltip = null;
+       tooltip = null,
+       scrollChildren = null,
+       maxHeight = null;
+
+  /// A group of rows rendered as a fixed-height scrollable block within a menu.
+  const TpActionMenuSpec.scroll({
+    required List<TpActionMenuSpec> children,
+    this.maxHeight,
+  }) : isDivider = false,
+       value = null,
+       icon = null,
+       iconWidget = null,
+       label = null,
+       subtitle = null,
+       subtitleSuffix = null,
+       trailing = null,
+       destructive = false,
+       enabled = true,
+       selected = false,
+       onAction = null,
+       tooltip = null,
+       children = null,
+       searchable = false,
+       onOpen = null,
+       scrollChildren = children;
 
   final bool isDivider;
   final Object? value;
@@ -698,7 +726,12 @@ class TpActionMenuSpec {
   final bool searchable;
   final VoidCallback? onOpen;
 
+  /// Non-null for [TpActionMenuSpec.scroll].
+  final List<TpActionMenuSpec>? scrollChildren;
+  final double? maxHeight;
+
   bool get isSubmenu => !isDivider && children != null;
+  bool get isScrollBlock => !isDivider && scrollChildren != null;
 }
 
 int tpActionMenuSpecItemCount(List<TpActionMenuSpec> specs) =>
@@ -718,6 +751,12 @@ List<Widget> buildTpActionMenuChildren({
     for (var i = 0; i < specs.length; i++)
       if (specs[i].isDivider)
         const TpActionMenuDivider()
+      else if (specs[i].isScrollBlock)
+        _TpActionMenuScrollBlock(
+          spec: specs[i],
+          menuController: menuController,
+          onSelect: onSelect,
+        )
       else if (specs[i].isSubmenu)
         TpActionMenuSubmenuItem(
           id: i,
@@ -734,6 +773,41 @@ List<Widget> buildTpActionMenuChildren({
           onSelect: onSelect,
         ),
   ];
+}
+
+/// A group of rows confined to a fixed max-height and scrolled when long
+/// (used e.g. for a capped presets list so the rest of the menu stays short).
+class _TpActionMenuScrollBlock extends StatelessWidget {
+  const _TpActionMenuScrollBlock({
+    required this.spec,
+    required this.menuController,
+    required this.onSelect,
+  });
+
+  final TpActionMenuSpec spec;
+  final TpActionMenuController menuController;
+  final ValueChanged<Object?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight =
+        spec.maxHeight ?? MediaQuery.sizeOf(context).height * 0.5;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: buildTpActionMenuChildren(
+            context: context,
+            specs: spec.scrollChildren!,
+            menuController: menuController,
+            onSelect: onSelect,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _TpActionMenuSubmenuPanel extends StatefulWidget {
@@ -823,9 +897,9 @@ class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (showSearch)
+                if (showSearch) ...[
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+                    padding: const EdgeInsets.fromLTRB(6, 0, 6, 4),
                     child: TextField(
                       focusNode: _searchFocus,
                       autofocus: true,
@@ -841,6 +915,8 @@ class _TpActionMenuSubmenuPanelState extends State<_TpActionMenuSubmenuPanel> {
                       ),
                     ),
                   ),
+                  const TpActionMenuDivider(),
+                ],
                 Flexible(
                   child: SingleChildScrollView(
                     child: FocusTraversalGroup(
