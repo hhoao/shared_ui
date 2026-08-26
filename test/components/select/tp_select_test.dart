@@ -277,4 +277,66 @@ void main() {
       },
     );
   });
+
+  group('TpSelect error state', () {
+    Color triggerBorderColor(WidgetTester tester, ColorScheme scheme) {
+      final box = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(GestureDetector),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final decoration = box.decoration! as BoxDecoration;
+      return (decoration.border! as Border).top.color;
+    }
+
+    testWidgets('hasError draws the error-colored trigger border', (
+      tester,
+    ) async {
+      final scheme = ColorScheme.fromSeed(seedColor: Colors.orange);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(colorScheme: scheme, useMaterial3: true),
+          home: TpTheme(
+            data: TpThemeData.fromColorScheme(scheme, scale: 1.0),
+            child: Scaffold(
+              body: TpSelect<String>(
+                items: const ['alpha', 'beta'],
+                itemLabel: (item) => item,
+                hasError: true,
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(triggerBorderColor(tester, scheme), scheme.error);
+    });
+
+    testWidgets('default trigger border is not the error color', (
+      tester,
+    ) async {
+      final scheme = ColorScheme.fromSeed(seedColor: Colors.orange);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(colorScheme: scheme, useMaterial3: true),
+          home: TpTheme(
+            data: TpThemeData.fromColorScheme(scheme, scale: 1.0),
+            child: Scaffold(
+              body: TpSelect<String>(
+                items: const ['alpha', 'beta'],
+                itemLabel: (item) => item,
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(triggerBorderColor(tester, scheme), isNot(scheme.error));
+    });
+  });
 }

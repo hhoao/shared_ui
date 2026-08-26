@@ -48,6 +48,7 @@ class TpSelect<T extends Object> extends StatefulWidget {
     this.headerMaxLines = 1,
     this.listItemMaxLines = 1,
     this.enabled = true,
+    this.hasError = false,
     this.onEmptyTap,
     this.closedHeaderPadding,
     this.expandedHeaderPadding,
@@ -80,6 +81,9 @@ class TpSelect<T extends Object> extends StatefulWidget {
   final int headerMaxLines;
   final int listItemMaxLines;
   final bool enabled;
+
+  /// Draws the trigger border in the error color (validation feedback).
+  final bool hasError;
   final VoidCallback? onEmptyTap;
   final EdgeInsets? closedHeaderPadding;
   final EdgeInsets? expandedHeaderPadding;
@@ -316,6 +320,7 @@ class _TpSelectState<T extends Object> extends State<TpSelect<T>> {
         TpSelectDecorations.themed(
           context,
           suffixIconSize: context.tpIconSizes.md,
+          hasError: widget.hasError,
         );
     final headerPadding =
         widget.closedHeaderPadding ?? kTpSelectClosedHeaderPadding;
@@ -387,6 +392,7 @@ class _TpSelectState<T extends Object> extends State<TpSelect<T>> {
             decoration: deco.buttonDecoration(
               menuOpen: isOpen,
               isHovering: _isHovering,
+              hasError: widget.hasError,
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {

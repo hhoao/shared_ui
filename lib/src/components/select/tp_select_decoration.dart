@@ -26,6 +26,7 @@ class TpSelectDecoration {
     this.menuBorderRadius,
     this.buttonHoverColor,
     this.listItemBorderRadius,
+    this.errorBorderColor,
   });
 
   final Color closedFillColor;
@@ -50,17 +51,26 @@ class TpSelectDecoration {
   final Color? buttonHoverColor;
   final BorderRadius? listItemBorderRadius;
 
+  /// Border color applied to the closed trigger while the select is in an
+  /// error state. When null the regular [closedBorder] is kept.
+  final Color? errorBorderColor;
+
   BoxDecoration buttonDecoration({
     required bool menuOpen,
     bool isHovering = false,
+    bool hasError = false,
   }) {
     Color fill = menuOpen ? expandedFillColor : closedFillColor;
     if (!menuOpen && isHovering && buttonHoverColor != null) {
       fill = buttonHoverColor!;
     }
+    BoxBorder border = menuOpen ? expandedBorder : closedBorder;
+    if (hasError && !menuOpen && errorBorderColor != null) {
+      border = Border.all(color: errorBorderColor!);
+    }
     return BoxDecoration(
       color: fill,
-      border: menuOpen ? expandedBorder : closedBorder,
+      border: border,
       borderRadius: menuOpen ? expandedBorderRadius : closedBorderRadius,
     );
   }
@@ -124,6 +134,7 @@ abstract final class TpSelectDecorations {
     double highlightAlphaLight = 0.04,
     double selectedPrimaryAlphaDark = 0.2,
     double? listItemBorderRadius,
+    bool hasError = false,
     EdgeInsetsGeometry? menuPadding,
   }) {
     final selectTheme = context.tpTheme.selectTheme;
@@ -155,7 +166,11 @@ abstract final class TpSelectDecorations {
     return TpSelectDecoration(
       closedFillColor: closedFillColor ?? Colors.transparent,
       expandedFillColor: expandedFillColor ?? hoverBg,
-      closedBorder: closedBorder ?? Border.all(color: outlineVariant, width: 1),
+      closedBorder: closedBorder ??
+          Border.all(
+            color: hasError ? cs.error : outlineVariant,
+            width: 1,
+          ),
       expandedBorder: expandedBorder ?? Border.all(color: cs.primary, width: 1),
       closedBorderRadius: buttonRadius,
       expandedBorderRadius: buttonRadius,
@@ -200,6 +215,7 @@ abstract final class TpSelectDecorations {
       suffixIconSize: resolvedSuffixIconSize,
       listItemHighlightColor: highlight,
       listItemSelectedColor: selectedBg,
+      errorBorderColor: cs.error,
       listItemBorderRadius: BorderRadius.circular(resolvedListItemBorderRadius),
       menuPadding:
           menuPadding ??
