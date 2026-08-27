@@ -4,6 +4,7 @@ library shared_ui;
 export 'src/components/action_menu/tp_action_menu.dart';
 export 'src/components/action_menu/tp_action_menu_overlay.dart';
 export 'src/components/action_menu/tp_context_menu_position.dart';
+export 'src/components/action_menu/tp_text_selection_context_menu.dart';
 export 'src/components/badge/tp_status_badge.dart';
 export 'src/components/button/tp_button.dart';
 export 'src/components/card/tp_action_row.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../action_menu/tp_text_selection_context_menu.dart';
 import '../popover/tp_anchor.dart';
 import '../popover/tp_portal.dart';
 import 'tp_token_chip_mirror.dart';
@@ -45,6 +46,8 @@ class TpTokenTextField extends StatefulWidget {
     this.fieldKey,
     this.selectionColor,
     this.undoController,
+    this.contextMenuBuilder,
+    this.selectionControls,
     super.key,
   });
 
@@ -71,6 +74,13 @@ class TpTokenTextField extends StatefulWidget {
   final FocusOnKeyEventCallback? onKeyEvent;
   final GlobalKey? fieldKey;
   final UndoHistoryController? undoController;
+
+  /// Overrides the right-click / selection context toolbar. Defaults to the
+  /// Tp action menu ([buildTpTextFieldContextMenu]).
+  final EditableTextContextMenuBuilder? contextMenuBuilder;
+
+  /// Custom text-selection controls for the underlying [TextField].
+  final TextSelectionControls? selectionControls;
 
   @override
   State<TpTokenTextField> createState() => _TpTokenTextFieldState();
@@ -394,6 +404,9 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
               minLines: widget.expands ? null : widget.minLines,
               maxLines: widget.expands ? null : widget.maxLines,
               enabled: widget.enabled,
+              contextMenuBuilder:
+                  widget.contextMenuBuilder ?? buildTpTextFieldContextMenu,
+              selectionControls: widget.selectionControls,
               onChanged: (value) {
                 if (!_applyingTokenHistory) {
                   _clearTokenHistory();
