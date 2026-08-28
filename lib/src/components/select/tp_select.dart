@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/tp_theme.dart';
 import '../popover/tp_popover.dart';
+import '../text/tp_ellipsis_text.dart';
 import 'tp_select_decoration.dart';
 import 'tp_select_item_filter.dart';
 import 'tp_select_menu_item_button.dart';
@@ -283,11 +284,10 @@ class _TpSelectState<T extends Object> extends State<TpSelect<T>> {
       return widget.itemBuilder!(context, item);
     }
     final key = widget.listItemKey?.call(item);
-    return Text(
+    return TpEllipsisText(
       widget.itemLabel!(item),
       key: key,
       maxLines: maxLines,
-      overflow: TextOverflow.ellipsis,
       style: style,
     );
   }

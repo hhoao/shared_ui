@@ -339,4 +339,78 @@ void main() {
       expect(triggerBorderColor(tester, scheme), isNot(scheme.error));
     });
   });
+
+  group('TpSelect long labels', () {
+    const longName = 'deepseek-v4-pro[1m]-a-very-long-model-name-overflow';
+
+    testWidgets('closed header shows a Tooltip with the full item label', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 160,
+            child: TpSelect<String>(
+              items: const [longName],
+              initialItem: longName,
+              searchable: false,
+              itemLabel: (item) => item,
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      final tooltip = find.byType(Tooltip);
+      expect(tooltip, findsOneWidget);
+      expect(tester.widget<Tooltip>(tooltip).message, longName);
+    });
+
+    testWidgets('short header item does not show a Tooltip', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 240,
+            child: TpSelect<String>(
+              items: const ['sonnet'],
+              initialItem: 'sonnet',
+              searchable: false,
+              itemLabel: (item) => item,
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(Tooltip), findsNothing);
+    });
+
+    testWidgets('long open-menu row shows a Tooltip with the full label', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 160,
+            child: TpSelect<String>(
+              items: const ['sonnet', longName],
+              searchable: false,
+              itemLabel: (item) => item,
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(TpSelect<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Tooltip), findsWidgets);
+      final messages = tester
+          .widgetList<Tooltip>(find.byType(Tooltip))
+          .map((t) => t.message)
+          .toList();
+      expect(messages, contains(longName));
+    });
+  });
 }
