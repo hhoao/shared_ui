@@ -61,7 +61,7 @@ class TpSidebarGroupLabel extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: Text(
             label,
-            style: styles.xsTrackColored(
+            style: styles.smMediumColored(
               cs.onSurfaceVariant.withValues(alpha: 0.85),
             ),
             maxLines: 1,

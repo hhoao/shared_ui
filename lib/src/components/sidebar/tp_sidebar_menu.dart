@@ -212,7 +212,7 @@ class TpSidebarMenuButton extends StatelessWidget {
                   label!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: styles.smMediumColored(isActive ? accentFg : fg),
+                  style: styles.mdMediumColored(isActive ? accentFg : fg),
                 ),
               ),
             ],
@@ -309,7 +309,7 @@ class TpSidebarMenuBadge extends StatelessWidget {
       ),
       child: Text(
         label!,
-        style: styles.xsTrackColored(cs.onSurfaceVariant),
+        style: styles.smColored(cs.onSurfaceVariant),
       ),
     );
   }
@@ -436,7 +436,7 @@ class TpSidebarMenuSubButton extends StatelessWidget {
                     label!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: styles.smColored(isActive ? accentFg : fg),
+                    style: styles.mdColored(isActive ? accentFg : fg),
                   ),
                 ),
               ],
