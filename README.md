@@ -67,7 +67,7 @@ import 'package:shared_ui/shared_ui.dart';
 | **Date range** | `TpDateRangePicker`, `TpRangeCalendar`, calendar date utils |
 | **Toast** | `TpToast`, `TpToastWrapper`, `TpToastConfig`, `TpToastTheme`, `TpToastVariant`, `TpToastAction` |
 | **Layout / chrome** | `TpCard`, `TpCardHeader`, `TpActionRow`, `TpSeparator`, `TpSegmentedControl`, `TpSegmentedPicker`, `TpEmptyState`, `TpHover` / `TpHoverRow` (click cursor when interactive, animated hover fill; optional idle `backgroundColor`, `enabled`, `onLongPress`, `onSecondaryTapDown`, `pressScale` — prefer over bare `MouseRegion`+`GestureDetector` for onTap chrome; selected idle fill = pass `backgroundColor`, not a `selected` API on `TpHover`), `TpSidebar` |
-| **Deferred / keep-alive** | `TpDeferredMountShell`, `TpDeferredMountAfter`, `TpDeferredForegroundMount`, `TpKeepAliveLayer` — host progressive paint guide (TeamPilot: `docs/PERFORMANCE.md`) |
+| **Deferred / keep-alive** | `TpDeferredMountShell`, `TpDeferredMountAfter`, `TpDeferredForegroundMount`, `TpKeepAliveLayer`|
 | **Preference** | `TpPreferenceRow`, `TpPreferenceStack`, `TpSectionHeader`, `TpDisclosure`, `TpStatusBadge`, `TpCompactSelect` |
 | **File selection** | `showTpFileSelection`, `TpFileSelectionDeps`, `TpFileSelectionOptions`, `TpPickedEntry`, port adapters (`TpFilesystemPort`, `TpGalleryPort`, …) |
 | **Theme** | `TpTheme`, `TpThemeData`, `TpTextStyles`, `TpFontTheme`, `TpGlyphWarmup`, icon sizes (`sm`/`md`/`lg`/`hero`), spacing / typography / control metrics, per-component themes |

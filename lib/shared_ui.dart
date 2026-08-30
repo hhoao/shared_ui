@@ -52,6 +52,8 @@ export 'src/components/file_selection/ui/tp_gallery_tab.dart';
 export 'src/components/file_selection/ui/widgets/tp_full_disk_search_dialog.dart';
 export 'src/components/form/tp_form.dart';
 export 'src/components/form/tp_form_field.dart';
+export 'src/components/form/tp_form_field_label.dart';
+export 'src/components/form/tp_info_tip_icon.dart';
 export 'src/components/form/tp_form_field_layout.dart';
 export 'src/components/form/tp_form_map.dart';
 export 'src/components/hover/tp_hover.dart';

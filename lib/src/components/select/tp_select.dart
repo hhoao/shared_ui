@@ -65,6 +65,8 @@ class TpSelect<T extends Object> extends StatefulWidget {
     this.clearSearchOnClose = true,
     this.onSearchChanged,
     this.onHighlightChanged,
+    this.anchor,
+    this.overlayFillHeight = false,
   }) : assert(
          itemLabel != null || itemBuilder != null || listItemBuilder != null,
          'Provide itemLabel, itemBuilder, or listItemBuilder',
@@ -120,6 +122,13 @@ class TpSelect<T extends Object> extends StatefulWidget {
   /// when the menu closes. Exit between rows does not clear (last hover sticks
   /// until another enter or close) so consumers can preview without flicker.
   final ValueChanged<T?>? onHighlightChanged;
+
+  /// When set, controls where the menu opens relative to the trigger.
+  final TpAnchorBase? anchor;
+
+  /// When true, the overlay panel uses a fixed [overlayHeight] (or theme default)
+  /// instead of shrinking to the option list.
+  final bool overlayFillHeight;
 
   @override
   State<TpSelect<T>> createState() => _TpSelectState<T>();
@@ -362,22 +371,28 @@ class _TpSelectState<T extends Object> extends State<TpSelect<T>> {
       overlayVisible: _overlayWidth != null,
       padding: deco.menuPadding,
       decoration: deco.menuDecoration(),
-      anchor: const TpAnchor(
-        childAlignment: Alignment.topCenter,
-        overlayAlignment: Alignment.bottomCenter,
-        offset: Offset(0, 4),
-      ),
+      anchor:
+          widget.anchor ??
+          const TpAnchor(
+            childAlignment: Alignment.topCenter,
+            overlayAlignment: Alignment.bottomCenter,
+            offset: Offset(0, 4),
+          ),
       popover: (popoverContext) {
+        final panel = FocusScope(
+          autofocus: !_showsSearch,
+          child: _buildPopoverBody(
+            popoverContext,
+            deco: deco,
+            itemPadding: itemPadding,
+          ),
+        );
+        if (widget.overlayFillHeight) {
+          return SizedBox(height: maxHeight, child: panel);
+        }
         return ConstrainedBox(
           constraints: BoxConstraints(maxHeight: maxHeight),
-          child: FocusScope(
-            autofocus: !_showsSearch,
-            child: _buildPopoverBody(
-              popoverContext,
-              deco: deco,
-              itemPadding: itemPadding,
-            ),
-          ),
+          child: panel,
         );
       },
       child: MouseRegion(
@@ -462,6 +477,7 @@ class _TpSelectState<T extends Object> extends State<TpSelect<T>> {
     // Short menus must shrink to content; otherwise ListView expands to the
     // overlay maxHeight and leaves empty space.
     final shrinkWrap =
+        !widget.overlayFillHeight &&
         widget.items.length <= _kTpSelectPlainListShrinkWrapMaxItems;
     return ListView.separated(
       shrinkWrap: shrinkWrap,
