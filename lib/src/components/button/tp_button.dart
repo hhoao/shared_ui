@@ -21,6 +21,7 @@ class TpButton extends StatelessWidget {
     this.onPressed,
     this.variant = TpButtonVariant.primary,
     this.size,
+    this.fitContentHeight = false,
     this.focusNode,
     this.autofocus = false,
     this.clipBehavior = Clip.none,
@@ -30,6 +31,9 @@ class TpButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final TpButtonVariant variant;
   final TpControlSize? size;
+  /// When true, the button grows vertically with [child] instead of capping
+  /// at the control-size height (for multi-line labels).
+  final bool fitContentHeight;
   final FocusNode? focusNode;
   final bool autofocus;
   final Clip clipBehavior;
@@ -47,6 +51,7 @@ class TpButton extends StatelessWidget {
       scheme: scheme,
       metrics: metrics,
       radius: control.radius,
+      fitContentHeight: fitContentHeight,
     );
 
     return TextButton(
@@ -64,19 +69,27 @@ class TpButton extends StatelessWidget {
     required ColorScheme scheme,
     required TpControlSizeMetrics metrics,
     required double radius,
+    bool fitContentHeight = false,
   }) {
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radius),
     );
     final geometry = ButtonStyle(
       minimumSize: WidgetStatePropertyAll(
-        Size(metrics.minWidth, metrics.height),
+        Size(metrics.minWidth, fitContentHeight ? 0 : metrics.height),
       ),
-      maximumSize: WidgetStatePropertyAll(
-        Size(double.infinity, metrics.height),
-      ),
+      maximumSize: fitContentHeight
+          ? null
+          : WidgetStatePropertyAll(
+              Size(double.infinity, metrics.height),
+            ),
       padding: WidgetStatePropertyAll(
-        EdgeInsets.symmetric(horizontal: metrics.horizontalPadding),
+        fitContentHeight
+            ? EdgeInsets.symmetric(
+                horizontal: metrics.horizontalPadding,
+                vertical: metrics.verticalPadding,
+              )
+            : EdgeInsets.symmetric(horizontal: metrics.horizontalPadding),
       ),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.standard,
