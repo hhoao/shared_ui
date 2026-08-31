@@ -175,4 +175,35 @@ void main() {
     expect(activeColor, Colors.white);
     expect(inactiveColor, isNot(Colors.white));
   });
+
+  testWidgets('optional per-segment tooltips are wired', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(useMaterial3: true),
+        home: TpTheme(
+          data: TpThemeData.fromColorScheme(
+            ColorScheme.fromSeed(seedColor: Colors.orange),
+            scale: 1.0,
+          ),
+          child: Scaffold(
+            body: TpSegmentedControl(
+              totalSwitches: 2,
+              initialLabelIndex: 0,
+              labels: const ['', ''],
+              icons: const [
+                Icons.chat_bubble_outline_rounded,
+                Icons.terminal_rounded,
+              ],
+              tooltips: const ['Chat', 'Terminal'],
+              onToggle: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byTooltip('Chat'), findsOneWidget);
+    expect(find.byTooltip('Terminal'), findsOneWidget);
+    expect(find.byType(TpHover), findsNWidgets(2));
+  });
 }
