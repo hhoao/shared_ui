@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../form/tp_form_field.dart';
+import '../../theme/tokens/tp_control_metrics.dart';
 import 'tp_input.dart';
 
 /// [TpFormField] wrapping [TpInput]; label / error / description come from
@@ -30,6 +31,8 @@ class TpInputFormField extends TpFormField<String> {
     super.layoutStyle,
     super.labelWidth,
     this.decoration,
+    this.size,
+    this.metrics,
     this.style,
     this.strutStyle,
     this.textAlign = TextAlign.start,
@@ -69,6 +72,8 @@ class TpInputFormField extends TpFormField<String> {
              enabled: state.enabled,
              readOnly: readOnly,
              controller: state.controller,
+             size: size,
+             metrics: metrics,
              onEditingComplete: onEditingComplete,
              onSubmitted: onSubmitted,
              decoration: baseDecoration.copyWith(
@@ -105,6 +110,8 @@ class TpInputFormField extends TpFormField<String> {
 
   final TextEditingController? controller;
   final InputDecoration? decoration;
+  final TpControlSize? size;
+  final TpControlSizeMetrics? metrics;
   final TextStyle? style;
   final StrutStyle? strutStyle;
   final TextAlign textAlign;

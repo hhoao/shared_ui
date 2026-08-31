@@ -46,6 +46,8 @@ class TpInputTheme {
     this.labelAlpha = 0.9,
     this.focusedBorderWidth = 1.5,
     this.disabledBorderAlpha = 0.38,
+    this.defaultSize,
+    this.metrics,
   });
 
   factory TpInputTheme.defaults() => const TpInputTheme();
@@ -54,6 +56,14 @@ class TpInputTheme {
   final double labelAlpha;
   final double focusedBorderWidth;
   final double disabledBorderAlpha;
+
+  /// Default [TpControlSize] for [TpInput] when neither [TpInput.size] nor
+  /// [TpInput.metrics] is set. When null, the dedicated input track
+  /// ([TpControlMetrics.input], ~32px) is used.
+  final TpControlSize? defaultSize;
+
+  /// Optional fixed geometry for all inputs in this theme subtree.
+  final TpControlSizeMetrics? metrics;
 
   /// Builds Material [InputDecorationThemeData] for app-level theme assembly.
   InputDecorationThemeData toInputDecorationTheme({
@@ -119,7 +129,9 @@ class TpInputTheme {
           hintAlpha == other.hintAlpha &&
           labelAlpha == other.labelAlpha &&
           focusedBorderWidth == other.focusedBorderWidth &&
-          disabledBorderAlpha == other.disabledBorderAlpha;
+          disabledBorderAlpha == other.disabledBorderAlpha &&
+          defaultSize == other.defaultSize &&
+          metrics == other.metrics;
 
   @override
   int get hashCode => Object.hash(
@@ -127,6 +139,8 @@ class TpInputTheme {
     labelAlpha,
     focusedBorderWidth,
     disabledBorderAlpha,
+    defaultSize,
+    metrics,
   );
 }
 

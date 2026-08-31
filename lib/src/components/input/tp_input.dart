@@ -2,7 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../theme/components/tp_input_theme.dart';
+import '../../theme/tokens/tp_control_metrics.dart';
 import '../../theme/tp_theme.dart';
+
+TpControlSizeMetrics tpResolveInputMetrics({
+  required TpControlMetrics control,
+  required TpInputTheme inputTheme,
+  TpControlSize? size,
+  TpControlSizeMetrics? metrics,
+}) {
+  if (metrics != null) return metrics;
+  if (size != null) return control.metricsFor(size);
+  if (inputTheme.metrics != null) return inputTheme.metrics!;
+  if (inputTheme.defaultSize != null) {
+    return control.metricsFor(inputTheme.defaultSize!);
+  }
+  return control.input;
+}
 
 /// Single-line outline [TextField] chrome aligned with [TpInputTheme] /
 /// textarea fill + border colors.
@@ -10,13 +26,23 @@ InputDecoration tpOutlineInputDecoration(
   BuildContext context, {
   InputDecoration? decoration,
   bool hasError = false,
+  TpControlSize? size,
+  TpControlSizeMetrics? metrics,
 }) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
   final inputTheme = theme.inputDecorationTheme;
   final tp = TpTheme.of(context);
   final control = tp.control;
-  final metrics = tp.inputTheme;
+  final metricsTheme = tp.inputTheme;
+  final resolvedMetrics = tpResolveInputMetrics(
+    control: control,
+    inputTheme: metricsTheme,
+    size: size,
+    metrics: metrics,
+  );
+  final useDefaultInputTrack = identical(resolvedMetrics, control.input) ||
+      resolvedMetrics == control.input;
   final radius = BorderRadius.circular(control.radius);
   final base = decoration ?? const InputDecoration();
   final outline = scheme.outlineVariant;
@@ -40,7 +66,7 @@ InputDecoration tpOutlineInputDecoration(
   final hintBase = theme.textTheme.bodyMedium ?? theme.textTheme.bodyLarge!;
   final hintStyle = tpWithResolvedFontSize(
     (base.hintStyle ?? inputTheme.hintStyle ?? hintBase).copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: metrics.hintAlpha),
+      color: scheme.onSurfaceVariant.withValues(alpha: metricsTheme.hintAlpha),
       height: 1.25,
       fontWeight: FontWeight.w400,
     ),
@@ -52,17 +78,17 @@ InputDecoration tpOutlineInputDecoration(
     filled: base.filled ?? true,
     fillColor:
         base.fillColor ?? inputTheme.fillColor ?? scheme.surfaceContainer,
-    isDense: base.isDense ?? true,
+    isDense: base.isDense ?? useDefaultInputTrack,
     constraints:
         base.constraints ??
         inputTheme.constraints ??
-        BoxConstraints.tightFor(height: control.input.height),
+        BoxConstraints.tightFor(height: resolvedMetrics.height),
     contentPadding:
         base.contentPadding ??
         inputTheme.contentPadding ??
         EdgeInsets.symmetric(
-          horizontal: control.input.horizontalPadding,
-          vertical: control.input.verticalPadding,
+          horizontal: resolvedMetrics.horizontalPadding,
+          vertical: resolvedMetrics.verticalPadding,
         ),
     hintStyle: hintStyle,
     border: themed(
@@ -77,7 +103,7 @@ InputDecoration tpOutlineInputDecoration(
       inputTheme.focusedBorder,
       outlineBorder(
         hasError ? scheme.error : scheme.primary,
-        metrics.focusedBorderWidth,
+        metricsTheme.focusedBorderWidth,
       ),
     ),
     errorBorder: themed(
@@ -86,12 +112,12 @@ InputDecoration tpOutlineInputDecoration(
     ),
     focusedErrorBorder: themed(
       inputTheme.focusedErrorBorder,
-      outlineBorder(scheme.error, metrics.focusedBorderWidth),
+      outlineBorder(scheme.error, metricsTheme.focusedBorderWidth),
     ),
     disabledBorder: themed(
       inputTheme.disabledBorder,
       outlineBorder(
-        outline.withValues(alpha: metrics.disabledBorderAlpha),
+        outline.withValues(alpha: metricsTheme.disabledBorderAlpha),
       ),
     ),
   );
@@ -105,6 +131,8 @@ class TpInput extends StatefulWidget {
     this.controller,
     this.focusNode,
     this.decoration,
+    this.size,
+    this.metrics,
     this.onChanged,
     this.onEditingComplete,
     this.onSubmitted,
@@ -143,6 +171,8 @@ class TpInput extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final InputDecoration? decoration;
+  final TpControlSize? size;
+  final TpControlSizeMetrics? metrics;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
   final ValueChanged<String>? onSubmitted;
@@ -235,6 +265,8 @@ class _TpInputState extends State<TpInput> {
       decoration: tpOutlineInputDecoration(
         context,
         decoration: widget.decoration,
+        size: widget.size,
+        metrics: widget.metrics,
       ),
       style: style,
       strutStyle: widget.strutStyle,

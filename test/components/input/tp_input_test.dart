@@ -49,6 +49,39 @@ void main() {
     );
   });
 
+  testWidgets('metrics overrides default compact input height', (tester) async {
+    const tall = TpControlSizeMetrics(
+      height: 72,
+      minWidth: 64,
+      horizontalPadding: 16,
+      verticalPadding: 24,
+    );
+    await tester.pumpWidget(
+      wrap(const TpInput(metrics: tall)),
+    );
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.decoration?.constraints?.maxHeight, 72);
+    expect(field.decoration?.isDense, isFalse);
+    expect(
+      field.decoration?.contentPadding,
+      const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+    );
+  });
+
+  testWidgets('size uses button control track geometry', (tester) async {
+    final control = TpControlMetrics.fromScale(1.0);
+    await tester.pumpWidget(
+      wrap(const TpInput(size: TpControlSize.large)),
+    );
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(
+      field.decoration?.constraints?.maxHeight,
+      control.large.height,
+    );
+  });
+
   testWidgets('TpInputFormField syncs text with form', (tester) async {
     await tester.pumpWidget(
       wrap(
