@@ -266,7 +266,12 @@ class _TpSegmentedControlTrackState extends State<_TpSegmentedControlTrack> {
       borderRadius: BorderRadius.circular(widget.cornerRadius),
       backgroundColor: active ? widget.activeBgColor : Colors.transparent,
       onTap: () => _handleTap(index),
-      child: content,
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: content,
+        ),
+      ),
     );
 
     if (tooltip != null && tooltip.isNotEmpty) {
