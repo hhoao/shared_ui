@@ -27,13 +27,15 @@ void main() {
     expect(find.text('Card body'), findsOneWidget);
     expect(find.byType(TpCard), findsOneWidget);
 
-    final material = tester.widget<Material>(
+    final box = tester.widget<DecoratedBox>(
       find.descendant(
         of: find.byType(TpCard),
-        matching: find.byType(Material),
+        matching: find.byType(DecoratedBox),
       ).first,
     );
-    expect(material.color, isNotNull);
+    expect(box.decoration, isA<BoxDecoration>());
+    final decoration = box.decoration! as BoxDecoration;
+    expect(decoration.color, isNotNull);
 
     final padding = tester.widget<Padding>(
       find.descendant(
@@ -42,5 +44,37 @@ void main() {
       ).first,
     );
     expect(padding.padding, isNot(EdgeInsets.zero));
+  });
+
+  testWidgets('TpCard.elevated uses surface fill and shadow', (tester) async {
+    await tester.pumpWidget(
+      wrap(const TpCard.elevated(child: Text('Elevated'))),
+    );
+
+    final box = tester.widget<DecoratedBox>(
+      find.descendant(
+        of: find.byType(TpCard),
+        matching: find.byType(DecoratedBox),
+      ).first,
+    );
+    final decoration = box.decoration! as BoxDecoration;
+    expect(decoration.boxShadow, isNotEmpty);
+    expect(decoration.border, isNull);
+  });
+
+  testWidgets('TpCard.tiled uses border and shadow', (tester) async {
+    await tester.pumpWidget(
+      wrap(const TpCard.tiled(child: Text('Tile'))),
+    );
+
+    final box = tester.widget<DecoratedBox>(
+      find.descendant(
+        of: find.byType(TpCard),
+        matching: find.byType(DecoratedBox),
+      ).first,
+    );
+    final decoration = box.decoration! as BoxDecoration;
+    expect(decoration.border, isNotNull);
+    expect(decoration.boxShadow, isNotEmpty);
   });
 }
