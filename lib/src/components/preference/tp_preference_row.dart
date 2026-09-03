@@ -41,6 +41,10 @@ class TpPreferenceRow extends StatelessWidget {
     final spacing = context.tpSpacing;
     final hasSub = hasSubtitle(subtitle);
     final subtitleStyle = TpTextStyles.of(context).mutedSm;
+    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+          height: 1.35,
+        ) ??
+        TpTextStyles.of(context).md;
     final resolvedPadding = padding ?? defaultPadding;
 
     return RepaintBoundary(
@@ -64,7 +68,7 @@ class TpPreferenceRow extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title),
+                        Text(title, style: titleStyle),
                         if (hasSub) ...[
                           const SizedBox(height: _titleSubtitleGap),
                           Text(subtitle!.trim(), style: subtitleStyle),

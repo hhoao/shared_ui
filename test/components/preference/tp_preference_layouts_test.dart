@@ -52,13 +52,14 @@ void main() {
     await tester.pumpWidget(
       wrap(const TpCard.outlined(child: Text('Panel'))),
     );
-    final material = tester.widget<Material>(
+    final box = tester.widget<DecoratedBox>(
       find.descendant(
         of: find.byType(TpCard),
-        matching: find.byType(Material),
+        matching: find.byType(DecoratedBox),
       ).first,
     );
-    expect(material.color, Colors.transparent);
+    final decoration = box.decoration! as BoxDecoration;
+    expect(decoration.color, Colors.transparent);
   });
 
   testWidgets('TpStatusBadge shows label', (tester) async {
