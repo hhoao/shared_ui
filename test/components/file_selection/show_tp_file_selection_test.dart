@@ -164,4 +164,53 @@ void main() {
 
     expect(find.byKey(const Key('tp_file_selection_page')), findsOneWidget);
   });
+
+  testWidgets('non-desktop classic layout pushes the classic page',
+      (tester) async {
+    final filesystem = FakeFilesystemPort(
+      roots: const [
+        TpFilesystemRoot(
+          id: 'phone_storage',
+          label: 'phone_storage',
+          path: '/storage',
+        ),
+      ],
+    );
+    final deps = TpFileSelectionDeps(
+      filesystem: filesystem,
+      permission: FakePermissionPort(),
+      strings: TpFileSelectionStrings.english(),
+      isDesktop: () => false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () {
+                showTpFileSelection(
+                  context: context,
+                  deps: deps,
+                  options: const TpFileSelectionOptions(
+                    layout: TpFileSelectionLayout.classic,
+                  ),
+                );
+              },
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('tp_file_selection_classic_page')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('tp_file_selection_page')), findsNothing);
+  });
 }

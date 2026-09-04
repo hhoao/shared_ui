@@ -10,8 +10,12 @@ class TpFileSelectionStrings {
     required this.addSelectedFiles,
     required this.albumAllMediaSubtitle,
     required this.albumCount,
+    required this.albumsSection,
+    required this.allImagesTile,
+    required this.allVideosTile,
     required this.appFoldersTab,
     required this.authorize,
+    required this.backToParent,
     required this.calculating,
     required this.calculatingFileSize,
     required this.cannotAccessDirectory,
@@ -34,6 +38,7 @@ class TpFileSelectionStrings {
     required this.folderCreatedSuccess,
     required this.folderEmpty,
     required this.folderInfo,
+    required this.folderItemCount,
     required this.folderNameHint,
     required this.foundFileCount,
     required this.fullDiskSearchTab,
@@ -52,6 +57,7 @@ class TpFileSelectionStrings {
     required this.inputFileNameHint,
     required this.inputFileNameKeywordHint,
     required this.inputKeywordHint,
+    required this.internalStorageSection,
     required this.itemCountUnit,
     required this.itemTypeDirectory,
     required this.itemTypeFile,
@@ -63,6 +69,7 @@ class TpFileSelectionStrings {
     required this.loading,
     required this.maxSelectionCountReached,
     required this.maxSelectionCountReachedFor,
+    required this.mediaFilesSection,
     required this.mediaItemCount,
     required this.mediaTypeAll,
     required this.mediaTypeImage,
@@ -99,12 +106,14 @@ class TpFileSelectionStrings {
     required this.searchingFiles,
     required this.selectAlbum,
     required this.selectAll,
+    required this.selectAction,
     required this.selectDirectoryPrompt,
     required this.selectDirectoryTitle,
     required this.selectFilesAndDirectoriesTitle,
     required this.selectFilesOrDirectoriesPrompt,
     required this.selectFilesPrompt,
     required this.selectFilesTitle,
+    required this.selectionPromptForType,
     required this.selectImagesTitle,
     required this.selectMediaTitle,
     required this.selectThisDirectory,
@@ -121,6 +130,7 @@ class TpFileSelectionStrings {
     required this.sortByName,
     required this.sortOptionsTitle,
     required this.storagePermissionRequired,
+    required this.storageSummary,
     required this.switchTabClearSelectionMessage,
     required this.switchTabTitle,
     required this.switchToGridMode,
@@ -144,8 +154,12 @@ class TpFileSelectionStrings {
   final String Function(int count) addSelectedFiles;
   final String Function(String mediaType) albumAllMediaSubtitle;
   final String Function(int count) albumCount;
+  final String albumsSection;
+  final String allImagesTile;
+  final String allVideosTile;
   final String appFoldersTab;
   final String authorize;
+  final String backToParent;
   final String calculating;
   final String calculatingFileSize;
   final String Function(String error) cannotAccessDirectory;
@@ -168,6 +182,7 @@ class TpFileSelectionStrings {
   final String folderCreatedSuccess;
   final String folderEmpty;
   final String folderInfo;
+  final String Function(int count) folderItemCount;
   final String folderNameHint;
   final String Function(int count) foundFileCount;
   final String fullDiskSearchTab;
@@ -186,6 +201,7 @@ class TpFileSelectionStrings {
   final String inputFileNameHint;
   final String inputFileNameKeywordHint;
   final String inputKeywordHint;
+  final String internalStorageSection;
   final String Function(int count) itemCountUnit;
   final String itemTypeDirectory;
   final String itemTypeFile;
@@ -197,6 +213,7 @@ class TpFileSelectionStrings {
   final String loading;
   final String Function(int count) maxSelectionCountReached;
   final String Function(int count, String itemType) maxSelectionCountReachedFor;
+  final String mediaFilesSection;
   final String Function(int count, String mediaType) mediaItemCount;
   final String mediaTypeAll;
   final String mediaTypeImage;
@@ -233,12 +250,14 @@ class TpFileSelectionStrings {
   final String searchingFiles;
   final String selectAlbum;
   final String selectAll;
+  final String selectAction;
   final String selectDirectoryPrompt;
   final String selectDirectoryTitle;
   final String selectFilesAndDirectoriesTitle;
   final String selectFilesOrDirectoriesPrompt;
   final String selectFilesPrompt;
   final String selectFilesTitle;
+  final String Function(String mediaType) selectionPromptForType;
   final String selectImagesTitle;
   final String selectMediaTitle;
   final String selectThisDirectory;
@@ -256,6 +275,7 @@ class TpFileSelectionStrings {
   final String sortByName;
   final String sortOptionsTitle;
   final String storagePermissionRequired;
+  final String Function(int folderCount, int fileCount) storageSummary;
   final String switchTabClearSelectionMessage;
   final String switchTabTitle;
   final String switchToGridMode;
@@ -281,8 +301,12 @@ class TpFileSelectionStrings {
       addSelectedFiles: (count) => 'Add $count file(s)',
       albumAllMediaSubtitle: (mediaType) => 'All $mediaType files',
       albumCount: (count) => '$count album(s)',
+      albumsSection: 'Albums',
+      allImagesTile: 'All images',
+      allVideosTile: 'All videos',
       appFoldersTab: 'App folders',
       authorize: 'Authorize',
+      backToParent: 'Back',
       calculating: 'Calculating...',
       calculatingFileSize: 'Calculating size...',
       cannotAccessDirectory: (error) => 'Cannot access this directory: $error',
@@ -307,6 +331,7 @@ class TpFileSelectionStrings {
       folderCreatedSuccess: 'Folder created',
       folderEmpty: 'This folder is empty',
       folderInfo: 'Folder info',
+      folderItemCount: (count) => '$count item(s)',
       folderNameHint: 'Enter folder name',
       foundFileCount: (count) => 'Found $count file(s)',
       fullDiskSearchTab: 'Search all',
@@ -326,6 +351,7 @@ class TpFileSelectionStrings {
       inputFileNameHint: 'Enter file name...',
       inputFileNameKeywordHint: 'Enter file name keyword...',
       inputKeywordHint: 'Enter keyword...',
+      internalStorageSection: 'Internal storage',
       itemCountUnit: (count) => '$count',
       itemTypeDirectory: 'directory',
       itemTypeFile: 'file',
@@ -338,6 +364,7 @@ class TpFileSelectionStrings {
       maxSelectionCountReached: (count) => 'You can select at most $count file(s)',
       maxSelectionCountReachedFor: (count, itemType) =>
           'You can select at most $count $itemType',
+      mediaFilesSection: 'Media files',
       mediaItemCount: (count, mediaType) => '$count $mediaType',
       mediaTypeAll: 'media',
       mediaTypeImage: 'images',
@@ -375,12 +402,14 @@ class TpFileSelectionStrings {
       searchingFiles: 'Searching files...',
       selectAlbum: 'Select album',
       selectAll: 'Select all',
+      selectAction: 'Select',
       selectDirectoryPrompt: 'Please select a directory',
       selectDirectoryTitle: 'Select directory',
       selectFilesAndDirectoriesTitle: 'Select files and directories',
       selectFilesOrDirectoriesPrompt: 'Please select file(s) or directory',
       selectFilesPrompt: 'Please select file(s)',
       selectFilesTitle: 'Select files',
+      selectionPromptForType: (mediaType) => 'Please select $mediaType files',
       selectImagesTitle: 'Select images',
       selectMediaTitle: 'Select media',
       selectThisDirectory: 'Select this directory',
@@ -399,6 +428,8 @@ class TpFileSelectionStrings {
       sortOptionsTitle: 'Sort by',
       storagePermissionRequired:
           'Storage permission is required to access files',
+      storageSummary: (folderCount, fileCount) =>
+          '$folderCount folder(s), $fileCount file(s)',
       switchTabClearSelectionMessage:
           'Switching tabs will clear your current selection. Continue?',
       switchTabTitle: 'Switch tab',

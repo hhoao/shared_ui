@@ -16,6 +16,7 @@ import 'tp_file_selection_strings.dart';
 import 'tp_filesystem_tab.dart';
 import 'tp_gallery_tab.dart';
 import 'widgets/tp_file_sort_sheet.dart';
+import 'widgets/tp_file_selection_bottom_bar.dart';
 
 /// Mobile file-selection page: app bar, filesystem/gallery tabs, bottom bar.
 class TpFileSelectionPage extends StatefulWidget {
@@ -185,6 +186,22 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
     tabController.index = index;
   }
 
+  /// Horizontal icon + label tab used by the [TpFileSelectionTabStyle.tabBar]
+  /// presentation.
+  Widget _buildTabLabel(IconData icon, String label) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 12),
+          const SizedBox(width: 4),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showSortSheet() async {
     await showTpFileSortSheet(
       context: context,
@@ -339,22 +356,37 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
               ],
             ),
             if (_showGalleryTab && _tabController != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Center(
-                  child: TpSegmentedControl(
-                    key: ValueKey(_tabController!.index),
-                    totalSwitches: 2,
-                    initialLabelIndex: _tabController!.index,
-                    labels: [
-                      _strings.tabFiles,
-                      _strings.tabPhotoGallery,
-                    ],
-                    icons: const [Icons.folder_outlined, Icons.photo_library_outlined],
-                    onToggle: _onSegmentedTabToggle,
-                  ),
-                ),
-              ),
+              widget.options.tabStyle == TpFileSelectionTabStyle.tabBar
+                  ? TabBar(
+                      key: const Key('tp_file_selection_tab_bar'),
+                      controller: _tabController!,
+                      tabs: [
+                        _buildTabLabel(
+                          Icons.folder,
+                          _strings.tabFiles,
+                        ),
+                        _buildTabLabel(
+                          Icons.photo_library,
+                          _strings.tabPhotoGallery,
+                        ),
+                      ],
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Center(
+                        child: TpSegmentedControl(
+                          key: ValueKey(_tabController!.index),
+                          totalSwitches: 2,
+                          initialLabelIndex: _tabController!.index,
+                          labels: [
+                            _strings.tabFiles,
+                            _strings.tabPhotoGallery,
+                          ],
+                          icons: const [Icons.folder_outlined, Icons.photo_library_outlined],
+                          onToggle: _onSegmentedTabToggle,
+                        ),
+                      ),
+                    ),
           ],
         ),
       ),
@@ -399,8 +431,25 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                     child: _isDirectoryMode
-                        ? _buildDirectoryBottomBar(styles, cs)
-                        : _buildFileBottomBar(styles, cs),
+                        ? TpFileSelectionBottomBar.directory(
+                            strings: _strings,
+                            currentPath: _controller.currentPath,
+                            onConfirmDirectory: _confirmDirectory,
+                          )
+                        : TpFileSelectionBottomBar.file(
+                            strings: _strings,
+                            selectionCount: _controller.selection.length,
+                            maxSelectionCount: widget.options.maxSelectionCount,
+                            selectionSummary: _selectionSummary(),
+                            confirmLabel: _controller.selection.isEmpty
+                                ? _strings.actionConfirm
+                                : _strings.actionConfirmWithCount(
+                                    _controller.selection.length,
+                                  ),
+                            onClearSelection: _clearSelection,
+                            onToggleSelectAll: _toggleSelectAll,
+                            onConfirm: _confirmSelection,
+                          ),
                   ),
                 ),
               );
@@ -408,95 +457,6 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDirectoryBottomBar(TpTextStyles styles, ColorScheme cs) {
-    return Row(
-      children: [
-        Icon(Icons.folder_outlined, color: cs.primary, size: 16),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_strings.currentDirectoryLabel, style: styles.mutedXs),
-              Text(
-                _controller.currentPath,
-                style: styles.smMediumColored(cs.primary),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        TpButton(
-          key: const Key('tp_file_selection_select_directory'),
-          onPressed: _confirmDirectory,
-          child: Text(_strings.selectThisDirectory),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFileBottomBar(TpTextStyles styles, ColorScheme cs) {
-    final hasSelection = _controller.selection.isNotEmpty;
-    final confirmLabel = hasSelection
-        ? _strings.actionConfirmWithCount(_controller.selection.length)
-        : _strings.actionConfirm;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            TpButton(
-              key: const Key('tp_file_selection_clear'),
-              variant: TpButtonVariant.ghost,
-              onPressed: hasSelection ? _clearSelection : null,
-              child: Text(_strings.clearSelection),
-            ),
-            if (widget.options.maxSelectionCount != null) ...[
-              const SizedBox(width: 8),
-              Text(
-                '${_controller.selection.length}/${widget.options.maxSelectionCount}',
-                style: styles.mutedSm,
-              ),
-            ],
-            const Spacer(),
-            TpButton(
-              key: const Key('tp_file_selection_select_all'),
-              variant: TpButtonVariant.ghost,
-              onPressed: _toggleSelectAll,
-              child: Text(_strings.selectAll),
-            ),
-          ],
-        ),
-        const Divider(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _selectionSummary(),
-                style: hasSelection
-                    ? styles.smMediumColored(cs.primary)
-                    : styles.mutedSm,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 12),
-            TpButton(
-              key: const Key('tp_file_selection_confirm'),
-              onPressed: hasSelection ? _confirmSelection : null,
-              child: Text(confirmLabel),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

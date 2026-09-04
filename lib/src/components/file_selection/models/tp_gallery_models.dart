@@ -3,11 +3,15 @@ class TpGalleryAlbum {
     required this.id,
     required this.name,
     this.assetCount,
+    this.isAll = false,
   });
 
   final String id;
   final String name;
   final int? assetCount;
+
+  /// Whether this is the device-wide "all media" album.
+  final bool isAll;
 }
 
 class TpGalleryAsset {

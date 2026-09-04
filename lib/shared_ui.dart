@@ -46,6 +46,8 @@ export 'src/components/file_selection/ports/tp_gallery_port.dart';
 export 'src/components/file_selection/ports/tp_media_preview_port.dart';
 export 'src/components/file_selection/ports/tp_permission_port.dart';
 export 'src/components/file_selection/show_tp_file_selection.dart';
+export 'src/components/file_selection/ui/classic/tp_classic_views.dart';
+export 'src/components/file_selection/ui/classic/tp_file_selection_classic_page.dart';
 export 'src/components/file_selection/ui/tp_file_selection_strings.dart';
 export 'src/components/file_selection/ui/tp_filesystem_tab.dart';
 export 'src/components/file_selection/ui/tp_gallery_tab.dart';

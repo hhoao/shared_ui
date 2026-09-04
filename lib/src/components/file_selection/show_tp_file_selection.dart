@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/tp_file_selection_options.dart';
 import 'models/tp_picked_entry.dart';
 import 'ports/tp_file_selection_deps.dart';
+import 'ui/classic/tp_file_selection_classic_page.dart';
 import 'ui/tp_file_selection_page.dart';
 
 Future<List<TpPickedEntry>?> showTpFileSelection({
@@ -29,9 +30,10 @@ Future<List<TpPickedEntry>?> showTpFileSelection({
         );
     }
   }
+  final page = options.layout == TpFileSelectionLayout.classic
+      ? TpFileSelectionClassicPage(deps: deps, options: options)
+      : TpFileSelectionPage(deps: deps, options: options);
   return Navigator.of(context).push<List<TpPickedEntry>>(
-    MaterialPageRoute(
-      builder: (_) => TpFileSelectionPage(deps: deps, options: options),
-    ),
+    MaterialPageRoute(builder: (_) => page),
   );
 }

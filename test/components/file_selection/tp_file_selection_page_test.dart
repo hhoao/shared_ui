@@ -140,6 +140,26 @@ void main() {
 
       expect(find.text(strings.tabFiles), findsOneWidget);
       expect(find.text(strings.tabPhotoGallery), findsOneWidget);
+      expect(find.byType(TpSegmentedControl), findsOneWidget);
+      expect(find.byType(TabBar), findsNothing);
+    });
+
+    testWidgets('tabBar style renders a material TabBar instead of a segmented control',
+        (tester) async {
+      await _openPage(
+        tester,
+        deps: _depsWithFilesystem(gallery: _galleryWithSampleAssets()),
+        options: const TpFileSelectionOptions(
+          tabStyle: TpFileSelectionTabStyle.tabBar,
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.byType(TpSegmentedControl), findsNothing);
+      expect(find.text(strings.tabFiles), findsOneWidget);
+      expect(find.text(strings.tabPhotoGallery), findsOneWidget);
     });
   });
 
