@@ -129,7 +129,14 @@ void main() {
       ),
     );
     expect(find.byType(SingleChildScrollView), findsOneWidget);
-    expect(find.byType(FittedBox), findsNothing);
+    // Per-segment labels may scale down (fa9dc54); the control itself must not.
+    expect(
+      find.ancestor(
+        of: find.byType(TpSegmentedControl),
+        matching: find.byType(FittedBox),
+      ),
+      findsNothing,
+    );
     expect(find.byType(TpSegmentedControl), findsOneWidget);
   });
 

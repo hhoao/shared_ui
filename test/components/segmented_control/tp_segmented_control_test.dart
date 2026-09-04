@@ -206,4 +206,72 @@ void main() {
     expect(find.byTooltip('Terminal'), findsOneWidget);
     expect(find.byType(TpHover), findsNWidgets(2));
   });
+
+  testWidgets('outlined variant keeps custom corner radius and draws dividers', (
+    tester,
+  ) async {
+    const radius = 6.0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(useMaterial3: true),
+        home: TpTheme(
+          data: TpThemeData.fromColorScheme(
+            ColorScheme.fromSeed(seedColor: Colors.indigo),
+            scale: 1.0,
+          ),
+          child: Scaffold(
+            body: Center(
+              child: TpSegmentedControl(
+                totalSwitches: 2,
+                initialLabelIndex: 0,
+                labels: const ['All', 'Current'],
+                variant: TpSegmentedControlVariant.outlined,
+                cornerRadius: radius,
+                onToggle: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final track = tester.widget<DecoratedBox>(
+      find.byKey(const ValueKey('tp-segmented-control-track')),
+    );
+    final decoration = track.decoration as BoxDecoration;
+    expect(decoration.borderRadius, BorderRadius.circular(radius));
+    expect(decoration.border, isNotNull);
+    // One vertical divider between the two segments.
+    expect(find.byType(VerticalDivider), findsOneWidget);
+
+    final hovers = tester.widgetList<TpHover>(find.byType(TpHover)).toList();
+    expect(hovers, hasLength(2));
+    for (final hover in hovers) {
+      expect(hover.shape, TpPressableShape.rounded);
+      expect(hover.borderRadius, BorderRadius.circular(radius));
+    }
+  });
+
+  testWidgets('filled variant omits dividers by default', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(useMaterial3: true),
+        home: TpTheme(
+          data: TpThemeData.fromColorScheme(
+            ColorScheme.fromSeed(seedColor: Colors.indigo),
+            scale: 1.0,
+          ),
+          child: Scaffold(
+            body: TpSegmentedControl(
+              totalSwitches: 2,
+              initialLabelIndex: 0,
+              labels: const ['A', 'B'],
+              onToggle: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(VerticalDivider), findsNothing);
+  });
 }
