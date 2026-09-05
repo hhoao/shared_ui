@@ -41,7 +41,8 @@ InputDecoration tpOutlineInputDecoration(
     size: size,
     metrics: metrics,
   );
-  final useDefaultInputTrack = identical(resolvedMetrics, control.input) ||
+  final useDefaultInputTrack =
+      identical(resolvedMetrics, control.input) ||
       resolvedMetrics == control.input;
   final radius = BorderRadius.circular(control.radius);
   final base = decoration ?? const InputDecoration();
@@ -74,27 +75,28 @@ InputDecoration tpOutlineInputDecoration(
     typography: tp.typography,
   );
 
+  // Per-widget size/metrics (or a theme-level TpInputTheme track) must win
+  // over the fixed geometry baked into the Material inputDecorationTheme,
+  // otherwise every input collapses back to the default 32px track.
+  final trackConstraints = useDefaultInputTrack
+      ? inputTheme.constraints
+      : BoxConstraints.tightFor(height: resolvedMetrics.height);
+  final trackPadding = useDefaultInputTrack
+      ? inputTheme.contentPadding
+      : EdgeInsets.symmetric(
+          horizontal: resolvedMetrics.horizontalPadding,
+          vertical: resolvedMetrics.verticalPadding,
+        );
+
   return base.copyWith(
     filled: base.filled ?? true,
     fillColor:
         base.fillColor ?? inputTheme.fillColor ?? scheme.surfaceContainer,
     isDense: base.isDense ?? useDefaultInputTrack,
-    constraints:
-        base.constraints ??
-        inputTheme.constraints ??
-        BoxConstraints.tightFor(height: resolvedMetrics.height),
-    contentPadding:
-        base.contentPadding ??
-        inputTheme.contentPadding ??
-        EdgeInsets.symmetric(
-          horizontal: resolvedMetrics.horizontalPadding,
-          vertical: resolvedMetrics.verticalPadding,
-        ),
+    constraints: base.constraints ?? trackConstraints,
+    contentPadding: base.contentPadding ?? trackPadding,
     hintStyle: hintStyle,
-    border: themed(
-      inputTheme.border,
-      outlineBorder(outline),
-    ),
+    border: themed(inputTheme.border, outlineBorder(outline)),
     enabledBorder: themed(
       inputTheme.enabledBorder,
       outlineBorder(hasError ? scheme.error : outline),
@@ -106,10 +108,7 @@ InputDecoration tpOutlineInputDecoration(
         metricsTheme.focusedBorderWidth,
       ),
     ),
-    errorBorder: themed(
-      inputTheme.errorBorder,
-      outlineBorder(scheme.error),
-    ),
+    errorBorder: themed(inputTheme.errorBorder, outlineBorder(scheme.error)),
     focusedErrorBorder: themed(
       inputTheme.focusedErrorBorder,
       outlineBorder(scheme.error, metricsTheme.focusedBorderWidth),
