@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/tp_text_styles.dart';
@@ -41,10 +42,15 @@ class TpPreferenceRow extends StatelessWidget {
     final spacing = context.tpSpacing;
     final hasSub = hasSubtitle(subtitle);
     final subtitleStyle = TpTextStyles.of(context).mutedSm;
-    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
-          height: 1.35,
-        ) ??
-        TpTextStyles.of(context).md;
+    // Touch (mobile) layouts get the larger titleMedium for hierarchy on dense
+    // single-column lists; desktop chrome stays at plain md (matches nav).
+    final isTouch = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    final titleStyle = isTouch
+        ? Theme.of(context).textTheme.titleMedium?.copyWith(height: 1.35) ??
+              TpTextStyles.of(context).md
+        : TpTextStyles.of(context).md;
     final resolvedPadding = padding ?? defaultPadding;
 
     return RepaintBoundary(
