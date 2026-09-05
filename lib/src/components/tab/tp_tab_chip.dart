@@ -20,6 +20,9 @@ class TpTabChip extends StatefulWidget {
     this.working = false,
     this.workingIndicator,
     this.preview = false,
+    this.pinned = false,
+    this.onUnpin,
+    this.onDoubleTap,
     this.accentColor,
     this.maxWidth = 200,
     this.tooltip,
@@ -41,6 +44,12 @@ class TpTabChip extends StatefulWidget {
   /// (e.g. a product-specific spinner). Falls back to [CircularProgressIndicator].
   final Widget? workingIndicator;
   final bool preview;
+
+  /// Pinned tab: the close X is replaced by a pin icon whose tap unpins
+  /// (falls back to [onClose] when no unpin handler is supplied).
+  final bool pinned;
+  final VoidCallback? onUnpin;
+  final VoidCallback? onDoubleTap;
   final Color? accentColor;
   final double maxWidth;
   final String? tooltip;
@@ -85,6 +94,7 @@ class _TpTabChipState extends State<TpTabChip> {
       waitDuration: const Duration(milliseconds: 500),
       child: TpHover(
         onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
         onSecondaryTapDown: widget.onSecondaryTapDown,
         onLongPress: widget.onLongPress,
         backgroundColor: active ? cs.surfaceContainerHigh : null,
@@ -167,10 +177,15 @@ class _TpTabChipState extends State<TpTabChip> {
                     ),
                   _TpTabChromeSlot(
                     visible: _showChrome,
-                    child: _TpTabCloseButton(
-                      active: active,
-                      onTap: widget.onClose,
-                    ),
+                    child: widget.pinned
+                        ? _TpTabPinButton(
+                            active: active,
+                            onTap: widget.onUnpin ?? widget.onClose,
+                          )
+                        : _TpTabCloseButton(
+                            active: active,
+                            onTap: widget.onClose,
+                          ),
                   ),
                 ],
               ),
@@ -221,6 +236,34 @@ class _TpTabCloseButton extends StatelessWidget {
       onTap: onTap,
       child: Icon(
         Icons.close,
+        size: context.tpIconSizes.md,
+        color: tint,
+      ),
+    );
+  }
+}
+
+/// Pin marker replacing the close X while a tab is pinned — tapping it
+/// unpins rather than closes.
+class _TpTabPinButton extends StatelessWidget {
+  const _TpTabPinButton({required this.onTap, required this.active});
+
+  final VoidCallback onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tint = active ? cs.onSurface : cs.onSurfaceVariant;
+    final hoverAlpha = active ? 0.14 : 0.08;
+
+    return TpHover(
+      borderRadius: BorderRadius.circular(5),
+      padding: const EdgeInsets.all(2),
+      hoverColor: cs.onSurface.withValues(alpha: hoverAlpha),
+      onTap: onTap,
+      child: Icon(
+        Icons.push_pin,
         size: context.tpIconSizes.md,
         color: tint,
       ),
