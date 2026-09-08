@@ -52,6 +52,36 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('tall panel scrolls instead of overflowing', (tester) async {
+    // Regression: GitGraphRefsMenu stacks several scroll sections; the panel
+    // Column sized rows at natural height and overflowed the popover's
+    // loosened height constraint (RenderFlex overflowed by N pixels).
+    await tester.pumpWidget(
+      wrap(
+        TpActionMenuPanel(
+          children: [
+            for (var i = 0; i < 40; i++)
+              TpActionMenuItem(
+                icon: Icons.label,
+                label: 'Row $i',
+                onTap: () {},
+              ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final scrollable = find.byType(SingleChildScrollView);
+    expect(scrollable, findsOneWidget);
+    // Panel must stay within 0.6 of the surface height (default 600 → 360).
+    expect(tester.getSize(scrollable).height, lessThanOrEqualTo(360));
+    await tester.scrollUntilVisible(find.text('Row 39'), 100);
+    await tester.pumpAndSettle();
+    expect(find.text('Row 39'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('scroll block confines many rows to a fixed height', (
     tester,
   ) async {
@@ -82,7 +112,8 @@ void main() {
     );
     await tester.tap(find.byIcon(Icons.more_horiz));
     await tester.pumpAndSettle();
-    final scrollable = find.byType(SingleChildScrollView);
+    // Two scrollables now: the panel-level one wraps the scroll block's own.
+    final scrollable = find.byType(SingleChildScrollView).last;
     expect(scrollable, findsOneWidget);
     expect(tester.getSize(scrollable).height, 120);
   });
@@ -471,12 +502,20 @@ void main() {
       ]);
       await tester.tap(find.text('Big'));
       await tester.pumpAndSettle();
-      final viewport = tester.getRect(find.byType(SingleChildScrollView));
+      // Two scrollables: the parent panel's (first) and the submenu's (last).
+      final viewport = tester.getRect(find.byType(SingleChildScrollView).last);
       expect(
         tester.getTopLeft(find.text('Row 39')).dy,
         greaterThan(viewport.bottom),
       );
-      await tester.scrollUntilVisible(find.text('Row 39'), 200);
+      await tester.scrollUntilVisible(
+        find.text('Row 39'),
+        200,
+        scrollable: find.descendant(
+          of: find.byType(SingleChildScrollView).last,
+          matching: find.byType(Scrollable),
+        ),
+      );
       await tester.pump();
       expect(find.text('Row 39'), findsOneWidget);
       final revealed = tester.getRect(find.text('Row 39'));

@@ -41,6 +41,11 @@ abstract final class TpActionMenuMetrics {
   /// Legacy [MenuAnchor] allowed the panel to grow up to min × 2.
   static double maxWidthFor(double minWidth) => minWidth * 2;
 
+  /// Height cap for the whole panel: content taller than 60% of the surface
+  /// scrolls instead of overflowing the popover's loosened height constraint.
+  static double panelMaxHeight(BuildContext context) =>
+      MediaQuery.sizeOf(context).height * 0.6;
+
   static BoxConstraints panelConstraints({
     double minWidth = TpActionMenuMetrics.minWidth,
     double? maxWidth,
@@ -132,10 +137,25 @@ class TpActionMenuPanel extends StatelessWidget {
           minWidth: minWidth,
           maxWidth: maxWidth,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: _interleaveTpActionMenuItemGap(children),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: TpActionMenuMetrics.panelMaxHeight(context),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: _interleaveTpActionMenuItemGap(children),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
