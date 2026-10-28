@@ -404,6 +404,10 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
                   scrollOffset: scrollOffset,
                   tokenRanges: widget.tokenRanges,
                   resolvePalette: widget.resolveTokenPalette,
+                  caretOffset: widget.controller.selection.isValid &&
+                          widget.controller.selection.isCollapsed
+                      ? widget.controller.selection.extentOffset
+                      : null,
                 );
               },
             ),
