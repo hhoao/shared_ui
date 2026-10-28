@@ -5,11 +5,15 @@ import 'package:flutter/material.dart';
 import 'tp_token_edit.dart';
 import 'tp_token_palette.dart';
 
-/// Visual bleed on the left only; right edge stays at the layout token end.
+/// Visual bleed used by legacy [tpTokenPillWidth] callers.
 const double tpTokenPillLeftBleed = 4;
 
-/// Inner horizontal inset reserved when measuring chip chrome (legacy).
-const double tpTokenPillHorizontalPadding = 6;
+/// Horizontal breathing room on both sides of a chip label.
+///
+/// The pill is painted behind the text, so this does not move the glyphs; it
+/// extends the background into the leading edge and into the following
+/// whitespace, which is what makes a stadium chip look padded.
+const double tpTokenPillHorizontalPadding = 8;
 
 List<InlineSpan> buildTpTokenMirrorLayoutSpans({
   required String text,
@@ -95,12 +99,24 @@ List<Widget> buildTpTokenPillOverlays({
     );
     if (boxes.isEmpty) continue;
 
-    for (final box in boxes) {
+    for (var index = 0; index < boxes.length; index++) {
+      final box = boxes[index];
+      final isLast = index == boxes.length - 1;
+      final left = box.left - tpTokenPillHorizontalPadding;
+      final right = isLast
+          ? box.right +
+                _trailingChipPadding(
+                  text: text,
+                  rangeEnd: range.end,
+                  painter: painter,
+                  box: box,
+                )
+          : box.right;
       overlays.add(
         Positioned(
-          left: box.left - tpTokenPillLeftBleed,
+          left: left,
           top: box.top + 1,
-          width: tpTokenPillWidth(box.right - box.left),
+          width: right - left,
           height: box.bottom - box.top - 2,
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -115,6 +131,36 @@ List<Widget> buildTpTokenPillOverlays({
     }
   }
   return overlays;
+}
+
+/// Extra background to the right of a chip label.
+///
+/// Extends into following whitespace (stopping just before the next glyph), or
+/// into the end-of-text / end-of-line margin. Never paints under a following
+/// glyph — that would make ordinary text look like part of the chip.
+double _trailingChipPadding({
+  required String text,
+  required int rangeEnd,
+  required TextPainter painter,
+  required TextBox box,
+}) {
+  if (rangeEnd >= text.length) return tpTokenPillHorizontalPadding;
+  final next = text[rangeEnd];
+  if (next == '\n' || next == '\r') return tpTokenPillHorizontalPadding;
+  if (next != ' ' && next != '\t') return 0;
+
+  var end = rangeEnd;
+  while (end < text.length && (text[end] == ' ' || text[end] == '\t')) {
+    end++;
+  }
+  // When the trailing whitespace wraps, the caret after it lands on the next
+  // line at a small x, so `available` is <= 0 and no padding is applied.
+  final caret = painter.getOffsetForCaret(
+    TextPosition(offset: end),
+    Rect.zero,
+  );
+  final available = caret.dx - box.right;
+  return math.max(0, math.min(tpTokenPillHorizontalPadding, available - 0.5));
 }
 
 /// Decorative mirror of text with inline token chips (sits under the TextField).

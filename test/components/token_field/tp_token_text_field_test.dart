@@ -625,4 +625,92 @@ void main() {
     expect(radius.topLeft.x, positioned.height! / 2);
     expect(radius.bottomRight.x, positioned.height! / 2);
   });
+
+  test('chip pill has horizontal padding around the label', () {
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    const text = '@a next';
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 400);
+    final tokenBox = painter
+        .getBoxesForSelection(
+          const TextSelection(baseOffset: 0, extentOffset: 2),
+        )
+        .single;
+
+    final overlays = buildTpTokenPillOverlays(
+      text: text,
+      baseStyle: style,
+      colorScheme: const ColorScheme.light(),
+      painter: painter,
+      tokenRanges: const [TpTokenRange(start: 0, end: 2)],
+      resolvePalette: resolvePalette,
+    );
+
+    final positioned = overlays.single as Positioned;
+    expect(
+      positioned.left,
+      closeTo(tokenBox.left - tpTokenPillHorizontalPadding, 0.01),
+    );
+    expect(
+      positioned.left! + positioned.width!,
+      closeTo(tokenBox.right + tpTokenPillHorizontalPadding, 0.01),
+    );
+  });
+
+  test('chip pill does not paint under a following glyph', () {
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    const text = '@aX';
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 400);
+    final tokenBox = painter
+        .getBoxesForSelection(
+          const TextSelection(baseOffset: 0, extentOffset: 2),
+        )
+        .single;
+
+    final overlays = buildTpTokenPillOverlays(
+      text: text,
+      baseStyle: style,
+      colorScheme: const ColorScheme.light(),
+      painter: painter,
+      tokenRanges: const [TpTokenRange(start: 0, end: 2)],
+      resolvePalette: resolvePalette,
+    );
+
+    final positioned = overlays.single as Positioned;
+    expect(positioned.left! + positioned.width!, closeTo(tokenBox.right, 0.01));
+  });
+
+  test('chip pill pads past the end of the text', () {
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    const text = '@a';
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 400);
+    final tokenBox = painter
+        .getBoxesForSelection(
+          const TextSelection(baseOffset: 0, extentOffset: 2),
+        )
+        .single;
+
+    final overlays = buildTpTokenPillOverlays(
+      text: text,
+      baseStyle: style,
+      colorScheme: const ColorScheme.light(),
+      painter: painter,
+      tokenRanges: const [TpTokenRange(start: 0, end: 2)],
+      resolvePalette: resolvePalette,
+    );
+
+    final positioned = overlays.single as Positioned;
+    expect(
+      positioned.left! + positioned.width!,
+      closeTo(tokenBox.right + tpTokenPillHorizontalPadding, 0.01),
+    );
+  });
 }
