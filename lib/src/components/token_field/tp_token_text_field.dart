@@ -8,7 +8,7 @@ import 'tp_token_chip_mirror.dart';
 import 'tp_token_edit.dart';
 import 'tp_token_palette.dart';
 
-/// Multiline text field that renders [tokenPattern] matches as inline chips.
+/// Multiline text field that renders [tokenRanges] as inline chips.
 ///
 /// When the text has no token matches, this is a normal opaque [TextField] (no
 /// mirror). With matches, the editable layer uses transparent glyphs and a
@@ -22,7 +22,7 @@ import 'tp_token_palette.dart';
 /// Ctrl/Cmd+Shift+Z still work when Flutter's 500ms [UndoHistory] throttle
 /// would otherwise discard redo.
 ///
-/// Callers must supply [tokenPattern] and [resolveTokenPalette]; the package
+/// Callers must supply [tokenRanges] and [resolveTokenPalette]; the package
 /// does not ship product-specific compose token defaults.
 class TpTokenTextField extends StatefulWidget {
   const TpTokenTextField({
@@ -34,7 +34,7 @@ class TpTokenTextField extends StatefulWidget {
     required this.textStyle,
     required this.hintStyle,
     required this.cursorColor,
-    required this.tokenPattern,
+    required this.tokenRanges,
     required this.resolveTokenPalette,
     this.minLines = 3,
     this.maxLines = 6,
@@ -60,7 +60,7 @@ class TpTokenTextField extends StatefulWidget {
   final TextStyle hintStyle;
   final Color cursorColor;
   final Color? selectionColor;
-  final RegExp tokenPattern;
+  final List<TpTokenRange> tokenRanges;
   final TpTokenPaletteResolver resolveTokenPalette;
   final int minLines;
   final int maxLines;
@@ -210,7 +210,7 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
     if (event.logicalKey == LogicalKeyboardKey.backspace) {
       final updated = applyTpTokenBackspace(
         widget.controller.value,
-        widget.tokenPattern,
+        widget.tokenRanges,
       );
       if (updated != null) {
         _commitTokenEdit(before: widget.controller.value, after: updated);
@@ -220,7 +220,7 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
     if (event.logicalKey == LogicalKeyboardKey.delete) {
       final updated = applyTpTokenDelete(
         widget.controller.value,
-        widget.tokenPattern,
+        widget.tokenRanges,
       );
       if (updated != null) {
         _commitTokenEdit(before: widget.controller.value, after: updated);
@@ -342,7 +342,7 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
 
   Widget _buildEditorStack(Color selectionColor) {
     final text = widget.controller.text;
-    final showChipMirror = widget.tokenPattern.hasMatch(text);
+    final showChipMirror = widget.tokenRanges.isNotEmpty;
 
     // Always keep two Stack slots so toggling the mirror never shifts the
     // TextField from index 1 → 0 (that remounts EditableText and can kill IME).
@@ -361,7 +361,7 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
                   maxLines: widget.expands ? 100 : widget.maxLines,
                   expands: widget.expands,
                   scrollOffset: scrollOffset,
-                  tokenPattern: widget.tokenPattern,
+                  tokenRanges: widget.tokenRanges,
                   resolvePalette: widget.resolveTokenPalette,
                 );
               },

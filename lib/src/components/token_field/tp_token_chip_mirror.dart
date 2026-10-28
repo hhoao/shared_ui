@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'tp_token_edit.dart';
 import 'tp_token_palette.dart';
 
 /// Visual bleed on the left only; right edge stays at the layout token end.
@@ -13,7 +14,7 @@ const double tpTokenPillHorizontalPadding = 6;
 List<InlineSpan> buildTpTokenMirrorLayoutSpans({
   required String text,
   required TextStyle baseStyle,
-  required RegExp tokenPattern,
+  required List<TpTokenRange> tokenRanges,
   ColorScheme? colorScheme,
   TpTokenPaletteResolver? resolvePalette,
 }) {
@@ -21,13 +22,14 @@ List<InlineSpan> buildTpTokenMirrorLayoutSpans({
 
   final spans = <InlineSpan>[];
   var start = 0;
-  for (final match in tokenPattern.allMatches(text)) {
-    if (match.start > start) {
+  for (final range in tokenRanges) {
+    if (range.start < start || range.end > text.length) continue;
+    if (range.start > start) {
       spans.add(
-        TextSpan(text: text.substring(start, match.start), style: baseStyle),
+        TextSpan(text: text.substring(start, range.start), style: baseStyle),
       );
     }
-    final token = match.group(0)!;
+    final token = text.substring(range.start, range.end);
     final foreground = (colorScheme != null && resolvePalette != null)
         ? resolvePalette(token, colorScheme).foreground
         : (baseStyle.color ?? Colors.black);
@@ -39,7 +41,7 @@ List<InlineSpan> buildTpTokenMirrorLayoutSpans({
         style: baseStyle.copyWith(color: foreground),
       ),
     );
-    start = match.end;
+    start = range.end;
   }
   if (start < text.length) {
     spans.add(TextSpan(text: text.substring(start), style: baseStyle));
@@ -78,15 +80,18 @@ List<Widget> buildTpTokenPillOverlays({
   required TextStyle baseStyle,
   required ColorScheme colorScheme,
   required TextPainter painter,
-  required RegExp tokenPattern,
+  required List<TpTokenRange> tokenRanges,
   required TpTokenPaletteResolver resolvePalette,
 }) {
   final overlays = <Widget>[];
-  for (final match in tokenPattern.allMatches(text)) {
-    final token = match.group(0)!;
+  for (final range in tokenRanges) {
+    if (range.start < 0 || range.end > text.length || range.end <= range.start) {
+      continue;
+    }
+    final token = text.substring(range.start, range.end);
     final palette = resolvePalette(token, colorScheme);
     final boxes = painter.getBoxesForSelection(
-      TextSelection(baseOffset: match.start, extentOffset: match.end),
+      TextSelection(baseOffset: range.start, extentOffset: range.end),
     );
     if (boxes.isEmpty) continue;
 
@@ -117,7 +122,7 @@ class TpTokenChipMirror extends StatelessWidget {
     required this.baseStyle,
     required this.minLines,
     required this.maxLines,
-    required this.tokenPattern,
+    required this.tokenRanges,
     required this.resolvePalette,
     this.scrollOffset = 0,
     this.expands = false,
@@ -130,7 +135,7 @@ class TpTokenChipMirror extends StatelessWidget {
   final int maxLines;
   final double scrollOffset;
   final bool expands;
-  final RegExp tokenPattern;
+  final List<TpTokenRange> tokenRanges;
   final TpTokenPaletteResolver resolvePalette;
 
   @override
@@ -146,7 +151,7 @@ class TpTokenChipMirror extends StatelessWidget {
         final layoutSpans = buildTpTokenMirrorLayoutSpans(
           text: text,
           baseStyle: baseStyle,
-          tokenPattern: tokenPattern,
+          tokenRanges: tokenRanges,
           colorScheme: cs,
           resolvePalette: resolvePalette,
         );
@@ -178,7 +183,7 @@ class TpTokenChipMirror extends StatelessWidget {
                 baseStyle: baseStyle,
                 colorScheme: cs,
                 painter: painter,
-                tokenPattern: tokenPattern,
+                tokenRanges: tokenRanges,
                 resolvePalette: resolvePalette,
               ),
               Text.rich(

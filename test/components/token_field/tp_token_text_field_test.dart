@@ -8,6 +8,9 @@ void main() {
   const tokenPattern = r'#\w+';
   final pattern = RegExp(tokenPattern);
 
+  List<TpTokenRange> rangesFor(String text) =>
+      tpTokenRanges(text, pattern).toList(growable: false);
+
   TpTokenPalette resolvePalette(String token, ColorScheme colorScheme) {
     return (
       background: const Color(0xFFAABBCC),
@@ -22,7 +25,9 @@ void main() {
           ColorScheme.fromSeed(seedColor: Colors.orange),
           scale: 1.0,
         ),
-        child: Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: child)),
+        child: Scaffold(
+          body: Padding(padding: const EdgeInsets.all(16), child: child),
+        ),
       ),
     );
   }
@@ -43,10 +48,14 @@ void main() {
           hint: 'Type here',
           enabled: true,
           onChanged: (_) {},
-          textStyle: const TextStyle(fontSize: 14, height: 1.5, color: Colors.black),
+          textStyle: const TextStyle(
+            fontSize: 14,
+            height: 1.5,
+            color: Colors.black,
+          ),
           hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
           cursorColor: Colors.blue,
-          tokenPattern: pattern,
+          tokenRanges: rangesFor(controller.text),
           resolveTokenPalette: resolvePalette,
         ),
       ),
@@ -58,7 +67,7 @@ void main() {
   });
 
   testWidgets(
-    'skips chip mirror when text has no token matches',
+    'skips chip mirror when text has no token ranges',
     (tester) async {
       // Dual TextField+mirror layout paid ~580ms RenderParagraph on landing
       // first-open (test55) even with empty compose — mirror is only needed
@@ -88,7 +97,7 @@ void main() {
                 textStyle: style,
                 hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
                 cursorColor: Colors.blue,
-                tokenPattern: pattern,
+                tokenRanges: const [],
                 resolveTokenPalette: resolvePalette,
               ),
               TpTokenTextField(
@@ -100,7 +109,7 @@ void main() {
                 textStyle: style,
                 hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
                 cursorColor: Colors.blue,
-                tokenPattern: pattern,
+                tokenRanges: const [],
                 resolveTokenPalette: resolvePalette,
               ),
             ],
@@ -109,7 +118,9 @@ void main() {
       );
 
       expect(find.byType(TpTokenChipMirror), findsNothing);
-      final fields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
       expect(fields, hasLength(2));
       expect(fields[0].style?.color, Colors.black);
       expect(fields[1].style?.color, Colors.black);
@@ -117,7 +128,7 @@ void main() {
   );
 
   testWidgets(
-    'mounts chip mirror when a token appears, unmounts when gone',
+    'mounts chip mirror for an explicit range and unmounts without one',
     (tester) async {
       const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
       final controller = TextEditingController(text: 'hello');
@@ -127,26 +138,26 @@ void main() {
         focusNode.dispose();
       });
 
-      await tester.pumpWidget(
-        wrap(
-          TpTokenTextField(
-            controller: controller,
-            focusNode: focusNode,
-            hint: 'Type here',
-            enabled: true,
-            onChanged: (_) {},
-            textStyle: style,
-            hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-            cursorColor: Colors.blue,
-            tokenPattern: pattern,
-            resolveTokenPalette: resolvePalette,
-          ),
+      Widget build(List<TpTokenRange> ranges) => wrap(
+        TpTokenTextField(
+          controller: controller,
+          focusNode: focusNode,
+          hint: 'Type here',
+          enabled: true,
+          onChanged: (_) {},
+          textStyle: style,
+          hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+          cursorColor: Colors.blue,
+          tokenRanges: ranges,
+          resolveTokenPalette: resolvePalette,
         ),
       );
+
+      await tester.pumpWidget(build(const []));
       expect(find.byType(TpTokenChipMirror), findsNothing);
 
       controller.text = 'hello #token';
-      await tester.pump();
+      await tester.pumpWidget(build(rangesFor(controller.text)));
       expect(find.byType(TpTokenChipMirror), findsOneWidget);
       expect(
         tester.widget<TextField>(find.byType(TextField)).style?.color,
@@ -154,7 +165,7 @@ void main() {
       );
 
       controller.text = 'hello';
-      await tester.pump();
+      await tester.pumpWidget(build(const []));
       expect(find.byType(TpTokenChipMirror), findsNothing);
       expect(
         tester.widget<TextField>(find.byType(TextField)).style?.color,
@@ -176,28 +187,30 @@ void main() {
         focusNode.dispose();
       });
 
-      await tester.pumpWidget(
-        wrap(
-          SizedBox(
-            height: 120,
-            child: TpTokenTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Type here',
-              enabled: true,
-              onChanged: (_) {},
-              textStyle: style,
-              hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-              cursorColor: Colors.blue,
-              tokenPattern: pattern,
-              resolveTokenPalette: resolvePalette,
-              expands: true,
-              minLines: 3,
-              maxLines: 3,
-            ),
+      final ranges = rangesFor(controller.text);
+
+      Widget build(List<TpTokenRange> tokenRanges) => wrap(
+        SizedBox(
+          height: 120,
+          child: TpTokenTextField(
+            controller: controller,
+            focusNode: focusNode,
+            hint: 'Type here',
+            enabled: true,
+            onChanged: (_) {},
+            textStyle: style,
+            hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+            cursorColor: Colors.blue,
+            tokenRanges: tokenRanges,
+            resolveTokenPalette: resolvePalette,
+            expands: true,
+            minLines: 3,
+            maxLines: 3,
           ),
         ),
       );
+
+      await tester.pumpWidget(build(ranges));
 
       focusNode.requestFocus();
       await tester.pump();
@@ -209,10 +222,11 @@ void main() {
           text: controller.text,
           selection: TextSelection.collapsed(offset: controller.text.length),
         ),
-        pattern,
+        ranges,
       );
       expect(deleted, isNotNull);
       controller.value = deleted!;
+      await tester.pumpWidget(build(const []));
       await tester.pump();
 
       expect(find.byType(TpTokenChipMirror), findsNothing);
@@ -258,7 +272,7 @@ void main() {
             textStyle: style,
             hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
             cursorColor: Colors.blue,
-            tokenPattern: pattern,
+            tokenRanges: rangesFor(controller.text),
             resolveTokenPalette: resolvePalette,
             expands: true,
             minLines: 3,
@@ -319,7 +333,7 @@ void main() {
               ),
               hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
               cursorColor: Colors.blue,
-              tokenPattern: pattern,
+              tokenRanges: const [],
               resolveTokenPalette: resolvePalette,
               expands: true,
               minLines: 3,
@@ -349,24 +363,28 @@ void main() {
     },
   );
 
-  test('buildTpTokenMirrorLayoutSpans paints token glyphs with palette color', () {
-    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
-    const scheme = ColorScheme.light();
-    final spans = buildTpTokenMirrorLayoutSpans(
-      text: 'hello #token world',
-      baseStyle: style,
-      tokenPattern: pattern,
-      colorScheme: scheme,
-      resolvePalette: resolvePalette,
-    );
+  test(
+    'buildTpTokenMirrorLayoutSpans paints token glyphs with palette color',
+    () {
+      const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+      const scheme = ColorScheme.light();
+      const text = 'hello #token world';
+      final spans = buildTpTokenMirrorLayoutSpans(
+        text: text,
+        baseStyle: style,
+        tokenRanges: rangesFor(text),
+        colorScheme: scheme,
+        resolvePalette: resolvePalette,
+      );
 
-    expect(spans.length, 3);
-    expect((spans[0] as TextSpan).text, 'hello ');
-    final token = spans[1] as TextSpan;
-    expect(token.text, '#token');
-    expect(token.style?.color, const Color(0xFF112233));
-    expect(token.style?.fontWeight, style.fontWeight);
-  });
+      expect(spans.length, 3);
+      expect((spans[0] as TextSpan).text, 'hello ');
+      final token = spans[1] as TextSpan;
+      expect(token.text, '#token');
+      expect(token.style?.color, const Color(0xFF112233));
+      expect(token.style?.fontWeight, style.fontWeight);
+    },
+  );
 
   test('buildTpTokenPillOverlays emits one background per wrapped line box', () {
     const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
@@ -387,7 +405,7 @@ void main() {
       baseStyle: style,
       colorScheme: const ColorScheme.light(),
       painter: painter,
-      tokenPattern: RegExp(r'@\S+'),
+      tokenRanges: [TpTokenRange(start: 0, end: path.length)],
       resolvePalette: resolvePalette,
     );
 
@@ -397,18 +415,19 @@ void main() {
   testWidgets('token chip mirror has no FittedBox scaleDown label', (
     tester,
   ) async {
+    const text =
+        '@/home/user/Downloads/DingDing/'
+        '事件Syslog格式和字段_2025.docx';
     await tester.pumpWidget(
       wrap(
         SizedBox(
           width: 160,
           child: TpTokenChipMirror(
-            text:
-                '@/home/user/Downloads/DingDing/'
-                '事件Syslog格式和字段_2025.docx',
+            text: text,
             baseStyle: const TextStyle(fontSize: 14, height: 1.5),
             minLines: 1,
             maxLines: 8,
-            tokenPattern: RegExp(r'@\S+'),
+            tokenRanges: [TpTokenRange(start: 0, end: text.length)],
             resolvePalette: resolvePalette,
           ),
         ),
@@ -433,6 +452,8 @@ void main() {
           '我需要完成这个需求：@/home/user/Downloads/file.docx '
           '1、因DLP日志的数据源发生变更，且新版日志的字段结构已发生变化，'
           '现需根据最新的天空卫视日志规范完成映射 UNIQUE_TAIL_LINE';
+      final tokenStart = text.indexOf('@');
+      final tokenEnd = text.indexOf(' ', tokenStart);
 
       await tester.pumpWidget(
         wrap(
@@ -446,7 +467,9 @@ void main() {
               maxLines: 100,
               expands: true,
               scrollOffset: lineHeight * 2,
-              tokenPattern: RegExp(r'@\S+'),
+              tokenRanges: [
+                TpTokenRange(start: tokenStart, end: tokenEnd),
+              ],
               resolvePalette: resolvePalette,
             ),
           ),
@@ -474,7 +497,7 @@ void main() {
       selection: const TextSelection.collapsed(offset: 10),
     );
 
-    final updated = applyTpTokenBackspace(value, pattern);
+    final updated = applyTpTokenBackspace(value, rangesFor(value.text));
     expect(updated, isNotNull);
     expect(updated!.text, 'hello  world');
     expect(updated.selection.baseOffset, 6);
@@ -486,9 +509,17 @@ void main() {
       selection: const TextSelection.collapsed(offset: 6),
     );
 
-    final updated = applyTpTokenDelete(value, pattern);
+    final updated = applyTpTokenDelete(value, rangesFor(value.text));
     expect(updated, isNotNull);
     expect(updated!.text, 'hello  world');
     expect(updated.selection.baseOffset, 6);
+  });
+
+  test('applyTpTokenBackspace ignores text that looks like a token', () {
+    const value = TextEditingValue(
+      text: '@a typed',
+      selection: TextSelection.collapsed(offset: 2),
+    );
+    expect(applyTpTokenBackspace(value, const []), isNull);
   });
 }
