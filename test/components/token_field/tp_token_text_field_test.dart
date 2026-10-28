@@ -522,4 +522,107 @@ void main() {
     );
     expect(applyTpTokenBackspace(value, const []), isNull);
   });
+
+  testWidgets('arrow keys skip whole tokens', (tester) async {
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    final controller = TextEditingController(text: 'hello @ab world');
+    controller.selection = const TextSelection.collapsed(offset: 6);
+    final focusNode = FocusNode();
+    addTearDown(() {
+      controller.dispose();
+      focusNode.dispose();
+    });
+
+    await tester.pumpWidget(
+      wrap(
+        TpTokenTextField(
+          controller: controller,
+          focusNode: focusNode,
+          hint: 'Type here',
+          enabled: true,
+          onChanged: (_) {},
+          textStyle: style,
+          hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+          cursorColor: Colors.blue,
+          tokenRanges: const [TpTokenRange(start: 6, end: 9)],
+          resolveTokenPalette: resolvePalette,
+        ),
+      ),
+    );
+    focusNode.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(controller.selection, const TextSelection.collapsed(offset: 9));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    expect(controller.selection, const TextSelection.collapsed(offset: 6));
+  });
+
+  testWidgets('shift + arrow selects the whole token', (tester) async {
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    final controller = TextEditingController(text: 'hello @ab world');
+    controller.selection = const TextSelection.collapsed(offset: 6);
+    final focusNode = FocusNode();
+    addTearDown(() {
+      controller.dispose();
+      focusNode.dispose();
+    });
+
+    await tester.pumpWidget(
+      wrap(
+        TpTokenTextField(
+          controller: controller,
+          focusNode: focusNode,
+          hint: 'Type here',
+          enabled: true,
+          onChanged: (_) {},
+          textStyle: style,
+          hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+          cursorColor: Colors.blue,
+          tokenRanges: const [TpTokenRange(start: 6, end: 9)],
+          resolveTokenPalette: resolvePalette,
+        ),
+      ),
+    );
+    focusNode.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(
+      controller.selection,
+      const TextSelection(baseOffset: 6, extentOffset: 9),
+    );
+  });
+
+  test('token pill is fully rounded (radius = half height)', () {
+    const style = TextStyle(fontSize: 14, height: 1.5, color: Colors.black);
+    const text = '@a next';
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 400);
+
+    final overlays = buildTpTokenPillOverlays(
+      text: text,
+      baseStyle: style,
+      colorScheme: const ColorScheme.light(),
+      painter: painter,
+      tokenRanges: const [TpTokenRange(start: 0, end: 2)],
+      resolvePalette: resolvePalette,
+    );
+
+    final positioned = overlays.single as Positioned;
+    final decoration =
+        (positioned.child! as DecoratedBox).decoration as BoxDecoration;
+    final radius = decoration.borderRadius! as BorderRadius;
+    expect(radius.topLeft.x, positioned.height! / 2);
+    expect(radius.bottomRight.x, positioned.height! / 2);
+  });
 }

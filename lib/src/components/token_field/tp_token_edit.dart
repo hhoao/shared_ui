@@ -25,6 +25,26 @@ Iterable<TpTokenRange> tpTokenRanges(String text, RegExp pattern) sync* {
   }
 }
 
+TpTokenRange? tpTokenRangeStartingAt(
+  Iterable<TpTokenRange> tokenRanges,
+  int offset,
+) {
+  for (final token in tokenRanges) {
+    if (token.start == offset && token.end > token.start) return token;
+  }
+  return null;
+}
+
+TpTokenRange? tpTokenRangeEndingAt(
+  Iterable<TpTokenRange> tokenRanges,
+  int offset,
+) {
+  for (final token in tokenRanges) {
+    if (token.end == offset && token.end > token.start) return token;
+  }
+  return null;
+}
+
 TpTokenRange? tpTokenRangeForBackspace(
   Iterable<TpTokenRange> tokenRanges,
   int offset,

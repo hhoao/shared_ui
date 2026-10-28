@@ -105,7 +105,9 @@ List<Widget> buildTpTokenPillOverlays({
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: palette.background,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(
+                math.max(0, box.bottom - box.top - 2) / 2,
+              ),
             ),
           ),
         ),

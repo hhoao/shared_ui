@@ -205,6 +205,47 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
       return KeyEventResult.ignored;
     }
 
+    // Arrow keys treat a token as one unit: right from its start lands after
+    // it, left from its end lands before it. Shift extends the selection over
+    // the whole token instead of stepping inside it.
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+        event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      final keyboard = HardwareKeyboard.instance;
+      if (!keyboard.isControlPressed &&
+          !keyboard.isMetaPressed &&
+          !keyboard.isAltPressed) {
+        final selection = widget.controller.selection;
+        if (selection.isValid) {
+          final extend = keyboard.isShiftPressed;
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            final token = tpTokenRangeEndingAt(
+              widget.tokenRanges,
+              selection.extentOffset,
+            );
+            if (token != null) {
+              widget.controller.selection = TextSelection(
+                baseOffset: extend ? selection.baseOffset : token.start,
+                extentOffset: token.start,
+              );
+              return KeyEventResult.handled;
+            }
+          } else {
+            final token = tpTokenRangeStartingAt(
+              widget.tokenRanges,
+              selection.extentOffset,
+            );
+            if (token != null) {
+              widget.controller.selection = TextSelection(
+                baseOffset: extend ? selection.baseOffset : token.end,
+                extentOffset: token.end,
+              );
+              return KeyEventResult.handled;
+            }
+          }
+        }
+      }
+    }
+
     // Apply whole-token deletes ourselves and keep a redo pair. Flutter's
     // UndoHistory 500ms throttle drops redo when undo lands before commit.
     if (event.logicalKey == LogicalKeyboardKey.backspace) {
