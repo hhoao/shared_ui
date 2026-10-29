@@ -70,6 +70,14 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     );
   }
 
+  void _handleReorder(String draggedId, String targetId) {
+    final ids = orderedTableColumns(widget.columns, widget.state)
+        .map((column) => column.id)
+        .toList(growable: false);
+    final next = reorderTableColumnIds(ids, draggedId, targetId);
+    widget.onStateChanged(widget.state.copyWith(order: next));
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -128,6 +136,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
                       layout: layout,
                       sort: effectiveSort,
                       onSort: _handleSort,
+                      onReorder: _handleReorder,
                       firstId: firstId,
                       lastId: lastId,
                       headerHeight: widget.headerHeight,

@@ -10,6 +10,7 @@ class TpTableHeader<T> extends StatelessWidget {
     required this.layout,
     required this.sort,
     required this.onSort,
+    required this.onReorder,
     required this.firstId,
     required this.lastId,
     required this.headerHeight,
@@ -20,6 +21,7 @@ class TpTableHeader<T> extends StatelessWidget {
   final TpTableLayout layout;
   final TpTableSort? sort;
   final ValueChanged<String> onSort;
+  final void Function(String draggedId, String targetId) onReorder;
   final String firstId;
   final String lastId;
   final double headerHeight;
@@ -43,7 +45,9 @@ class TpTableHeader<T> extends StatelessWidget {
                 ascending: sort?.ascending ?? false,
                 first: column.id == firstId,
                 last: column.id == lastId,
+                height: headerHeight,
                 onSort: onSort,
+                onReorder: onReorder,
               ),
             ),
         ],
@@ -52,14 +56,16 @@ class TpTableHeader<T> extends StatelessWidget {
   }
 }
 
-class _HeaderCell<T> extends StatelessWidget {
+class _HeaderCell<T> extends StatefulWidget {
   const _HeaderCell({
     required this.column,
     required this.sorted,
     required this.ascending,
     required this.first,
     required this.last,
+    required this.height,
     required this.onSort,
+    required this.onReorder,
     super.key,
   });
 
@@ -68,44 +74,127 @@ class _HeaderCell<T> extends StatelessWidget {
   final bool ascending;
   final bool first;
   final bool last;
+  final double height;
   final ValueChanged<String> onSort;
+  final void Function(String draggedId, String targetId) onReorder;
+
+  @override
+  State<_HeaderCell<T>> createState() => _HeaderCellState<T>();
+}
+
+class _HeaderCellState<T> extends State<_HeaderCell<T>> {
+  bool _hovered = false;
+  bool _dragging = false;
+
+  bool get _canDrag => widget.column.draggable && !widget.column.locked;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
-    return InkWell(
-      onTap: column.sortValue == null ? null : () => onSort(column.id),
-      child: Padding(
-        padding: tpTableCellPadding(
-          first: first,
-          last: last,
-          groupStart: column.groupStart,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                column.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: styles.xs.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.56),
-                  fontWeight: FontWeight.w600,
+
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (details) =>
+          _canDrag && details.data != widget.column.id,
+      onAcceptWithDetails: (details) =>
+          widget.onReorder(details.data, widget.column.id),
+      builder: (context, candidates, rejected) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() => _hovered = false),
+          child: Stack(
+            children: [
+              InkWell(
+                onTap: widget.column.sortValue == null
+                    ? null
+                    : () => widget.onSort(widget.column.id),
+                onLongPress: _canDrag
+                    ? () => setState(() => _hovered = true)
+                    : null,
+                child: Padding(
+                  padding: tpTableCellPadding(
+                    first: widget.first,
+                    last: widget.last,
+                    groupStart: widget.column.groupStart,
+                  ).copyWith(right: _canDrag ? 28 : null),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.column.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: styles.xs.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.56),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (widget.sorted) ...[
+                        const SizedBox(width: 2),
+                        Icon(
+                          widget.ascending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 12,
+                          color: cs.onSurface.withValues(alpha: 0.56),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (sorted) ...[
-              const SizedBox(width: 2),
-              Icon(
-                ascending ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 12,
-                color: cs.onSurface.withValues(alpha: 0.56),
-              ),
+              if (candidates.isNotEmpty)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 2,
+                  child: ColoredBox(color: cs.primary),
+                ),
+              if (_canDrag && (_hovered || _dragging))
+                Positioned(
+                  right: 2,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Draggable<String>(
+                      data: widget.column.id,
+                      axis: Axis.horizontal,
+                      onDragStarted: () => setState(() => _dragging = true),
+                      onDragEnd: (_) => setState(() => _dragging = false),
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          width: 160,
+                          height: widget.height,
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainer,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: cs.outlineVariant),
+                          ),
+                          child: Text(
+                            widget.column.label,
+                            style: styles.xs.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      child: const MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: Icon(Icons.drag_indicator, size: 14),
+                      ),
+                    ),
+                  ),
+                ),
             ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
+
