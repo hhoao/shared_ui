@@ -96,4 +96,44 @@ void main() {
     expect(malformed.hidden, isEmpty);
     expect(malformed.sort, isNull);
   });
+
+  test('equivalent states compare and hash equally', () {
+    const state = TpTableState(
+      order: ['group', 'total'],
+      hidden: {'input'},
+      sort: TpTableSort(columnId: 'total', ascending: true),
+    );
+    final other = TpTableState(
+      order: List<String>.of(state.order),
+      hidden: Set<String>.of(state.hidden),
+      sort: const TpTableSort(columnId: 'total', ascending: true),
+    );
+
+    expect(other, state);
+    expect(other.hashCode, state.hashCode);
+  });
+
+  test('differing order, hidden, or sort makes states unequal', () {
+    const state = TpTableState(
+      order: ['group', 'total'],
+      hidden: {'input'},
+      sort: TpTableSort(columnId: 'total', ascending: true),
+    );
+
+    expect(state, isNot(const TpTableState(
+      order: ['total', 'group'],
+      hidden: {'input'},
+      sort: TpTableSort(columnId: 'total', ascending: true),
+    )));
+    expect(state, isNot(const TpTableState(
+      order: ['group', 'total'],
+      hidden: {'share'},
+      sort: TpTableSort(columnId: 'total', ascending: true),
+    )));
+    expect(state, isNot(const TpTableState(
+      order: ['group', 'total'],
+      hidden: {'input'},
+      sort: TpTableSort(columnId: 'total', ascending: false),
+    )));
+  });
 }

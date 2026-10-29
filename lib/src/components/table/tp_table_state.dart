@@ -32,6 +32,23 @@ class TpTableState {
   final Set<String> hidden;
   final TpTableSort? sort;
 
+  @override
+  bool operator ==(Object other) {
+    return other is TpTableState &&
+        listEquals(other.order, order) &&
+        setEquals(other.hidden, hidden) &&
+        other.sort == sort;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      Object.hashAll(order),
+      Object.hashAllUnordered(hidden),
+      sort,
+    );
+  }
+
   TpTableState copyWith({
     List<String>? order,
     Set<String>? hidden,
