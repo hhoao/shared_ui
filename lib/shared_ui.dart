@@ -91,6 +91,8 @@ export 'src/components/tab/reorder_list_items.dart';
 export 'src/components/tab/tp_tab_chip.dart';
 export 'src/components/tab/tp_tab_strip.dart';
 export 'src/components/tab/tp_tab_strip_metrics.dart';
+export 'src/components/table/tp_table_column.dart';
+export 'src/components/table/tp_table_state.dart';
 export 'src/components/text/tp_ellipsis_text.dart';
 export 'src/components/time_picker/tp_time_picker.dart';
 export 'src/components/textarea/tp_textarea.dart';
