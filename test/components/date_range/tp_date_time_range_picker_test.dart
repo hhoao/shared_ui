@@ -14,6 +14,15 @@ Widget _wrap(Widget child) {
   );
 }
 
+Widget _trigger() {
+  return const SizedBox(
+    key: Key('open-range'),
+    width: 120,
+    height: 40,
+    child: ColoredBox(color: Colors.transparent),
+  );
+}
+
 Future<void> _open(WidgetTester tester) async {
   await tester.tap(find.byKey(const Key('open-range')));
   await tester.pumpAndSettle();
@@ -28,15 +37,9 @@ void main() {
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
           labels: const TpDateTimeRangePickerLabels(),
-          presets: const [
-            TpDateTimeRangePreset(id: 'today', label: 'Today'),
-          ],
+          presets: const [TpDateTimeRangePreset(id: 'today', label: 'Today')],
           onPresetSelected: (id) => selected = id,
-          triggerBuilder: (context, isOpen) => const SizedBox(
-            key: Key('open-range'),
-            width: 120,
-            height: 40,
-          ),
+          triggerBuilder: (context, isOpen) => _trigger(),
         ),
       ),
     );
@@ -62,11 +65,7 @@ void main() {
           ),
           labels: const TpDateTimeRangePickerLabels(),
           onChanged: (value) => applied = value,
-          triggerBuilder: (context, isOpen) => const SizedBox(
-            key: Key('open-range'),
-            width: 120,
-            height: 40,
-          ),
+          triggerBuilder: (context, isOpen) => _trigger(),
         ),
       ),
     );
@@ -95,11 +94,7 @@ void main() {
           ),
           labels: const TpDateTimeRangePickerLabels(),
           onChanged: (value) => applied = value,
-          triggerBuilder: (context, isOpen) => const SizedBox(
-            key: Key('open-range'),
-            width: 120,
-            height: 40,
-          ),
+          triggerBuilder: (context, isOpen) => _trigger(),
         ),
       ),
     );
@@ -129,11 +124,7 @@ void main() {
             end: DateTime(2026, 10, 29, 10),
           ),
           labels: const TpDateTimeRangePickerLabels(),
-          triggerBuilder: (context, isOpen) => const SizedBox(
-            key: Key('open-range'),
-            width: 120,
-            height: 40,
-          ),
+          triggerBuilder: (context, isOpen) => _trigger(),
         ),
       ),
     );
@@ -161,11 +152,7 @@ void main() {
             end: DateTime(2026, 3, 1),
           ),
           labels: const TpDateTimeRangePickerLabels(),
-          triggerBuilder: (context, isOpen) => const SizedBox(
-            key: Key('open-range'),
-            width: 120,
-            height: 40,
-          ),
+          triggerBuilder: (context, isOpen) => _trigger(),
         ),
       ),
     );
@@ -189,11 +176,7 @@ void main() {
             liveEnd: true,
           ),
           labels: const TpDateTimeRangePickerLabels(),
-          triggerBuilder: (context, isOpen) => const SizedBox(
-            key: Key('open-range'),
-            width: 120,
-            height: 40,
-          ),
+          triggerBuilder: (context, isOpen) => _trigger(),
         ),
       ),
     );
@@ -215,16 +198,97 @@ void main() {
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
           labels: const TpDateTimeRangePickerLabels(),
-          triggerBuilder: (context, isOpen) => const SizedBox(
-            key: Key('open-range'),
-            width: 120,
-            height: 40,
-          ),
+          triggerBuilder: (context, isOpen) => _trigger(),
         ),
       ),
     );
 
     await _open(tester);
     expect(find.byType(TpDialog), findsOneWidget);
+  });
+
+  testWidgets('cancel closes without applying', (tester) async {
+    TpDateTimeRange? applied;
+    await tester.pumpWidget(
+      _wrap(
+        TpDateTimeRangePicker(
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          value: TpDateTimeRange(
+            start: DateTime(2026, 9, 29, 10),
+            end: DateTime(2026, 10, 29, 12),
+          ),
+          labels: const TpDateTimeRangePickerLabels(),
+          onChanged: (value) => applied = value,
+          triggerBuilder: (context, isOpen) => _trigger(),
+        ),
+      ),
+    );
+
+    await _open(tester);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(applied, isNull);
+    expect(find.text('Confirm'), findsNothing);
+  });
+
+  testWidgets('dialog confirm returns the draft range', (tester) async {
+    tester.view.physicalSize = const Size(500, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    TpDateTimeRange? applied;
+    await tester.pumpWidget(
+      _wrap(
+        TpDateTimeRangePicker(
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          value: TpDateTimeRange(
+            start: DateTime(2026, 9, 29, 10),
+            end: DateTime(2026, 10, 29, 12),
+          ),
+          labels: const TpDateTimeRangePickerLabels(),
+          onChanged: (value) => applied = value,
+          triggerBuilder: (context, isOpen) => _trigger(),
+        ),
+      ),
+    );
+
+    await _open(tester);
+    expect(find.byType(TpDialog), findsOneWidget);
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+
+    expect(applied, isNotNull);
+    expect(applied!.start, DateTime(2026, 9, 29, 10));
+    expect(applied!.end, DateTime(2026, 10, 29, 12));
+    expect(find.byType(TpDialog), findsNothing);
+  });
+
+  testWidgets('trigger receives the live open state', (tester) async {
+    final states = <bool>[];
+    await tester.pumpWidget(
+      _wrap(
+        TpDateTimeRangePicker(
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          labels: const TpDateTimeRangePickerLabels(),
+          triggerBuilder: (context, isOpen) {
+            states.add(isOpen);
+            return _trigger();
+          },
+        ),
+      ),
+    );
+
+    expect(states.last, isFalse);
+    await _open(tester);
+    expect(states.last, isTrue);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(states.last, isFalse);
   });
 }
