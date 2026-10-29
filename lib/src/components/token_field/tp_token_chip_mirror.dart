@@ -8,13 +8,6 @@ import 'tp_token_palette.dart';
 /// Visual bleed used by legacy [tpTokenPillWidth] callers.
 const double tpTokenPillLeftBleed = 4;
 
-/// Horizontal breathing room on both sides of a chip label.
-///
-/// The pill is painted behind the text, so this does not move the glyphs; it
-/// extends the background into the leading edge and into the following
-/// whitespace, which is what makes a stadium chip look padded.
-const double tpTokenPillHorizontalPadding = 8;
-
 List<InlineSpan> buildTpTokenMirrorLayoutSpans({
   required String text,
   required TextStyle baseStyle,
@@ -86,7 +79,6 @@ List<Widget> buildTpTokenPillOverlays({
   required TextPainter painter,
   required List<TpTokenRange> tokenRanges,
   required TpTokenPaletteResolver resolvePalette,
-  int? caretOffset,
 }) {
   final overlays = <Widget>[];
   for (final range in tokenRanges) {
@@ -100,34 +92,12 @@ List<Widget> buildTpTokenPillOverlays({
     );
     if (boxes.isEmpty) continue;
 
-    for (var index = 0; index < boxes.length; index++) {
-      final box = boxes[index];
-      final isLast = index == boxes.length - 1;
-      final left = box.left -
-          (index == 0
-              ? _leadingChipPadding(
-                  text: text,
-                  rangeStart: range.start,
-                  painter: painter,
-                  box: box,
-                  caretOffset: caretOffset,
-                )
-              : 0);
-      final right = isLast
-          ? box.right +
-                _trailingChipPadding(
-                  text: text,
-                  rangeEnd: range.end,
-                  painter: painter,
-                  box: box,
-                  caretOffset: caretOffset,
-                )
-          : box.right;
+    for (final box in boxes) {
       overlays.add(
         Positioned(
-          left: left,
+          left: box.left,
           top: box.top + 1,
-          width: right - left,
+          width: box.right - box.left,
           height: box.bottom - box.top - 2,
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -152,80 +122,6 @@ List<Widget> buildTpTokenPillOverlays({
 double _lineX(TextPainter painter, int offset) =>
     painter.getOffsetForCaret(TextPosition(offset: offset), Rect.zero).dx;
 
-/// Padding to the left of a chip label, bounded by the previous glyph and the
-/// caret. A caret sitting at the token start (or inside the preceding spaces)
-/// must stay outside the pill.
-double _leadingChipPadding({
-  required String text,
-  required int rangeStart,
-  required TextPainter painter,
-  required TextBox box,
-  required int? caretOffset,
-}) {
-  if (caretOffset == rangeStart) return 0;
-  var boundary = rangeStart;
-  while (boundary > 0 &&
-      (text[boundary - 1] == ' ' || text[boundary - 1] == '\t')) {
-    boundary--;
-  }
-  if (boundary == rangeStart) return 0;
-  final limit = math.max(
-    box.left - tpTokenPillHorizontalPadding,
-    _lineX(painter, boundary),
-  );
-  final pad = box.left - limit;
-  if (caretOffset != null && caretOffset < rangeStart && caretOffset >= boundary) {
-    final caretX = _lineX(painter, caretOffset);
-    if (caretX > limit) return box.left - caretX;
-  }
-  return pad;
-}
-
-/// Padding to the right of a chip label, bounded by the next glyph and the
-/// caret. Ends at the caret when the caret is inside the following spaces.
-double _trailingChipPadding({
-  required String text,
-  required int rangeEnd,
-  required TextPainter painter,
-  required TextBox box,
-  required int? caretOffset,
-}) {
-  if (caretOffset == rangeEnd) return 0;
-
-  double limit;
-  int? trailingEnd;
-  if (rangeEnd >= text.length) {
-    limit = box.right + tpTokenPillHorizontalPadding;
-  } else {
-    final next = text[rangeEnd];
-    if (next == '\n' || next == '\r') {
-      limit = box.right + tpTokenPillHorizontalPadding;
-    } else if (next == ' ' || next == '\t') {
-      var end = rangeEnd;
-      while (end < text.length && (text[end] == ' ' || text[end] == '\t')) {
-        end++;
-      }
-      trailingEnd = end;
-      // When the trailing whitespace wraps, the caret after it lands on the
-      // next line at a small x, so `available` is <= 0.
-      final available = _lineX(painter, end) - box.right;
-      limit = box.right +
-          math.max(0, math.min(tpTokenPillHorizontalPadding, available - 0.5));
-    } else {
-      return 0;
-    }
-  }
-
-  if (caretOffset != null &&
-      caretOffset > rangeEnd &&
-      trailingEnd != null &&
-      caretOffset <= trailingEnd) {
-    final caretX = _lineX(painter, caretOffset);
-    if (caretX < limit) return math.max(0, caretX - box.right);
-  }
-  return limit - box.right;
-}
-
 /// Decorative mirror of text with inline token chips (sits under the TextField).
 class TpTokenChipMirror extends StatelessWidget {
   const TpTokenChipMirror({
@@ -235,7 +131,6 @@ class TpTokenChipMirror extends StatelessWidget {
     required this.maxLines,
     required this.tokenRanges,
     required this.resolvePalette,
-    this.caretOffset,
     this.scrollOffset = 0,
     this.expands = false,
     super.key,
@@ -249,10 +144,6 @@ class TpTokenChipMirror extends StatelessWidget {
   final bool expands;
   final List<TpTokenRange> tokenRanges;
   final TpTokenPaletteResolver resolvePalette;
-
-  /// Collapsed caret offset. Padding shrinks to the caret so the caret never
-  /// sits inside a chip's rounded end.
-  final int? caretOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +192,6 @@ class TpTokenChipMirror extends StatelessWidget {
                 painter: painter,
                 tokenRanges: tokenRanges,
                 resolvePalette: resolvePalette,
-                caretOffset: caretOffset,
               ),
               Text.rich(
                 TextSpan(children: layoutSpans),
