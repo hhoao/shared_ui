@@ -81,16 +81,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
         if (widget.toolbar != null) ...[
           widget.toolbar!,
           const SizedBox(height: 10),
-        ] else
-          Align(
-            alignment: Alignment.centerRight,
-            child: TpTableColumnMenu<T>(
-              columns: widget.columns,
-              state: widget.state,
-              onChanged: widget.onStateChanged,
-              labels: widget.labels,
-            ),
-          ),
+        ],
         Divider(
           height: 1,
           color: cs.outlineVariant.withValues(alpha: 0.5),

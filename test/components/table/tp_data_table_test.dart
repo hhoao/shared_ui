@@ -58,6 +58,12 @@ class _HostState extends State<_Host> {
               columnId: 'value',
               ascending: false,
             ),
+            toolbar: TpTableColumnMenu<String>(
+              columns: _columns,
+              state: state,
+              onChanged: (next) => setState(() => state = next),
+              labels: const TpDataTableLabels(),
+            ),
             onStateChanged: (next) => setState(() => state = next),
           ),
         ),
@@ -99,7 +105,12 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.view_column_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Extra').first);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(TpActionMenuPanel),
+        matching: find.text('Extra'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(
