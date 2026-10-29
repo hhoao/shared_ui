@@ -552,10 +552,19 @@ void main() {
     focusNode.requestFocus();
     await tester.pump();
 
+    // Right crosses the token and its separator space in one press.
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
-    expect(controller.selection, const TextSelection.collapsed(offset: 9));
+    expect(controller.selection, const TextSelection.collapsed(offset: 10));
 
+    // Left from after the separator crosses the whole block back to its start.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    expect(controller.selection, const TextSelection.collapsed(offset: 6));
+
+    // Left from the token end also lands at its start.
+    controller.selection = const TextSelection.collapsed(offset: 9);
+    await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pump();
     expect(controller.selection, const TextSelection.collapsed(offset: 6));

@@ -217,9 +217,11 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
         final selection = widget.controller.selection;
         if (selection.isValid) {
           final extend = keyboard.isShiftPressed;
+          final text = widget.controller.text;
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            final token = tpTokenRangeEndingAt(
+            final token = tpTokenRangeForArrowLeft(
               widget.tokenRanges,
+              text,
               selection.extentOffset,
             );
             if (token != null) {
@@ -230,14 +232,19 @@ class _TpTokenTextFieldState extends State<TpTokenTextField> {
               return KeyEventResult.handled;
             }
           } else {
-            final token = tpTokenRangeStartingAt(
+            final token = tpTokenRangeForArrowRight(
               widget.tokenRanges,
+              text,
               selection.extentOffset,
             );
             if (token != null) {
+              final separatorEnd = tpTokenTrailingSeparatorEnd(text, token.end);
+              final target = extend && selection.extentOffset < token.end
+                  ? token.end
+                  : separatorEnd;
               widget.controller.selection = TextSelection(
-                baseOffset: extend ? selection.baseOffset : token.end,
-                extentOffset: token.end,
+                baseOffset: extend ? selection.baseOffset : target,
+                extentOffset: target,
               );
               return KeyEventResult.handled;
             }

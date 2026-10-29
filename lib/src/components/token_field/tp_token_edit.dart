@@ -25,22 +25,43 @@ Iterable<TpTokenRange> tpTokenRanges(String text, RegExp pattern) sync* {
   }
 }
 
-TpTokenRange? tpTokenRangeStartingAt(
+/// End of the single separator character inserted after a token, if any.
+///
+/// Navigation treats the token plus its one separator space as one unit so
+/// Left/Right cross the chip in a single press instead of stepping through the
+/// gap one pixel at a time.
+int tpTokenTrailingSeparatorEnd(String text, int tokenEnd) {
+  if (tokenEnd < text.length) {
+    final next = text[tokenEnd];
+    if (next == ' ' || next == '\t') return tokenEnd + 1;
+  }
+  return tokenEnd;
+}
+
+/// Token a Left arrow should jump over: the caret is anywhere from just after
+/// the token to just after its separator.
+TpTokenRange? tpTokenRangeForArrowLeft(
   Iterable<TpTokenRange> tokenRanges,
+  String text,
   int offset,
 ) {
   for (final token in tokenRanges) {
-    if (token.start == offset && token.end > token.start) return token;
+    final separatorEnd = tpTokenTrailingSeparatorEnd(text, token.end);
+    if (offset > token.start && offset <= separatorEnd) return token;
   }
   return null;
 }
 
-TpTokenRange? tpTokenRangeEndingAt(
+/// Token a Right arrow should jump over: the caret is anywhere from the token
+/// start to just before the end of its separator.
+TpTokenRange? tpTokenRangeForArrowRight(
   Iterable<TpTokenRange> tokenRanges,
+  String text,
   int offset,
 ) {
   for (final token in tokenRanges) {
-    if (token.end == offset && token.end > token.start) return token;
+    final separatorEnd = tpTokenTrailingSeparatorEnd(text, token.end);
+    if (offset >= token.start && offset < separatorEnd) return token;
   }
   return null;
 }
