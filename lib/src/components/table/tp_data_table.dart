@@ -70,11 +70,17 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     );
   }
 
+  List<String> get _orderedColumnIds => orderedTableColumns(
+    widget.columns,
+    widget.state,
+  ).map((column) => column.id).toList(growable: false);
+
   void _handleReorder(String draggedId, String targetId) {
-    final ids = orderedTableColumns(widget.columns, widget.state)
-        .map((column) => column.id)
-        .toList(growable: false);
-    final next = reorderTableColumnIds(ids, draggedId, targetId);
+    final next = reorderTableColumnIds(
+      _orderedColumnIds,
+      draggedId,
+      targetId,
+    );
     widget.onStateChanged(widget.state.copyWith(order: next));
   }
 
@@ -137,6 +143,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
                       sort: effectiveSort,
                       onSort: _handleSort,
                       onReorder: _handleReorder,
+                      allColumnIds: _orderedColumnIds,
                       firstId: firstId,
                       lastId: lastId,
                       headerHeight: widget.headerHeight,

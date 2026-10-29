@@ -60,18 +60,54 @@ class _HostState extends State<_Host> {
 }
 
 void main() {
-  testWidgets('hovering a draggable header shows the drag handle', (
+  testWidgets('hovering a draggable header shows its drag handle', (
     tester,
   ) async {
     await tester.pumpWidget(const _Host());
     await tester.pumpAndSettle();
 
-    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await gesture.addPointer(location: tester.getCenter(find.text('Value')));
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: tester.getCenter(find.text('Value')));
     await tester.pump();
 
-    expect(find.byIcon(Icons.drag_indicator), findsWidgets);
-    await gesture.removePointer();
+    expect(find.byIcon(Icons.drag_indicator), findsOneWidget);
+    await mouse.removePointer();
+  });
+
+  testWidgets('hovering a locked header shows no drag handle', (tester) async {
+    await tester.pumpWidget(const _Host());
+    await tester.pumpAndSettle();
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: tester.getCenter(find.text('Name')));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.drag_indicator), findsNothing);
+    await mouse.removePointer();
+  });
+
+  testWidgets('dropping a header on a locked header keeps the order', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const _Host());
+    await tester.pumpAndSettle();
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: tester.getCenter(find.text('Value')));
+    await tester.pump();
+
+    final handle = find.byIcon(Icons.drag_indicator);
+    final gesture = await tester.startGesture(
+      tester.getCenter(handle),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveTo(tester.getCenter(find.text('Name')));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    final hostState = tester.state<_HostState>(find.byType(_Host));
+    expect(hostState.state.order, isEmpty);
   });
 
   testWidgets('dragging a header onto another reorders columns', (
@@ -84,10 +120,20 @@ void main() {
     await mouse.addPointer(location: tester.getCenter(find.text('Value')));
     await tester.pump();
 
-    final handle = find.byIcon(Icons.drag_indicator).first;
-    final gesture = await tester.startGesture(tester.getCenter(handle));
+    final handle = find.byIcon(Icons.drag_indicator);
+    final gesture = await tester.startGesture(
+      tester.getCenter(handle),
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.moveTo(tester.getCenter(find.text('Extra')));
     await tester.pump();
+
+    // The hover pointer leaving the Value cell must not hide the handle while
+    // the drag is in flight.
+    await mouse.moveTo(tester.getCenter(find.text('Name')));
+    await tester.pump();
+    expect(find.byIcon(Icons.drag_indicator), findsOneWidget);
+
     await gesture.up();
     await tester.pumpAndSettle();
 

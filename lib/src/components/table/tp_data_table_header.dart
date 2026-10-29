@@ -11,6 +11,7 @@ class TpTableHeader<T> extends StatelessWidget {
     required this.sort,
     required this.onSort,
     required this.onReorder,
+    required this.allColumnIds,
     required this.firstId,
     required this.lastId,
     required this.headerHeight,
@@ -22,6 +23,9 @@ class TpTableHeader<T> extends StatelessWidget {
   final TpTableSort? sort;
   final ValueChanged<String> onSort;
   final void Function(String draggedId, String targetId) onReorder;
+
+  /// Every column id in display order, including locked and hidden ones.
+  final List<String> allColumnIds;
   final String firstId;
   final String lastId;
   final double headerHeight;
@@ -48,6 +52,7 @@ class TpTableHeader<T> extends StatelessWidget {
                 height: headerHeight,
                 onSort: onSort,
                 onReorder: onReorder,
+                allColumnIds: allColumnIds,
               ),
             ),
         ],
@@ -66,6 +71,7 @@ class _HeaderCell<T> extends StatefulWidget {
     required this.height,
     required this.onSort,
     required this.onReorder,
+    required this.allColumnIds,
     super.key,
   });
 
@@ -77,6 +83,7 @@ class _HeaderCell<T> extends StatefulWidget {
   final double height;
   final ValueChanged<String> onSort;
   final void Function(String draggedId, String targetId) onReorder;
+  final List<String> allColumnIds;
 
   @override
   State<_HeaderCell<T>> createState() => _HeaderCellState<T>();
@@ -88,6 +95,16 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
 
   bool get _canDrag => widget.column.draggable && !widget.column.locked;
 
+  bool get _canAccept => !widget.column.locked;
+
+  /// The dragged column lands in [widget.column]'s slot, so a column dragged
+  /// from the left of this one ends up on the right and vice versa.
+  bool _indicatorOnRight(String draggedId) {
+    final from = widget.allColumnIds.indexOf(draggedId);
+    final to = widget.allColumnIds.indexOf(widget.column.id);
+    return from >= 0 && to >= 0 && from < to;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -95,10 +112,13 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
 
     return DragTarget<String>(
       onWillAcceptWithDetails: (details) =>
-          _canDrag && details.data != widget.column.id,
+          _canAccept && details.data != widget.column.id,
       onAcceptWithDetails: (details) =>
           widget.onReorder(details.data, widget.column.id),
       builder: (context, candidates, rejected) {
+        final draggedId = candidates.isNotEmpty ? candidates.first : null;
+        final indicatorOnRight =
+            draggedId != null && _indicatorOnRight(draggedId);
         return MouseRegion(
           onEnter: (_) => setState(() => _hovered = true),
           onExit: (_) => setState(() => _hovered = false),
@@ -146,7 +166,8 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
               ),
               if (candidates.isNotEmpty)
                 Positioned(
-                  left: 0,
+                  left: indicatorOnRight ? null : 0,
+                  right: indicatorOnRight ? 0 : null,
                   top: 0,
                   bottom: 0,
                   width: 2,
