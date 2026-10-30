@@ -148,7 +148,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
           first: widget.first,
           last: widget.last,
           groupStart: widget.column.groupStart,
-        ).copyWith(end: _canDrag ? 28 : null),
+        ).copyWith(end: _canDrag ? 28 : 8),
         child: Row(
           children: [
             Expanded(
@@ -268,10 +268,10 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                           widget.onResizeEnd(widget.column.id),
                       onDoubleTap: () => widget.onResizeReset(widget.column.id),
                       child: SizedBox(
-                        width: 8,
+                        width: 12,
                         child: Center(
                           child: Container(
-                            width: 1,
+                            width: _resizeHovered ? 3 : 1,
                             color: _resizeHovered
                                 ? cs.primary
                                 : cs.outlineVariant.withValues(alpha: 0.6),
