@@ -13,7 +13,9 @@ class TpTableHeader<T> extends StatelessWidget {
     required this.onSort,
     required this.onReorder,
     required this.onResize,
+    required this.onResizeStart,
     required this.onResizeEnd,
+    required this.onResizeCancel,
     required this.onResizeReset,
     required this.allColumnIds,
     required this.labels,
@@ -29,7 +31,9 @@ class TpTableHeader<T> extends StatelessWidget {
   final ValueChanged<String> onSort;
   final void Function(String draggedId, String targetId) onReorder;
   final void Function(String columnId, double width) onResize;
+  final ValueChanged<String> onResizeStart;
   final ValueChanged<String> onResizeEnd;
+  final ValueChanged<String> onResizeCancel;
   final ValueChanged<String> onResizeReset;
 
   /// Every column id in display order, including locked and hidden ones.
@@ -64,7 +68,9 @@ class TpTableHeader<T> extends StatelessWidget {
                 onSort: onSort,
                 onReorder: onReorder,
                 onResize: onResize,
+                onResizeStart: onResizeStart,
                 onResizeEnd: onResizeEnd,
+                onResizeCancel: onResizeCancel,
                 onResizeReset: onResizeReset,
                 allColumnIds: allColumnIds,
                 labels: labels,
@@ -89,7 +95,9 @@ class _HeaderCell<T> extends StatefulWidget {
     required this.onSort,
     required this.onReorder,
     required this.onResize,
+    required this.onResizeStart,
     required this.onResizeEnd,
+    required this.onResizeCancel,
     required this.onResizeReset,
     required this.allColumnIds,
     required this.labels,
@@ -107,7 +115,9 @@ class _HeaderCell<T> extends StatefulWidget {
   final ValueChanged<String> onSort;
   final void Function(String draggedId, String targetId) onReorder;
   final void Function(String columnId, double width) onResize;
+  final ValueChanged<String> onResizeStart;
   final ValueChanged<String> onResizeEnd;
+  final ValueChanged<String> onResizeCancel;
   final ValueChanged<String> onResizeReset;
   final List<String> allColumnIds;
   final TpDataTableLabels labels;
@@ -121,10 +131,22 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
   bool _dragging = false;
   bool _resizeHovered = false;
   double _resizeStartWidth = 0;
+  int? _resizePointer;
+  double _resizeStartX = 0;
+  bool _resizeMoved = false;
 
   bool get _canDrag => widget.column.draggable && !widget.column.locked;
 
   bool get _canAccept => !widget.column.locked;
+
+  void _finishResize() {
+    _resizePointer = null;
+    if (_resizeMoved) {
+      widget.onResizeEnd(widget.column.id);
+    } else {
+      widget.onResizeCancel(widget.column.id);
+    }
+  }
 
   /// The dragged column lands in [widget.column]'s slot, so a column dragged
   /// from the left of this one ends up on the right and vice versa.
@@ -254,27 +276,44 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                     onEnter: (_) => setState(() => _resizeHovered = true),
                     onExit: (_) => setState(() => _resizeHovered = false),
                     child: GestureDetector(
-                      key: ValueKey('resize-${widget.column.id}'),
-                      behavior: HitTestBehavior.opaque,
-                      onHorizontalDragStart: (_) =>
-                          _resizeStartWidth = widget.width,
-                      onHorizontalDragUpdate: (details) {
-                        _resizeStartWidth += details.delta.dx;
-                        widget.onResize(widget.column.id, _resizeStartWidth);
-                      },
-                      onHorizontalDragEnd: (_) =>
-                          widget.onResizeEnd(widget.column.id),
-                      onHorizontalDragCancel: () =>
-                          widget.onResizeEnd(widget.column.id),
                       onDoubleTap: () => widget.onResizeReset(widget.column.id),
-                      child: SizedBox(
-                        width: 12,
-                        child: Center(
-                          child: Container(
-                            width: _resizeHovered ? 3 : 1,
-                            color: _resizeHovered
-                                ? cs.primary
-                                : cs.outlineVariant.withValues(alpha: 0.6),
+                      child: Listener(
+                        key: ValueKey('resize-${widget.column.id}'),
+                        behavior: HitTestBehavior.opaque,
+                        onPointerDown: (event) {
+                          if (_resizePointer != null) return;
+                          _resizePointer = event.pointer;
+                          _resizeStartX = event.position.dx;
+                          _resizeStartWidth = widget.width;
+                          _resizeMoved = false;
+                          widget.onResizeStart(widget.column.id);
+                        },
+                        onPointerMove: (event) {
+                          if (event.pointer != _resizePointer) return;
+                          final delta = event.position.dx - _resizeStartX;
+                          if (delta.abs() > 2) _resizeMoved = true;
+                          widget.onResize(
+                            widget.column.id,
+                            _resizeStartWidth + delta,
+                          );
+                        },
+                        onPointerUp: (event) {
+                          if (event.pointer != _resizePointer) return;
+                          _finishResize();
+                        },
+                        onPointerCancel: (event) {
+                          if (event.pointer != _resizePointer) return;
+                          _finishResize();
+                        },
+                        child: SizedBox(
+                          width: 12,
+                          child: Center(
+                            child: Container(
+                              width: _resizeHovered ? 3 : 1,
+                              color: _resizeHovered
+                                  ? cs.primary
+                                  : cs.outlineVariant.withValues(alpha: 0.6),
+                            ),
                           ),
                         ),
                       ),

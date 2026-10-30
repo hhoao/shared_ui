@@ -67,6 +67,7 @@ class TpDataTable<T> extends StatefulWidget {
 class _TpDataTableState<T> extends State<TpDataTable<T>> {
   int? _hoveredRow;
   final Map<String, double> _draftWidths = {};
+  bool _resizing = false;
 
   final ScrollController _pinnedVertical = ScrollController();
   final ScrollController _scrollableVertical = ScrollController();
@@ -155,9 +156,21 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     setState(() => _draftWidths[columnId] = width);
   }
 
+  void _handleResizeStart(String columnId) {
+    setState(() => _resizing = true);
+  }
+
+  void _handleResizeCancel(String columnId) {
+    _draftWidths.remove(columnId);
+    setState(() => _resizing = false);
+  }
+
   void _handleResizeEnd(String columnId) {
     final width = _draftWidths.remove(columnId);
-    if (width == null) return;
+    if (width == null) {
+      setState(() => _resizing = false);
+      return;
+    }
     TpTableColumn<T>? column;
     for (final item in widget.columns) {
       if (item.id == columnId) {
@@ -175,12 +188,13 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
         widths: {...widget.state.widths, columnId: clamped},
       ),
     );
+    setState(() => _resizing = false);
   }
 
   void _handleResizeReset(String columnId) {
     final next = {...widget.state.widths}..remove(columnId);
     _draftWidths.remove(columnId);
-    setState(() {});
+    setState(() => _resizing = false);
     widget.onStateChanged(widget.state.copyWith(widths: next));
   }
 
@@ -248,7 +262,9 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
                   onSort: _handleSort,
                   onReorder: _handleReorder,
                   onResize: _handleResize,
+                  onResizeStart: _handleResizeStart,
                   onResizeEnd: _handleResizeEnd,
+                  onResizeCancel: _handleResizeCancel,
                   onResizeReset: _handleResizeReset,
                   allColumnIds: _orderedColumnIds,
                   labels: widget.labels,
@@ -341,6 +357,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     if (pinned.isEmpty) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        physics: _resizing ? const NeverScrollableScrollPhysics() : null,
         child: SizedBox(width: tableWidth, child: rowsFor(visible)),
       );
     }
@@ -352,6 +369,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            physics: _resizing ? const NeverScrollableScrollPhysics() : null,
             child: SizedBox(width: scrollWidth, child: rowsFor(scrollable)),
           ),
         ),
@@ -382,6 +400,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
             notification.metrics.axis == Axis.horizontal,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          physics: _resizing ? const NeverScrollableScrollPhysics() : null,
           controller: controller,
           child: SizedBox(width: width, child: child),
         ),
@@ -394,6 +413,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            physics: _resizing ? const NeverScrollableScrollPhysics() : null,
             controller: _headerHorizontal,
             child: SizedBox(width: tableWidth, child: header(visible)),
           ),
@@ -423,6 +443,9 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                physics: _resizing
+                    ? const NeverScrollableScrollPhysics()
+                    : null,
                 controller: _headerHorizontal,
                 child: SizedBox(width: scrollWidth, child: header(scrollable)),
               ),
