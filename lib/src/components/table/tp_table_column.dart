@@ -54,6 +54,7 @@ class TpTableLayout {
     required double availableWidth,
     required double minTableWidth,
     Map<String, double> widthOverrides = const {},
+    bool fit = true,
   }) {
     final target = availableWidth < minTableWidth
         ? minTableWidth
@@ -97,7 +98,18 @@ class TpTableLayout {
     }
 
     final total = widths.values.fold<double>(0, (sum, width) => sum + width);
-    return TpTableLayout(widths: widths, totalWidth: total);
+    if (fit && total < target && columns.isNotEmpty) {
+      final candidates = columns
+          .where((column) => !widthOverrides.containsKey(column.id))
+          .toList(growable: false);
+      final filler = candidates.isNotEmpty ? candidates.last : columns.last;
+      widths[filler.id] = widths[filler.id]! + (target - total);
+    }
+    final fittedTotal = widths.values.fold<double>(
+      0,
+      (sum, width) => sum + width,
+    );
+    return TpTableLayout(widths: widths, totalWidth: fittedTotal);
   }
 }
 

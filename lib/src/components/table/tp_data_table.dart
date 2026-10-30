@@ -22,6 +22,7 @@ class TpDataTable<T> extends StatefulWidget {
     this.rowHeight = 40,
     this.headerHeight = 36,
     this.minTableWidth = 720,
+    this.fit = true,
     this.height,
     this.maxHeight,
     this.alwaysShowScrollbar = false,
@@ -41,6 +42,10 @@ class TpDataTable<T> extends StatefulWidget {
   final double rowHeight;
   final double headerHeight;
   final double minTableWidth;
+
+  /// Stretches the last column without a manual width so the table always
+  /// fills its available width. Set to false to leave a gap.
+  final bool fit;
 
   /// Fixed total table height (header + body). When null, the table grows with
   /// its rows and the surrounding page scrolls instead.
@@ -208,6 +213,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
                 availableWidth: constraints.maxWidth,
                 minTableWidth: widget.minTableWidth,
                 widthOverrides: widthOverrides,
+                fit: widget.fit,
               );
               final pinned = visible
                   .where((column) => column.locked)

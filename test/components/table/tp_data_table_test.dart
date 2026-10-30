@@ -78,6 +78,36 @@ class _HostState extends State<_Host> {
 }
 
 void main() {
+  test('layout fills the remaining width after a manual column width', () {
+    final columns = [
+      for (final id in ['a', 'b', 'c'])
+        TpTableColumn<String>(
+          id: id,
+          label: id,
+          width: 100,
+          cellBuilder: (context, row) => Text(row),
+        ),
+    ];
+
+    final fitted = TpTableLayout.resolve(
+      columns: columns,
+      availableWidth: 600,
+      minTableWidth: 300,
+      widthOverrides: const {'a': 100},
+    );
+    expect(fitted.totalWidth, 600);
+    expect(fitted.widthOf('c'), 400);
+
+    final notFitted = TpTableLayout.resolve(
+      columns: columns,
+      availableWidth: 600,
+      minTableWidth: 300,
+      widthOverrides: const {'a': 100},
+      fit: false,
+    );
+    expect(notFitted.totalWidth, 300);
+  });
+
   testWidgets('renders headers and rows', (tester) async {
     await tester.pumpWidget(const _Host());
     await tester.pumpAndSettle();
