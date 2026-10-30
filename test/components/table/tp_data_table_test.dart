@@ -27,9 +27,9 @@ final _columns = <TpTableColumn<String>>[
 ];
 
 class _Host extends StatefulWidget {
-  const _Host({this.rows = const ['alpha', 'four']});
+  const _Host();
 
-  final List<String> rows;
+  static const _rows = ['alpha', 'four'];
 
   @override
   State<_Host> createState() => _HostState();
@@ -51,7 +51,7 @@ class _HostState extends State<_Host> {
         child: Scaffold(
           body: TpDataTable<String>(
             columns: _columns,
-            rows: widget.rows,
+            rows: _Host._rows,
             rowKey: (row) => row,
             state: state,
             defaultSort: const TpTableSort(
