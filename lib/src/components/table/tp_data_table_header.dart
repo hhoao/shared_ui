@@ -201,6 +201,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
             message: widget.sorted && !widget.ascending
                 ? widget.labels.sortAscending
                 : widget.labels.sortDescending,
+            triggerMode: TooltipTriggerMode.manual,
             child: sortControl,
           );
 

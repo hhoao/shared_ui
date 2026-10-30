@@ -26,6 +26,7 @@ class TpDataTable<T> extends StatefulWidget {
     this.height,
     this.maxHeight,
     this.alwaysShowScrollbar = false,
+    this.showScrollbar = true,
     this.labels = const TpDataTableLabels(),
     super.key,
   });
@@ -57,6 +58,9 @@ class TpDataTable<T> extends StatefulWidget {
 
   /// Keeps the horizontal scrollbar visible instead of showing it on hover.
   final bool alwaysShowScrollbar;
+
+  /// Set to false to hide the horizontal scrollbar entirely.
+  final bool showScrollbar;
 
   final TpDataTableLabels labels;
 
@@ -393,17 +397,19 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
       required double width,
       required Widget child,
     }) {
+      final scrollView = SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: _resizing ? const NeverScrollableScrollPhysics() : null,
+        controller: controller,
+        child: SizedBox(width: width, child: child),
+      );
+      if (!widget.showScrollbar) return scrollView;
       return Scrollbar(
         controller: controller,
         thumbVisibility: widget.alwaysShowScrollbar,
         notificationPredicate: (notification) =>
             notification.metrics.axis == Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: _resizing ? const NeverScrollableScrollPhysics() : null,
-          controller: controller,
-          child: SizedBox(width: width, child: child),
-        ),
+        child: scrollView,
       );
     }
 
