@@ -18,6 +18,7 @@ class TpTableColumn<T> {
     this.hideable = true,
     this.locked = false,
     this.draggable = true,
+    this.resizable = true,
     this.groupStart = false,
   });
 
@@ -32,6 +33,7 @@ class TpTableColumn<T> {
   final bool hideable;
   final bool locked;
   final bool draggable;
+  final bool resizable;
   final bool groupStart;
 }
 
@@ -49,15 +51,25 @@ class TpTableLayout {
     required List<TpTableColumn<T>> columns,
     required double availableWidth,
     required double minTableWidth,
+    Map<String, double> widthOverrides = const {},
   }) {
     final target = availableWidth < minTableWidth
         ? minTableWidth
         : availableWidth;
     final fixedWidth = columns
-        .where((column) => column.width != null)
-        .fold<double>(0, (sum, column) => sum + column.width!);
+        .where(
+          (column) =>
+              column.width != null || widthOverrides.containsKey(column.id),
+        )
+        .fold<double>(
+          0,
+          (sum, column) => sum + (widthOverrides[column.id] ?? column.width!),
+        );
     final flexColumns = columns
-        .where((column) => column.width == null)
+        .where(
+          (column) =>
+              column.width == null && !widthOverrides.containsKey(column.id),
+        )
         .toList(growable: false);
     final flexTotal = flexColumns.fold<int>(
       0,
@@ -66,6 +78,13 @@ class TpTableLayout {
 
     final widths = <String, double>{};
     for (final column in columns) {
+      final override = widthOverrides[column.id];
+      if (override != null) {
+        widths[column.id] = override < column.minWidth
+            ? column.minWidth
+            : override;
+        continue;
+      }
       final fixed = column.width;
       if (fixed != null) {
         widths[column.id] = fixed;

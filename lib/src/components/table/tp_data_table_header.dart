@@ -12,6 +12,8 @@ class TpTableHeader<T> extends StatelessWidget {
     required this.sort,
     required this.onSort,
     required this.onReorder,
+    required this.onResize,
+    required this.onResizeEnd,
     required this.allColumnIds,
     required this.labels,
     required this.firstId,
@@ -25,6 +27,8 @@ class TpTableHeader<T> extends StatelessWidget {
   final TpTableSort? sort;
   final ValueChanged<String> onSort;
   final void Function(String draggedId, String targetId) onReorder;
+  final void Function(String columnId, double width) onResize;
+  final ValueChanged<String> onResizeEnd;
 
   /// Every column id in display order, including locked and hidden ones.
   final List<String> allColumnIds;
@@ -53,8 +57,12 @@ class TpTableHeader<T> extends StatelessWidget {
                 first: column.id == firstId,
                 last: column.id == lastId,
                 height: headerHeight,
+                width: layout.widthOf(column.id),
+                resizable: column.resizable,
                 onSort: onSort,
                 onReorder: onReorder,
+                onResize: onResize,
+                onResizeEnd: onResizeEnd,
                 allColumnIds: allColumnIds,
                 labels: labels,
               ),
@@ -73,8 +81,12 @@ class _HeaderCell<T> extends StatefulWidget {
     required this.first,
     required this.last,
     required this.height,
+    required this.width,
+    required this.resizable,
     required this.onSort,
     required this.onReorder,
+    required this.onResize,
+    required this.onResizeEnd,
     required this.allColumnIds,
     required this.labels,
     super.key,
@@ -86,8 +98,12 @@ class _HeaderCell<T> extends StatefulWidget {
   final bool first;
   final bool last;
   final double height;
+  final double width;
+  final bool resizable;
   final ValueChanged<String> onSort;
   final void Function(String draggedId, String targetId) onReorder;
+  final void Function(String columnId, double width) onResize;
+  final ValueChanged<String> onResizeEnd;
   final List<String> allColumnIds;
   final TpDataTableLabels labels;
 
@@ -98,6 +114,8 @@ class _HeaderCell<T> extends StatefulWidget {
 class _HeaderCellState<T> extends State<_HeaderCell<T>> {
   bool _hovered = false;
   bool _dragging = false;
+  bool _resizeHovered = false;
+  double _resizeStartWidth = 0;
 
   bool get _canDrag => widget.column.draggable && !widget.column.locked;
 
@@ -185,7 +203,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                 ),
               if (_canDrag && (_hovered || _dragging))
                 Positioned(
-                  right: 2,
+                  right: 10,
                   top: 0,
                   bottom: 0,
                   child: Center(
@@ -217,6 +235,42 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                       child: const MouseRegion(
                         cursor: SystemMouseCursors.grab,
                         child: Icon(Icons.drag_indicator, size: 14),
+                      ),
+                    ),
+                  ),
+                ),
+              if (widget.resizable)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.resizeColumn,
+                    onEnter: (_) => setState(() => _resizeHovered = true),
+                    onExit: (_) => setState(() => _resizeHovered = false),
+                    child: GestureDetector(
+                      key: ValueKey('resize-${widget.column.id}'),
+                      behavior: HitTestBehavior.opaque,
+                      onHorizontalDragStart: (_) =>
+                          _resizeStartWidth = widget.width,
+                      onHorizontalDragUpdate: (details) {
+                        _resizeStartWidth += details.delta.dx;
+                        widget.onResize(widget.column.id, _resizeStartWidth);
+                      },
+                      onHorizontalDragEnd: (_) =>
+                          widget.onResizeEnd(widget.column.id),
+                      onHorizontalDragCancel: () =>
+                          widget.onResizeEnd(widget.column.id),
+                      child: SizedBox(
+                        width: 8,
+                        child: Center(
+                          child: Container(
+                            width: 1,
+                            color: _resizeHovered
+                                ? cs.primary
+                                : cs.outlineVariant.withValues(alpha: 0.6),
+                          ),
+                        ),
                       ),
                     ),
                   ),

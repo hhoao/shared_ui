@@ -44,6 +44,7 @@ class TpDataTable<T> extends StatefulWidget {
 
 class _TpDataTableState<T> extends State<TpDataTable<T>> {
   int? _hoveredRow;
+  final Map<String, double> _draftWidths = {};
 
   void _setHovered(int index, bool hovered) {
     setState(() {
@@ -80,6 +81,19 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     widget.onStateChanged(widget.state.copyWith(order: next));
   }
 
+  void _handleResize(String columnId, double width) {
+    setState(() => _draftWidths[columnId] = width);
+  }
+
+  void _handleResizeEnd(String columnId) {
+    final width = _draftWidths.remove(columnId);
+    if (width == null) return;
+    setState(() {});
+    widget.onStateChanged(
+      widget.state.copyWith(widths: {...widget.state.widths, columnId: width}),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -103,10 +117,12 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
         else
           LayoutBuilder(
             builder: (context, constraints) {
+              final widthOverrides = {...widget.state.widths, ..._draftWidths};
               final layout = TpTableLayout.resolve(
                 columns: visible,
                 availableWidth: constraints.maxWidth,
                 minTableWidth: widget.minTableWidth,
+                widthOverrides: widthOverrides,
               );
               final pinned = visible
                   .where((column) => column.locked)
@@ -136,6 +152,8 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
                       sort: effectiveSort,
                       onSort: _handleSort,
                       onReorder: _handleReorder,
+                      onResize: _handleResize,
+                      onResizeEnd: _handleResizeEnd,
                       allColumnIds: _orderedColumnIds,
                       labels: widget.labels,
                       firstId: firstId,

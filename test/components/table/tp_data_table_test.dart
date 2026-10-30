@@ -125,6 +125,20 @@ void main() {
     },
   );
 
+  testWidgets('dragging the header edge resizes the column', (tester) async {
+    await tester.pumpWidget(const _Host());
+    await tester.pumpAndSettle();
+
+    await tester.drag(
+      find.byKey(const ValueKey('resize-value')),
+      const Offset(40, 0),
+    );
+    await tester.pumpAndSettle();
+
+    final host = tester.state<_HostState>(find.byType(_Host));
+    expect(host.state.widths['value'], greaterThan(100));
+  });
+
   testWidgets('column menu hides and restores a column', (tester) async {
     await tester.pumpWidget(const _Host());
     await tester.pumpAndSettle();

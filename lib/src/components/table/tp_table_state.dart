@@ -26,18 +26,23 @@ class TpTableState {
     this.order = const [],
     this.hidden = const {},
     this.sort,
+    this.widths = const {},
   });
 
   final List<String> order;
   final Set<String> hidden;
   final TpTableSort? sort;
 
+  /// Per-column width overrides (px) chosen by dragging a header edge.
+  final Map<String, double> widths;
+
   @override
   bool operator ==(Object other) {
     return other is TpTableState &&
         listEquals(other.order, order) &&
         setEquals(other.hidden, hidden) &&
-        other.sort == sort;
+        other.sort == sort &&
+        mapEquals(other.widths, widths);
   }
 
   @override
@@ -46,6 +51,9 @@ class TpTableState {
       Object.hashAll(order),
       Object.hashAllUnordered(hidden),
       sort,
+      Object.hashAllUnordered(
+        widths.entries.map((entry) => Object.hash(entry.key, entry.value)),
+      ),
     );
   }
 
@@ -54,11 +62,13 @@ class TpTableState {
     Set<String>? hidden,
     TpTableSort? sort,
     bool clearSort = false,
+    Map<String, double>? widths,
   }) {
     return TpTableState(
       order: order ?? this.order,
       hidden: hidden ?? this.hidden,
       sort: clearSort ? null : (sort ?? this.sort),
+      widths: widths ?? this.widths,
     );
   }
 
@@ -66,11 +76,9 @@ class TpTableState {
     return {
       'order': order,
       'hidden': hidden.toList(growable: false),
+      'widths': widths,
       if (sort != null)
-        'sort': {
-          'column': sort!.columnId,
-          'ascending': sort!.ascending,
-        },
+        'sort': {'column': sort!.columnId, 'ascending': sort!.ascending},
     };
   }
 
@@ -103,7 +111,24 @@ class TpTableState {
       }
     }
 
-    return TpTableState(order: order, hidden: hidden, sort: sort);
+    final widths = <String, double>{};
+    final rawWidths = json['widths'];
+    if (rawWidths is Map) {
+      for (final entry in rawWidths.entries) {
+        final key = entry.key;
+        final value = entry.value;
+        if (key is String && key.isNotEmpty && value is num) {
+          widths[key] = value.toDouble();
+        }
+      }
+    }
+
+    return TpTableState(
+      order: order,
+      hidden: hidden,
+      sort: sort,
+      widths: widths,
+    );
   }
 }
 
