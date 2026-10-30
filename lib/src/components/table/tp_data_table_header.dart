@@ -133,9 +133,8 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                 widget.column.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: styles.xs.copyWith(
+                style: styles.xsSemibold.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.56),
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -174,7 +173,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
           onExit: (_) => setState(() => _hovered = false),
           child: Stack(
             children: [
-              header,
+              Positioned.fill(child: header),
               if (candidates.isNotEmpty)
                 Positioned(
                   left: indicatorOnRight ? null : 0,
