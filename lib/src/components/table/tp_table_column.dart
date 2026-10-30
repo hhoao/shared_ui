@@ -94,17 +94,57 @@ class TpTableLayout {
         continue;
       }
       final share = (target - fixedWidth) * column.flex / flexTotal;
-      widths[column.id] = share < column.minWidth ? column.minWidth : share;
+      widths[column.id] = share
+          .clamp(column.minWidth, column.maxWidth)
+          .toDouble();
     }
 
-    final total = widths.values.fold<double>(0, (sum, width) => sum + width);
-    if (fit && total < target && columns.isNotEmpty) {
-      final candidates = columns
-          .where((column) => !widthOverrides.containsKey(column.id))
-          .toList(growable: false);
-      final filler = candidates.isNotEmpty ? candidates.last : columns.last;
-      widths[filler.id] = widths[filler.id]! + (target - total);
+    var total = widths.values.fold<double>(0, (sum, width) => sum + width);
+    if (fit && total < target) {
+      var remaining = target - total;
+      for (
+        var index = columns.length - 1;
+        index >= 0 && remaining > 0;
+        index--
+      ) {
+        final column = columns[index];
+        if (widthOverrides.containsKey(column.id)) continue;
+        final room = column.maxWidth - widths[column.id]!;
+        if (room <= 0) continue;
+        final add = room < remaining ? room : remaining;
+        widths[column.id] = widths[column.id]! + add;
+        remaining -= add;
+      }
+      total = widths.values.fold<double>(0, (sum, width) => sum + width);
     }
+
+    if (fit && total > target) {
+      var excess = total - target;
+      // Shrink user-resized columns last: their explicit width wins until the
+      // other columns reach their minimums.
+      for (final overriddenPass in [false, true]) {
+        if (excess <= 0) break;
+        final candidates = columns
+            .where(
+              (column) =>
+                  widthOverrides.containsKey(column.id) == overriddenPass &&
+                  widths[column.id]! > column.minWidth,
+            )
+            .toList(growable: false);
+        final capacity = candidates.fold<double>(
+          0,
+          (sum, column) => sum + (widths[column.id]! - column.minWidth),
+        );
+        if (capacity <= 0) continue;
+        final take = excess < capacity ? excess : capacity;
+        for (final column in candidates) {
+          final room = widths[column.id]! - column.minWidth;
+          widths[column.id] = widths[column.id]! - take * room / capacity;
+        }
+        excess -= take;
+      }
+    }
+
     final fittedTotal = widths.values.fold<double>(
       0,
       (sum, width) => sum + width,

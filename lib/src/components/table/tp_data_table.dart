@@ -27,6 +27,7 @@ class TpDataTable<T> extends StatefulWidget {
     this.maxHeight,
     this.alwaysShowScrollbar = false,
     this.showScrollbar = true,
+    this.horizontalScroll = true,
     this.labels = const TpDataTableLabels(),
     super.key,
   });
@@ -61,6 +62,10 @@ class TpDataTable<T> extends StatefulWidget {
 
   /// Set to false to hide the horizontal scrollbar entirely.
   final bool showScrollbar;
+
+  /// Set to false to disable horizontal scrolling and fit columns to the
+  /// available width.
+  final bool horizontalScroll;
 
   final TpDataTableLabels labels;
 
@@ -229,7 +234,9 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
               final layout = TpTableLayout.resolve(
                 columns: visible,
                 availableWidth: constraints.maxWidth,
-                minTableWidth: widget.minTableWidth,
+                minTableWidth: widget.horizontalScroll
+                    ? widget.minTableWidth
+                    : 0,
                 widthOverrides: widthOverrides,
                 fit: widget.fit,
               );
@@ -250,9 +257,11 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
               final firstId = visible.isEmpty ? '' : visible.first.id;
               final lastId = visible.isEmpty ? '' : visible.last.id;
               final effectiveSort = widget.state.sort ?? widget.defaultSort;
-              final tableWidth = layout.totalWidth < constraints.maxWidth
+              final tableWidth = !widget.horizontalScroll
                   ? constraints.maxWidth
-                  : layout.totalWidth;
+                  : (layout.totalWidth < constraints.maxWidth
+                        ? constraints.maxWidth
+                        : layout.totalWidth);
               final remainingWidth = constraints.maxWidth - pinnedWidth;
               final scrollWidth = remainingWidth > scrollableWidth
                   ? remainingWidth
@@ -361,7 +370,9 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     if (pinned.isEmpty) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        physics: _resizing ? const NeverScrollableScrollPhysics() : null,
+        physics: _resizing || !widget.horizontalScroll
+            ? const NeverScrollableScrollPhysics()
+            : null,
         child: SizedBox(width: tableWidth, child: rowsFor(visible)),
       );
     }
@@ -373,7 +384,9 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            physics: _resizing ? const NeverScrollableScrollPhysics() : null,
+            physics: _resizing || !widget.horizontalScroll
+                ? const NeverScrollableScrollPhysics()
+                : null,
             child: SizedBox(width: scrollWidth, child: rowsFor(scrollable)),
           ),
         ),
@@ -399,7 +412,9 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     }) {
       final scrollView = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        physics: _resizing ? const NeverScrollableScrollPhysics() : null,
+        physics: _resizing || !widget.horizontalScroll
+            ? const NeverScrollableScrollPhysics()
+            : null,
         controller: controller,
         child: SizedBox(width: width, child: child),
       );
@@ -419,7 +434,9 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            physics: _resizing ? const NeverScrollableScrollPhysics() : null,
+            physics: _resizing || !widget.horizontalScroll
+                ? const NeverScrollableScrollPhysics()
+                : null,
             controller: _headerHorizontal,
             child: SizedBox(width: tableWidth, child: header(visible)),
           ),
