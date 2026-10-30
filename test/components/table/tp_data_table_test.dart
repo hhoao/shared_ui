@@ -54,15 +54,16 @@ class _HostState extends State<_Host> {
             rows: _Host._rows,
             rowKey: (row) => row,
             state: state,
-            defaultSort: const TpTableSort(
-              columnId: 'value',
-              ascending: false,
-            ),
+            defaultSort: const TpTableSort(columnId: 'value', ascending: false),
             toolbar: TpTableColumnMenu<String>(
               columns: _columns,
               state: state,
               onChanged: (next) => setState(() => state = next),
               labels: const TpDataTableLabels(),
+            ),
+            labels: const TpDataTableLabels(
+              sortAscending: 'Sort ascending localized',
+              sortDescending: 'Sort descending localized',
             ),
             onStateChanged: (next) => setState(() => state = next),
           ),
@@ -84,20 +85,45 @@ void main() {
     expect(find.text('four'), findsOneWidget);
   });
 
-  testWidgets('clicking a sortable header cycles descending, ascending, default', (
+  testWidgets('uses rowKey for every rendered table row', (tester) async {
+    await tester.pumpWidget(const _Host());
+    await tester.pumpAndSettle();
+
+    final keys = tester
+        .widgetList<TpTableRow<String>>(find.byType(TpTableRow<String>))
+        .map((row) => row.key)
+        .toList(growable: false);
+    expect(keys.where((key) => key == const ValueKey('alpha')), hasLength(2));
+    expect(keys.where((key) => key == const ValueKey('four')), hasLength(2));
+  });
+
+  testWidgets('sortable header uses injected next-direction labels', (
     tester,
   ) async {
     await tester.pumpWidget(const _Host());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Value'));
+    expect(find.byTooltip('Sort ascending localized'), findsOneWidget);
+    await tester.tap(find.byTooltip('Sort ascending localized'));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
-
-    await tester.tap(find.text('Value'));
-    await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+    expect(find.byTooltip('Sort descending localized'), findsOneWidget);
   });
+
+  testWidgets(
+    'clicking a sortable header cycles descending, ascending, default',
+    (tester) async {
+      await tester.pumpWidget(const _Host());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Value'));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
+
+      await tester.tap(find.text('Value'));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+    },
+  );
 
   testWidgets('column menu hides and restores a column', (tester) async {
     await tester.pumpWidget(const _Host());

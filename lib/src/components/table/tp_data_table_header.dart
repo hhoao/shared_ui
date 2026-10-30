@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/tp_text_styles.dart';
 import 'tp_table_column.dart';
+import 'tp_table_column_menu.dart';
 import 'tp_table_state.dart';
 
 class TpTableHeader<T> extends StatelessWidget {
@@ -12,6 +13,7 @@ class TpTableHeader<T> extends StatelessWidget {
     required this.onSort,
     required this.onReorder,
     required this.allColumnIds,
+    required this.labels,
     required this.firstId,
     required this.lastId,
     required this.headerHeight,
@@ -26,6 +28,7 @@ class TpTableHeader<T> extends StatelessWidget {
 
   /// Every column id in display order, including locked and hidden ones.
   final List<String> allColumnIds;
+  final TpDataTableLabels labels;
   final String firstId;
   final String lastId;
   final double headerHeight;
@@ -53,6 +56,7 @@ class TpTableHeader<T> extends StatelessWidget {
                 onSort: onSort,
                 onReorder: onReorder,
                 allColumnIds: allColumnIds,
+                labels: labels,
               ),
             ),
         ],
@@ -72,6 +76,7 @@ class _HeaderCell<T> extends StatefulWidget {
     required this.onSort,
     required this.onReorder,
     required this.allColumnIds,
+    required this.labels,
     super.key,
   });
 
@@ -84,6 +89,7 @@ class _HeaderCell<T> extends StatefulWidget {
   final ValueChanged<String> onSort;
   final void Function(String draggedId, String targetId) onReorder;
   final List<String> allColumnIds;
+  final TpDataTableLabels labels;
 
   @override
   State<_HeaderCell<T>> createState() => _HeaderCellState<T>();
@@ -109,6 +115,50 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
+    final sortControl = InkWell(
+      onTap: widget.column.sortValue == null
+          ? null
+          : () => widget.onSort(widget.column.id),
+      onLongPress: _canDrag ? () => setState(() => _hovered = true) : null,
+      child: Padding(
+        padding: tpTableCellPadding(
+          first: widget.first,
+          last: widget.last,
+          groupStart: widget.column.groupStart,
+        ).copyWith(right: _canDrag ? 28 : null),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.column.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: styles.xs.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.56),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (widget.sorted) ...[
+              const SizedBox(width: 2),
+              Icon(
+                widget.ascending ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 12,
+                color: cs.onSurface.withValues(alpha: 0.56),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+    final header = widget.column.sortValue == null
+        ? sortControl
+        : Tooltip(
+            message: widget.sorted && !widget.ascending
+                ? widget.labels.sortAscending
+                : widget.labels.sortDescending,
+            child: sortControl,
+          );
 
     return DragTarget<String>(
       onWillAcceptWithDetails: (details) =>
@@ -124,46 +174,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
           onExit: (_) => setState(() => _hovered = false),
           child: Stack(
             children: [
-              InkWell(
-                onTap: widget.column.sortValue == null
-                    ? null
-                    : () => widget.onSort(widget.column.id),
-                onLongPress: _canDrag
-                    ? () => setState(() => _hovered = true)
-                    : null,
-                child: Padding(
-                  padding: tpTableCellPadding(
-                    first: widget.first,
-                    last: widget.last,
-                    groupStart: widget.column.groupStart,
-                  ).copyWith(right: _canDrag ? 28 : null),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.column.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: styles.xs.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.56),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      if (widget.sorted) ...[
-                        const SizedBox(width: 2),
-                        Icon(
-                          widget.ascending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                          size: 12,
-                          color: cs.onSurface.withValues(alpha: 0.56),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+              header,
               if (candidates.isNotEmpty)
                 Positioned(
                   left: indicatorOnRight ? null : 0,
@@ -218,4 +229,3 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
     );
   }
 }
-

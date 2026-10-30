@@ -71,9 +71,7 @@ class TpTableLayout {
         widths[column.id] = fixed;
         continue;
       }
-      final share = flexTotal == 0
-          ? 0.0
-          : (target - fixedWidth) * column.flex / flexTotal;
+      final share = (target - fixedWidth) * column.flex / flexTotal;
       widths[column.id] = share < column.minWidth ? column.minWidth : share;
     }
 

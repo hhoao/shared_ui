@@ -59,6 +59,12 @@ class _HostState extends State<_Host> {
   }
 }
 
+Positioned _insertionIndicator(WidgetTester tester) {
+  return tester
+      .widgetList<Positioned>(find.byType(Positioned))
+      .singleWhere((positioned) => positioned.width == 2);
+}
+
 void main() {
   testWidgets('hovering a draggable header shows its drag handle', (
     tester,
@@ -108,6 +114,54 @@ void main() {
 
     final hostState = tester.state<_HostState>(find.byType(_Host));
     expect(hostState.state.order, isEmpty);
+  });
+
+  testWidgets('rightward drag renders the insertion indicator on the right', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const _Host());
+    await tester.pumpAndSettle();
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: tester.getCenter(find.text('Value')));
+    await tester.pump();
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byIcon(Icons.drag_indicator)),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveTo(tester.getCenter(find.text('Extra')));
+    await tester.pump();
+
+    final indicator = _insertionIndicator(tester);
+    expect(indicator.left, isNull);
+    expect(indicator.right, 0);
+
+    await gesture.up();
+    await mouse.removePointer();
+  });
+
+  testWidgets('leftward drag renders the insertion indicator on the left', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const _Host());
+    await tester.pumpAndSettle();
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: tester.getCenter(find.text('Extra')));
+    await tester.pump();
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byIcon(Icons.drag_indicator)),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveTo(tester.getCenter(find.text('Value')));
+    await tester.pump();
+
+    final indicator = _insertionIndicator(tester);
+    expect(indicator.left, 0);
+    expect(indicator.right, isNull);
+
+    await gesture.up();
+    await mouse.removePointer();
   });
 
   testWidgets('dragging a header onto another reorders columns', (

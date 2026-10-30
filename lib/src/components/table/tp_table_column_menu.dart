@@ -12,11 +12,15 @@ class TpDataTableLabels {
     this.columns = 'Columns',
     this.reset = 'Reset to default',
     this.empty = 'No data',
+    this.sortAscending = 'Sort ascending',
+    this.sortDescending = 'Sort descending',
   });
 
   final String columns;
   final String reset;
   final String empty;
+  final String sortAscending;
+  final String sortDescending;
 }
 
 class TpTableColumnMenu<T> extends StatefulWidget {
@@ -55,9 +59,10 @@ class _TpTableColumnMenuState<T> extends State<TpTableColumnMenu<T>> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final columns = orderedTableColumns(widget.columns, widget.state)
-        .where((column) => !column.locked)
-        .toList(growable: false);
+    final columns = orderedTableColumns(
+      widget.columns,
+      widget.state,
+    ).where((column) => !column.locked).toList(growable: false);
 
     return TpPopover(
       controller: _controller,

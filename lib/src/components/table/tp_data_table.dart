@@ -76,11 +76,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
   ).map((column) => column.id).toList(growable: false);
 
   void _handleReorder(String draggedId, String targetId) {
-    final next = reorderTableColumnIds(
-      _orderedColumnIds,
-      draggedId,
-      targetId,
-    );
+    final next = reorderTableColumnIds(_orderedColumnIds, draggedId, targetId);
     widget.onStateChanged(widget.state.copyWith(order: next));
   }
 
@@ -96,10 +92,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
           widget.toolbar!,
           const SizedBox(height: 10),
         ],
-        Divider(
-          height: 1,
-          color: cs.outlineVariant.withValues(alpha: 0.5),
-        ),
+        Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
         if (widget.rows.isEmpty)
           SizedBox(
             height: 160,
@@ -144,12 +137,14 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
                       onSort: _handleSort,
                       onReorder: _handleReorder,
                       allColumnIds: _orderedColumnIds,
+                      labels: widget.labels,
                       firstId: firstId,
                       lastId: lastId,
                       headerHeight: widget.headerHeight,
                     ),
                     for (var index = 0; index < widget.rows.length; index++)
                       TpTableRow<T>(
+                        key: ValueKey(widget.rowKey(widget.rows[index])),
                         columns: columns,
                         layout: layout,
                         row: widget.rows[index],
