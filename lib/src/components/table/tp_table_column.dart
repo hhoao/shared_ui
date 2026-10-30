@@ -13,6 +13,7 @@ class TpTableColumn<T> {
     this.width,
     this.flex = 1,
     this.minWidth = 80,
+    this.maxWidth = 640,
     this.alignment = Alignment.centerLeft,
     this.sortValue,
     this.hideable = true,
@@ -28,6 +29,7 @@ class TpTableColumn<T> {
   final double? width;
   final int flex;
   final double minWidth;
+  final double maxWidth;
   final Alignment alignment;
   final Comparable? Function(T row)? sortValue;
   final bool hideable;
@@ -80,9 +82,9 @@ class TpTableLayout {
     for (final column in columns) {
       final override = widthOverrides[column.id];
       if (override != null) {
-        widths[column.id] = override < column.minWidth
-            ? column.minWidth
-            : override;
+        widths[column.id] = override
+            .clamp(column.minWidth, column.maxWidth)
+            .toDouble();
         continue;
       }
       final fixed = column.width;
@@ -99,12 +101,12 @@ class TpTableLayout {
   }
 }
 
-EdgeInsets tpTableCellPadding({
+EdgeInsetsDirectional tpTableCellPadding({
   required bool first,
   required bool last,
   required bool groupStart,
 }) {
-  final left = first ? 16.0 : (groupStart ? 40.0 : 24.0);
-  final right = last ? 16.0 : 24.0;
-  return EdgeInsets.only(left: left, right: right);
+  final start = first ? 16.0 : (groupStart ? 40.0 : 24.0);
+  final end = last ? 16.0 : 24.0;
+  return EdgeInsetsDirectional.only(start: start, end: end);
 }

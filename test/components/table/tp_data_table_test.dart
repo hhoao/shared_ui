@@ -27,9 +27,12 @@ final _columns = <TpTableColumn<String>>[
 ];
 
 class _Host extends StatefulWidget {
-  const _Host();
+  const _Host({this.rows = _Host._rows, this.height});
 
   static const _rows = ['alpha', 'four'];
+
+  final List<String> rows;
+  final double? height;
 
   @override
   State<_Host> createState() => _HostState();
@@ -51,8 +54,9 @@ class _HostState extends State<_Host> {
         child: Scaffold(
           body: TpDataTable<String>(
             columns: _columns,
-            rows: _Host._rows,
+            rows: widget.rows,
             rowKey: (row) => row,
+            height: widget.height,
             state: state,
             defaultSort: const TpTableSort(columnId: 'value', ascending: false),
             toolbar: TpTableColumnMenu<String>(
@@ -137,6 +141,45 @@ void main() {
 
     final host = tester.state<_HostState>(find.byType(_Host));
     expect(host.state.widths['value'], greaterThan(100));
+  });
+
+  testWidgets('double tapping the resize handle resets the width', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const _Host());
+    await tester.pumpAndSettle();
+
+    final handle = find.byKey(const ValueKey('resize-value'));
+    await tester.drag(handle, const Offset(40, 0));
+    await tester.pumpAndSettle();
+
+    final host = tester.state<_HostState>(find.byType(_Host));
+    expect(host.state.widths['value'], greaterThan(100));
+
+    await tester.tap(handle);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(handle);
+    await tester.pumpAndSettle();
+
+    expect(host.state.widths.containsKey('value'), isFalse);
+  });
+
+  testWidgets('bounded height keeps the header and virtualizes rows', (
+    tester,
+  ) async {
+    final rows = [for (var index = 0; index < 100; index++) 'row$index'];
+    await tester.pumpWidget(_Host(rows: rows, height: 200));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Name'), findsOneWidget);
+    expect(find.text('row0'), findsOneWidget);
+    expect(find.text('row99'), findsNothing);
+
+    await tester.drag(find.byType(ListView).last, const Offset(0, -400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Name'), findsOneWidget);
+    expect(find.text('row0'), findsNothing);
   });
 
   testWidgets('column menu hides and restores a column', (tester) async {

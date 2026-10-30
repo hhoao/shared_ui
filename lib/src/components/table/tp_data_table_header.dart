@@ -14,6 +14,7 @@ class TpTableHeader<T> extends StatelessWidget {
     required this.onReorder,
     required this.onResize,
     required this.onResizeEnd,
+    required this.onResizeReset,
     required this.allColumnIds,
     required this.labels,
     required this.firstId,
@@ -29,6 +30,7 @@ class TpTableHeader<T> extends StatelessWidget {
   final void Function(String draggedId, String targetId) onReorder;
   final void Function(String columnId, double width) onResize;
   final ValueChanged<String> onResizeEnd;
+  final ValueChanged<String> onResizeReset;
 
   /// Every column id in display order, including locked and hidden ones.
   final List<String> allColumnIds;
@@ -63,6 +65,7 @@ class TpTableHeader<T> extends StatelessWidget {
                 onReorder: onReorder,
                 onResize: onResize,
                 onResizeEnd: onResizeEnd,
+                onResizeReset: onResizeReset,
                 allColumnIds: allColumnIds,
                 labels: labels,
               ),
@@ -87,6 +90,7 @@ class _HeaderCell<T> extends StatefulWidget {
     required this.onReorder,
     required this.onResize,
     required this.onResizeEnd,
+    required this.onResizeReset,
     required this.allColumnIds,
     required this.labels,
     super.key,
@@ -104,6 +108,7 @@ class _HeaderCell<T> extends StatefulWidget {
   final void Function(String draggedId, String targetId) onReorder;
   final void Function(String columnId, double width) onResize;
   final ValueChanged<String> onResizeEnd;
+  final ValueChanged<String> onResizeReset;
   final List<String> allColumnIds;
   final TpDataTableLabels labels;
 
@@ -143,7 +148,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
           first: widget.first,
           last: widget.last,
           groupStart: widget.column.groupStart,
-        ).copyWith(right: _canDrag ? 28 : null),
+        ).copyWith(end: _canDrag ? 28 : null),
         child: Row(
           children: [
             Expanded(
@@ -193,17 +198,17 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
             children: [
               Positioned.fill(child: header),
               if (candidates.isNotEmpty)
-                Positioned(
-                  left: indicatorOnRight ? null : 0,
-                  right: indicatorOnRight ? 0 : null,
+                PositionedDirectional(
+                  start: indicatorOnRight ? null : 0,
+                  end: indicatorOnRight ? 0 : null,
                   top: 0,
                   bottom: 0,
                   width: 2,
                   child: ColoredBox(color: cs.primary),
                 ),
               if (_canDrag && (_hovered || _dragging))
-                Positioned(
-                  right: 10,
+                PositionedDirectional(
+                  end: 10,
                   top: 0,
                   bottom: 0,
                   child: Center(
@@ -240,8 +245,8 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                   ),
                 ),
               if (widget.resizable)
-                Positioned(
-                  right: 0,
+                PositionedDirectional(
+                  end: 0,
                   top: 0,
                   bottom: 0,
                   child: MouseRegion(
@@ -261,6 +266,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                           widget.onResizeEnd(widget.column.id),
                       onHorizontalDragCancel: () =>
                           widget.onResizeEnd(widget.column.id),
+                      onDoubleTap: () => widget.onResizeReset(widget.column.id),
                       child: SizedBox(
                         width: 8,
                         child: Center(
