@@ -170,7 +170,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
           first: widget.first,
           last: widget.last,
           groupStart: widget.column.groupStart,
-        ).copyWith(end: _canDrag ? 28 : 8),
+        ).copyWith(end: 8),
         child: Row(
           children: [
             Expanded(
@@ -231,7 +231,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                 ),
               if (_canDrag && (_hovered || _dragging))
                 PositionedDirectional(
-                  end: 10,
+                  end: 14,
                   top: 0,
                   bottom: 0,
                   child: Center(

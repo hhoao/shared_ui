@@ -90,7 +90,9 @@ class TpTableLayout {
       }
       final fixed = column.width;
       if (fixed != null) {
-        widths[column.id] = fixed;
+        widths[column.id] = fixed
+            .clamp(column.minWidth, column.maxWidth)
+            .toDouble();
         continue;
       }
       final share = (target - fixedWidth) * column.flex / flexTotal;
