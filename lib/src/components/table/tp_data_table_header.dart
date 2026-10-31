@@ -178,7 +178,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                 widget.column.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: styles.xsSemibold.copyWith(
+                style: styles.mdSemibold.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.56),
                 ),
               ),
