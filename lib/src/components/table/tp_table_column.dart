@@ -110,7 +110,6 @@ class TpTableLayout {
         index--
       ) {
         final column = columns[index];
-        if (widthOverrides.containsKey(column.id)) continue;
         final room = column.maxWidth - widths[column.id]!;
         if (room <= 0) continue;
         final add = room < remaining ? room : remaining;

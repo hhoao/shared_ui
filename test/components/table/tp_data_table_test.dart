@@ -106,6 +106,14 @@ void main() {
       fit: false,
     );
     expect(notFitted.totalWidth, 300);
+
+    final allManual = TpTableLayout.resolve(
+      columns: columns,
+      availableWidth: 600,
+      minTableWidth: 300,
+      widthOverrides: const {'a': 100, 'b': 100, 'c': 100},
+    );
+    expect(allManual.totalWidth, 600);
   });
 
   testWidgets('renders headers and rows', (tester) async {
