@@ -82,6 +82,7 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
   String? _resizeNextId;
   double _resizeBaseWidth = 0;
   double _resizeNextBaseWidth = 0;
+  Set<String> _lastResizeIds = const {};
 
   final ScrollController _pinnedVertical = ScrollController();
   final ScrollController _scrollableVertical = ScrollController();
@@ -209,48 +210,41 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     _resizeNextBaseWidth = _resizeNextId == null
         ? 0
         : layout.widthOf(_resizeNextId!);
+    _draftWidths
+      ..clear()
+      ..addAll({
+        for (final column in _visibleColumns)
+          column.id: layout.widthOf(column.id),
+      });
     setState(() => _resizing = true);
   }
 
   void _handleResizeCancel(String columnId) {
-    _draftWidths.remove(columnId);
-    if (_resizeNextId != null) _draftWidths.remove(_resizeNextId);
+    _draftWidths.clear();
     setState(() => _resizing = false);
   }
 
   void _handleResizeEnd(String columnId) {
-    final width = _draftWidths.remove(columnId);
-    if (width == null) {
+    if (_draftWidths.isEmpty) {
       setState(() => _resizing = false);
       return;
     }
-    final nextId = _resizeNextId;
-    final nextWidth = nextId == null ? null : _draftWidths.remove(nextId);
-    TpTableColumn<T>? column;
-    for (final item in widget.columns) {
-      if (item.id == columnId) {
-        column = item;
-        break;
-      }
-    }
     final widths = {...widget.state.widths};
-    widths[columnId] = width.clamp(
-      column?.minWidth ?? 60.0,
-      column?.maxWidth ?? 640.0,
-    );
-    if (nextId != null && nextWidth != null) {
-      TpTableColumn<T>? next;
+    for (final entry in _draftWidths.entries) {
+      TpTableColumn<T>? column;
       for (final item in widget.columns) {
-        if (item.id == nextId) {
-          next = item;
+        if (item.id == entry.key) {
+          column = item;
           break;
         }
       }
-      widths[nextId] = nextWidth.clamp(
-        next?.minWidth ?? 60.0,
-        next?.maxWidth ?? 640.0,
+      widths[entry.key] = entry.value.clamp(
+        column?.minWidth ?? 60.0,
+        column?.maxWidth ?? 640.0,
       );
     }
+    _lastResizeIds = _draftWidths.keys.toSet();
+    _draftWidths.clear();
     setState(() => _resizing = false);
     widget.onStateChanged(widget.state.copyWith(widths: widths));
   }
@@ -259,8 +253,10 @@ class _TpDataTableState<T> extends State<TpDataTable<T>> {
     final next = {...widget.state.widths}
       ..remove(columnId)
       ..remove(_resizeNextId);
-    _draftWidths.remove(columnId);
-    if (_resizeNextId != null) _draftWidths.remove(_resizeNextId);
+    for (final id in _lastResizeIds) {
+      next.remove(id);
+    }
+    _draftWidths.clear();
     setState(() => _resizing = false);
     widget.onStateChanged(widget.state.copyWith(widths: next));
   }

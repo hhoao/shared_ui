@@ -181,7 +181,7 @@ void main() {
     final host = tester.state<_HostState>(find.byType(_Host));
     expect(host.state.widths['value'], 120);
     expect(host.state.widths['extra'], 80);
-    expect(host.state.widths.containsKey('name'), isFalse);
+    expect(host.state.widths.containsKey('name'), isTrue);
   });
 
   testWidgets('double tapping the resize handle resets the width', (
