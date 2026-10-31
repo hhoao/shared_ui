@@ -125,6 +125,7 @@ void main() {
     expect(find.text('Extra'), findsOneWidget);
     expect(find.text('alpha'), findsOneWidget);
     expect(find.text('four'), findsOneWidget);
+    expect(find.byKey(const ValueKey('resize-extra')), findsNothing);
   });
 
   testWidgets('uses rowKey for every rendered table row', (tester) async {

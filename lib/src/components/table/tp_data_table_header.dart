@@ -267,7 +267,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                     ),
                   ),
                 ),
-              if (widget.resizable)
+              if (widget.resizable && !widget.last)
                 PositionedDirectional(
                   end: 0,
                   top: 0,
