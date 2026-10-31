@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/tp_text_styles.dart';
+import '../../theme/tp_theme.dart';
 import 'tp_table_column.dart';
 import 'tp_table_column_menu.dart';
 import 'tp_table_state.dart';
@@ -187,7 +188,7 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
               const SizedBox(width: 2),
               Icon(
                 widget.ascending ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 12,
+                size: context.tpIconSizes.md,
                 color: cs.onSurface.withValues(alpha: 0.56),
               ),
             ],
@@ -260,9 +261,12 @@ class _HeaderCellState<T> extends State<_HeaderCell<T>> {
                           ),
                         ),
                       ),
-                      child: const MouseRegion(
+                      child: MouseRegion(
                         cursor: SystemMouseCursors.grab,
-                        child: Icon(Icons.drag_indicator, size: 14),
+                        child: Icon(
+                          Icons.drag_indicator,
+                          size: context.tpIconSizes.md,
+                        ),
                       ),
                     ),
                   ),

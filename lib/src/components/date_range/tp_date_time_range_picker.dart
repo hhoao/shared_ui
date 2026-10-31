@@ -329,10 +329,13 @@ class _TpDateTimeRangePickerState extends State<TpDateTimeRangePicker> {
   Widget build(BuildContext context) {
     final narrow = MediaQuery.sizeOf(context).width < 720;
     if (narrow) {
-      return GestureDetector(
-        onTap: _openDialog,
-        behavior: HitTestBehavior.opaque,
-        child: widget.triggerBuilder(context, false),
+      return MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: _openDialog,
+          behavior: HitTestBehavior.opaque,
+          child: widget.triggerBuilder(context, false),
+        ),
       );
     }
 
@@ -357,10 +360,13 @@ class _TpDateTimeRangePickerState extends State<TpDateTimeRangePicker> {
         onApply: _apply,
         onCancel: _close,
       ),
-      child: GestureDetector(
-        onTap: _controller.isOpen ? _close : _open,
-        behavior: HitTestBehavior.opaque,
-        child: widget.triggerBuilder(context, _controller.isOpen),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: _controller.isOpen ? _close : _open,
+          behavior: HitTestBehavior.opaque,
+          child: widget.triggerBuilder(context, _controller.isOpen),
+        ),
       ),
     );
   }

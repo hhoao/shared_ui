@@ -16,6 +16,7 @@ class TpTableColumn<T> {
     this.maxWidth = 640,
     this.alignment = Alignment.centerLeft,
     this.sortValue,
+    this.tooltip,
     this.hideable = true,
     this.locked = false,
     this.draggable = true,
@@ -32,6 +33,9 @@ class TpTableColumn<T> {
   final double maxWidth;
   final Alignment alignment;
   final Comparable? Function(T row)? sortValue;
+
+  /// Hover text for this cell. When null or empty, no tooltip is shown.
+  final String Function(T row)? tooltip;
   final bool hideable;
   final bool locked;
   final bool draggable;

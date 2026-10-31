@@ -24,6 +24,21 @@ class TpTableRow<T> extends StatelessWidget {
   final bool hovered;
   final ValueChanged<bool> onHoverChanged;
 
+  Widget _cellWithTooltip(
+    BuildContext context,
+    TpTableColumn<T> column,
+    T row,
+  ) {
+    final cell = column.cellBuilder(context, row);
+    final message = column.tooltip?.call(row);
+    if (message == null || message.isEmpty) return cell;
+    return Tooltip(
+      message: message,
+      waitDuration: const Duration(milliseconds: 400),
+      child: cell,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -56,7 +71,7 @@ class TpTableRow<T> extends StatelessWidget {
                   ),
                   child: Align(
                     alignment: column.alignment,
-                    child: column.cellBuilder(context, row),
+                    child: _cellWithTooltip(context, column, row),
                   ),
                 ),
               ),
