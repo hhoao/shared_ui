@@ -103,49 +103,60 @@ Offset alignmentPointOnRect(Size size, Alignment alignment) {
   );
 }
 
-/// Top-left position of an auto-anchored overlay in the overlay ancestor's coords.
-Offset computeTpAnchorAutoOverlayTopLeft({
-  required RenderBox anchorBox,
-  required RenderBox overlayAncestor,
-  required Size overlaySize,
-  required TpAnchorAuto anchor,
+/// Clamps an overlay's top-left into the overlay ancestor's bounds.
+///
+/// An overlay that does not fit below [target] is flipped above it, matching
+/// [showMenu] / [RelativeRect] behaviour.
+Offset clampOverlayTopLeft({
+  required Offset target,
+  required Size size,
+  required Size childSize,
 }) {
-  final targetPoint = alignmentPointOnRect(anchorBox.size, anchor.targetAnchor);
-  final followerPoint = alignmentPointOnRect(
-    overlaySize,
-    anchor.followerAnchor,
-  );
-  final topLeftInAnchorBox = targetPoint + anchor.offset - followerPoint;
-  return anchorBox.localToGlobal(topLeftInAnchorBox, ancestor: overlayAncestor);
+  var x = target.dx;
+  var y = target.dy;
+  if (x + childSize.width > size.width) {
+    x = size.width - childSize.width;
+  }
+  if (y + childSize.height > size.height) {
+    y = target.dy - childSize.height;
+  }
+  x = x.clamp(0.0, (size.width - childSize.width).clamp(0.0, size.width));
+  y = y.clamp(0.0, (size.height - childSize.height).clamp(0.0, size.height));
+  return Offset(x, y);
 }
 
-/// True when overlay size must be known before the follower alignment is stable.
-bool tpAnchorAutoNeedsOverlayMeasure(TpAnchorAuto anchor) {
-  return anchor.followerAnchor != Alignment.topLeft;
-}
+/// Pins [followerAlignment] of the overlay to [targetPoint].
+///
+/// [targetPoint] is resolved during build, while the follower point is
+/// resolved inside [getPositionForChild] from the size the overlay actually
+/// laid out with. Measuring the overlay before layout would freeze the
+/// position on the previous frame's height, so a bottom-aligned panel that
+/// grows (a refresh error line appearing, for example) would be flipped above
+/// the anchor and jump upward.
+class TpOverlayPositionDelegate extends SingleChildLayoutDelegate {
+  const TpOverlayPositionDelegate({
+    required this.targetPoint,
+    required this.followerAlignment,
+  });
 
-/// Top-left position of a manually anchored overlay in the overlay ancestor's coords.
-Offset computeTpAnchorOverlayTopLeft({
-  required RenderBox anchorBox,
-  required RenderBox overlayAncestor,
-  required Size overlaySize,
-  required TpAnchor anchor,
-}) {
-  final targetPoint = alignmentPointOnRect(
-    anchorBox.size,
-    anchor.overlayAlignment,
-  );
-  final followerPoint = alignmentPointOnRect(
-    overlaySize,
-    anchor.childAlignment,
-  );
-  final topLeftInAnchorBox = targetPoint + anchor.offset - followerPoint;
-  return anchorBox.localToGlobal(topLeftInAnchorBox, ancestor: overlayAncestor);
-}
+  final Offset targetPoint;
+  final Alignment followerAlignment;
 
-/// True when overlay size must be known before [TpAnchor.childAlignment] is stable.
-bool tpAnchorNeedsOverlayMeasure(TpAnchor anchor) {
-  return anchor.childAlignment != Alignment.topLeft;
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
+      constraints.loosen();
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) => clampOverlayTopLeft(
+    target: targetPoint - alignmentPointOnRect(childSize, followerAlignment),
+    size: size,
+    childSize: childSize,
+  );
+
+  @override
+  bool shouldRelayout(TpOverlayPositionDelegate oldDelegate) =>
+      targetPoint != oldDelegate.targetPoint ||
+      followerAlignment != oldDelegate.followerAlignment;
 }
 
 /// Positions the overlay at a fixed global offset (screen coordinates).
@@ -179,25 +190,8 @@ class ContextMenuOverlayPositionDelegate extends SingleChildLayoutDelegate {
       constraints.loosen();
 
   @override
-  Offset getPositionForChild(Size size, Size childSize) {
-    var x = target.dx;
-    var y = target.dy;
-    if (x + childSize.width > size.width) {
-      x = size.width - childSize.width;
-    }
-    if (y + childSize.height > size.height) {
-      y = target.dy - childSize.height;
-    }
-    x = x.clamp(
-      0.0,
-      (size.width - childSize.width).clamp(0.0, size.width),
-    );
-    y = y.clamp(
-      0.0,
-      (size.height - childSize.height).clamp(0.0, size.height),
-    );
-    return Offset(x, y);
-  }
+  Offset getPositionForChild(Size size, Size childSize) =>
+      clampOverlayTopLeft(target: target, size: size, childSize: childSize);
 
   @override
   bool shouldRelayout(ContextMenuOverlayPositionDelegate oldDelegate) {

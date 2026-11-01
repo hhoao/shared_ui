@@ -29,7 +29,6 @@ class TpPortal extends StatefulWidget {
 class _TpPortalState extends State<TpPortal>
     with SingleTickerProviderStateMixin {
   final overlayPortalController = OverlayPortalController();
-  final overlayKey = GlobalKey();
   final _targetKey = GlobalKey();
   late final AnimationController _transitionController;
   late final Animation<double> _fadeAnimation;
@@ -137,8 +136,9 @@ class _TpPortalState extends State<TpPortal>
     );
   }
 
-  Widget _buildAutoPosition(BuildContext context, TpAnchorAuto anchor) {
-    if (anchor.followTargetOnResize) {
+  Widget _buildPositionedOverlay(BuildContext context, TpAnchorBase anchor) {
+    // Keeps the panel tracking the anchor when the viewport changes.
+    if (anchor is! TpAnchorAuto || anchor.followTargetOnResize) {
       MediaQuery.sizeOf(context);
     }
     final overlayState = Overlay.of(context, debugRequiredFor: widget);
@@ -152,94 +152,34 @@ class _TpPortalState extends State<TpPortal>
     final overlayAncestor =
         overlayState.context.findRenderObject()! as RenderBox;
 
-    final overlay = overlayKey.currentContext?.findRenderObject() as RenderBox?;
-    final overlaySize = overlay != null && overlay.hasSize
-        ? overlay.size
-        : Size.zero;
-    final needsMeasure =
-        (overlay == null || !overlay.hasSize) &&
-        tpAnchorAutoNeedsOverlayMeasure(anchor);
-
-    final overlayTopLeft = computeTpAnchorAutoOverlayTopLeft(
-      anchorBox: box,
-      overlayAncestor: overlayAncestor,
-      overlaySize: overlaySize,
-      anchor: anchor,
-    );
-
-    if (needsMeasure) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() {});
-      });
+    final Offset targetPoint;
+    final Alignment followerAlignment;
+    switch (anchor) {
+      case TpGlobalAnchor():
+        return CustomSingleChildLayout(
+          delegate: ContextMenuOverlayPositionDelegate(target: anchor.offset),
+          child: _buildAnimatedPortal(context, widget.portalBuilder(context)),
+        );
+      case TpAnchor():
+        targetPoint = box.localToGlobal(
+          alignmentPointOnRect(box.size, anchor.overlayAlignment) +
+              anchor.offset,
+          ancestor: overlayAncestor,
+        );
+        followerAlignment = anchor.childAlignment;
+      case TpAnchorAuto():
+        targetPoint = box.localToGlobal(
+          alignmentPointOnRect(box.size, anchor.targetAnchor) + anchor.offset,
+          ancestor: overlayAncestor,
+        );
+        followerAlignment = anchor.followerAnchor;
     }
 
     return CustomSingleChildLayout(
-      delegate: ContextMenuOverlayPositionDelegate(target: overlayTopLeft),
-      child: KeyedSubtree(
-        key: overlayKey,
-        child: Visibility.maintain(
-          visible: !needsMeasure,
-          child: IgnorePointer(
-            ignoring: needsMeasure,
-            child: _buildAnimatedPortal(context, widget.portalBuilder(context)),
-          ),
-        ),
+      delegate: TpOverlayPositionDelegate(
+        targetPoint: targetPoint,
+        followerAlignment: followerAlignment,
       ),
-    );
-  }
-
-  Widget _buildManualPosition(BuildContext context, TpAnchor anchor) {
-    MediaQuery.sizeOf(context);
-    final overlayState = Overlay.of(context, debugRequiredFor: widget);
-    final box = _targetKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() {});
-      });
-      return const SizedBox.shrink();
-    }
-    final overlayAncestor =
-        overlayState.context.findRenderObject()! as RenderBox;
-
-    final overlay = overlayKey.currentContext?.findRenderObject() as RenderBox?;
-    final overlaySize = overlay != null && overlay.hasSize
-        ? overlay.size
-        : Size.zero;
-    final needsMeasure =
-        (overlay == null || !overlay.hasSize) &&
-        tpAnchorNeedsOverlayMeasure(anchor);
-
-    final overlayTopLeft = computeTpAnchorOverlayTopLeft(
-      anchorBox: box,
-      overlayAncestor: overlayAncestor,
-      overlaySize: overlaySize,
-      anchor: anchor,
-    );
-
-    if (needsMeasure) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() {});
-      });
-    }
-
-    return CustomSingleChildLayout(
-      delegate: ContextMenuOverlayPositionDelegate(target: overlayTopLeft),
-      child: KeyedSubtree(
-        key: overlayKey,
-        child: Visibility.maintain(
-          visible: !needsMeasure,
-          child: IgnorePointer(
-            ignoring: needsMeasure,
-            child: _buildAnimatedPortal(context, widget.portalBuilder(context)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGlobalPosition(BuildContext context, TpGlobalAnchor anchor) {
-    return CustomSingleChildLayout(
-      delegate: ContextMenuOverlayPositionDelegate(target: anchor.offset),
       child: _buildAnimatedPortal(context, widget.portalBuilder(context)),
     );
   }
@@ -256,17 +196,7 @@ class _TpPortalState extends State<TpPortal>
             child: Center(
               widthFactor: 1,
               heightFactor: 1,
-              child: switch (widget.anchor) {
-                final TpAnchorAuto anchor => _buildAutoPosition(
-                  context,
-                  anchor,
-                ),
-                final TpAnchor anchor => _buildManualPosition(context, anchor),
-                final TpGlobalAnchor anchor => _buildGlobalPosition(
-                  context,
-                  anchor,
-                ),
-              },
+              child: _buildPositionedOverlay(context, widget.anchor),
             ),
           );
         },
