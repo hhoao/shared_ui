@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -38,10 +40,14 @@ class TpTextareaScrollBehavior extends MaterialScrollBehavior {
 /// Multiline decoration aligned with global outline [InputDecorationTheme]
 /// (same fill + border colors as single-line inputs). Clears the single-line
 /// [BoxConstraints.tightFor] track height and uses textarea padding.
+///
+/// Pass [maxHeight] (the field's layout height) to cap a multiline
+/// [InputDecoration.hintText] to the visible content — see [_tpHintMaxLines].
 InputDecoration tpMultilineInputDecoration(
   BuildContext context, {
   InputDecoration? decoration,
   bool hasError = false,
+  double? maxHeight,
 }) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
@@ -82,14 +88,27 @@ InputDecoration tpMultilineInputDecoration(
     typography: tp.typography,
   );
 
+  final contentPadding = base.contentPadding ?? textareaTheme.contentPadding;
+  final hintMaxLines = base.hintText == null
+      ? null
+      : _tpHintMaxLines(
+          context,
+          style: hintStyle,
+          availableHeight: maxHeight == null
+              ? null
+              : maxHeight - contentPadding.vertical,
+          limit: base.hintMaxLines,
+        );
+
   return base.copyWith(
     filled: base.filled ?? inputTheme.filled,
     fillColor:
         base.fillColor ?? inputTheme.fillColor ?? scheme.surfaceContainer,
     isDense: false,
     constraints: const BoxConstraints(),
-    contentPadding: base.contentPadding ?? textareaTheme.contentPadding,
+    contentPadding: contentPadding,
     hintStyle: hintStyle,
+    hintMaxLines: hintMaxLines,
     alignLabelWithHint: base.alignLabelWithHint ?? true,
     border: themed(
       inputTheme.border as OutlineInputBorder?,
@@ -121,6 +140,38 @@ InputDecoration tpMultilineInputDecoration(
       ),
     ),
   );
+}
+
+/// [InputDecoration.hintMaxLines] that keeps a multiline hint inside the
+/// visible textarea content.
+///
+/// Hints are painted by [InputDecorator] and are not part of the editable text,
+/// so they cannot scroll. A hint taller than the field counts as overflow and
+/// the decorator shifts the whole content up (`baselineAdjustment`), painting
+/// the first lines above the outline. Capping the line count keeps the hint
+/// inside `contentPadding` and truncates the tail with an ellipsis instead.
+int? _tpHintMaxLines(
+  BuildContext context, {
+  required TextStyle style,
+  required double? availableHeight,
+  int? limit,
+}) {
+  if (availableHeight == null || !availableHeight.isFinite) {
+    return limit;
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: 'x', style: style),
+    textDirection: TextDirection.ltr,
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  final lineHeight = painter.height;
+  painter.dispose();
+  if (lineHeight <= 0) {
+    return limit;
+  }
+  final fitting = math.max(1, (availableHeight / lineHeight).floor());
+  return limit == null ? fitting : math.min(limit, fitting);
 }
 
 /// Material [TextField] wrapped in [TpTextareaShell] with outline chrome,
@@ -305,61 +356,65 @@ class _TpTextareaState extends State<TpTextarea> {
       builder: (context, _) {
         return ClipRRect(
           borderRadius: radius,
-          child: SizedBox.expand(
-            child: ScrollConfiguration(
-              behavior: const TpTextareaScrollBehavior(),
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                decoration: tpMultilineInputDecoration(
-                  context,
-                  decoration: widget.decoration,
-                  hasError: hasError,
+          child: LayoutBuilder(
+            builder: (layoutContext, constraints) => SizedBox.expand(
+              child: ScrollConfiguration(
+                behavior: const TpTextareaScrollBehavior(),
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  decoration: tpMultilineInputDecoration(
+                    layoutContext,
+                    decoration: widget.decoration,
+                    hasError: hasError,
+                    maxHeight: constraints.maxHeight,
+                  ),
+                  onChanged: widget.onChanged,
+                  onEditingComplete: widget.onEditingComplete,
+                  onSubmitted: widget.onSubmitted,
+                  style: textStyle,
+                  strutStyle: widget.strutStyle,
+                  textAlign: widget.textAlign,
+                  textAlignVertical: TextAlignVertical.top,
+                  textDirection: widget.textDirection,
+                  showCursor: widget.showCursor,
+                  autofocus: widget.autofocus,
+                  enabled: widget.enabled,
+                  readOnly: widget.readOnly,
+                  maxLength: widget.maxLength,
+                  maxLengthEnforcement: widget.maxLengthEnforcement,
+                  cursorWidth: widget.cursorWidth,
+                  cursorHeight: widget.cursorHeight,
+                  cursorRadius: widget.cursorRadius,
+                  cursorColor: widget.cursorColor ?? scheme.primary,
+                  keyboardAppearance: widget.keyboardAppearance,
+                  scrollPadding: widget.scrollPadding,
+                  enableInteractiveSelection:
+                      widget.enableInteractiveSelection,
+                  selectionControls: widget.selectionControls,
+                  onTap: widget.onTap,
+                  onTapOutside: widget.onTapOutside,
+                  mouseCursor:
+                      widget.mouseCursor ??
+                      (widget.enabled
+                          ? SystemMouseCursors.text
+                          : SystemMouseCursors.basic),
+                  scrollController: widget.scrollController,
+                  scrollPhysics: widget.scrollPhysics,
+                  clipBehavior: widget.clipBehavior,
+                  restorationId: widget.restorationId,
+                  scribbleEnabled: widget.scribbleEnabled,
+                  enableIMEPersonalizedLearning:
+                      widget.enableIMEPersonalizedLearning,
+                  contextMenuBuilder: widget.contextMenuBuilder,
+                  spellCheckConfiguration: widget.spellCheckConfiguration,
+                  magnifierConfiguration: widget.magnifierConfiguration,
+                  inputFormatters: widget.inputFormatters,
+                  keyboardType: TextInputType.multiline,
+                  expands: true,
+                  minLines: null,
+                  maxLines: null,
                 ),
-                onChanged: widget.onChanged,
-                onEditingComplete: widget.onEditingComplete,
-                onSubmitted: widget.onSubmitted,
-                style: textStyle,
-                strutStyle: widget.strutStyle,
-                textAlign: widget.textAlign,
-                textAlignVertical: TextAlignVertical.top,
-                textDirection: widget.textDirection,
-                showCursor: widget.showCursor,
-                autofocus: widget.autofocus,
-                enabled: widget.enabled,
-                readOnly: widget.readOnly,
-                maxLength: widget.maxLength,
-                maxLengthEnforcement: widget.maxLengthEnforcement,
-                cursorWidth: widget.cursorWidth,
-                cursorHeight: widget.cursorHeight,
-                cursorRadius: widget.cursorRadius,
-                cursorColor: widget.cursorColor ?? scheme.primary,
-                keyboardAppearance: widget.keyboardAppearance,
-                scrollPadding: widget.scrollPadding,
-                enableInteractiveSelection: widget.enableInteractiveSelection,
-                selectionControls: widget.selectionControls,
-                onTap: widget.onTap,
-                onTapOutside: widget.onTapOutside,
-                mouseCursor:
-                    widget.mouseCursor ??
-                    (widget.enabled
-                        ? SystemMouseCursors.text
-                        : SystemMouseCursors.basic),
-                scrollController: widget.scrollController,
-                scrollPhysics: widget.scrollPhysics,
-                clipBehavior: widget.clipBehavior,
-                restorationId: widget.restorationId,
-                scribbleEnabled: widget.scribbleEnabled,
-                enableIMEPersonalizedLearning:
-                    widget.enableIMEPersonalizedLearning,
-                contextMenuBuilder: widget.contextMenuBuilder,
-                spellCheckConfiguration: widget.spellCheckConfiguration,
-                magnifierConfiguration: widget.magnifierConfiguration,
-                inputFormatters: widget.inputFormatters,
-                keyboardType: TextInputType.multiline,
-                expands: true,
-                minLines: null,
-                maxLines: null,
               ),
             ),
           ),

@@ -104,6 +104,36 @@ void main() {
     );
   });
 
+  testWidgets('keeps a multiline hint inside the outline', (tester) async {
+    const hint = '{\n  "Accept": "application/json",\n'
+        '  "User-Agent": "my-cli",\n'
+        '  "ChatGPT-Account-Id": "{accountId}"\n}';
+    await tester.pumpWidget(
+      wrap(
+        const Padding(
+          padding: EdgeInsets.all(20),
+          child: TpTextarea(
+            minHeight: 90,
+            maxHeight: 180,
+            decoration: InputDecoration(hintText: hint),
+          ),
+        ),
+      ),
+    );
+
+    final field = tester.getRect(find.byType(TpTextarea));
+    final hintRect = tester.getRect(find.text(hint));
+    // Regression: a hint taller than the field used to be shifted above the
+    // outline (the decorator treats it as overflow), hiding the first lines.
+    expect(hintRect.top, greaterThan(field.top));
+    expect(hintRect.bottom, lessThanOrEqualTo(field.bottom));
+    expect(hintRect.height, lessThan(field.height));
+    final decoration = tester
+        .widget<TextField>(find.byType(TextField))
+        .decoration!;
+    expect(decoration.hintMaxLines, isNotNull);
+  });
+
   testWidgets('focus border matches single-line outline inputs', (tester) async {
     final theme = themeWithTightInput();
     await tester.pumpWidget(wrap(const TpTextarea(minHeight: 80), theme: theme));
