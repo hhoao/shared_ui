@@ -7,6 +7,7 @@ import '../../theme/tp_text_styles.dart';
 import '../../theme/tp_theme.dart';
 import '../icon_button/tp_icon_button.dart';
 import '../popover/tp_popover.dart';
+import '../tooltip/tp_tooltip.dart';
 import 'tp_action_menu_overlay.dart';
 import 'tp_context_menu_position.dart';
 
@@ -200,6 +201,7 @@ class TpActionMenuItem extends StatefulWidget {
     this.highlighted = false,
     this.menuController,
     this.tooltip,
+    this.tooltipPlacement = TpTooltipPlacement.below,
   });
 
   final IconData? icon;
@@ -216,6 +218,7 @@ class TpActionMenuItem extends StatefulWidget {
   final bool highlighted;
   final TpActionMenuController? menuController;
   final String? tooltip;
+  final TpTooltipPlacement tooltipPlacement;
 
   @override
   State<TpActionMenuItem> createState() => _TpActionMenuItemState();
@@ -364,7 +367,13 @@ class _TpActionMenuItemState extends State<TpActionMenuItem> {
     );
 
     if (widget.tooltip != null && widget.tooltip!.isNotEmpty) {
-      row = Tooltip(message: widget.tooltip!, child: row);
+      row = widget.tooltipPlacement == TpTooltipPlacement.right
+          ? TpTooltip(
+              message: widget.tooltip!,
+              placement: TpTooltipPlacement.right,
+              child: row,
+            )
+          : Tooltip(message: widget.tooltip!, child: row);
     }
 
     return row;
@@ -658,6 +667,7 @@ class TpActionMenuSpec {
       selected = false,
       onAction = null,
       tooltip = null,
+      tooltipPlacement = TpTooltipPlacement.below,
       children = null,
       searchable = false,
       onOpen = null,
@@ -677,6 +687,7 @@ class TpActionMenuSpec {
     this.selected = false,
     this.onAction,
     this.tooltip,
+    this.tooltipPlacement = TpTooltipPlacement.below,
   }) : isDivider = false,
        children = null,
        searchable = false,
@@ -701,6 +712,7 @@ class TpActionMenuSpec {
        destructive = false,
        onAction = null,
        tooltip = null,
+       tooltipPlacement = TpTooltipPlacement.below,
        scrollChildren = null,
        maxHeight = null;
 
@@ -721,6 +733,7 @@ class TpActionMenuSpec {
        selected = false,
        onAction = null,
        tooltip = null,
+       tooltipPlacement = TpTooltipPlacement.below,
        children = null,
        searchable = false,
        onOpen = null,
@@ -739,6 +752,7 @@ class TpActionMenuSpec {
   final bool selected;
   final VoidCallback? onAction;
   final String? tooltip;
+  final TpTooltipPlacement tooltipPlacement;
 
   /// Non-null for [TpActionMenuSpec.submenu].
   final List<TpActionMenuSpec>? children;
@@ -1223,6 +1237,7 @@ Widget _specToMenuItem({
     destructive: spec.destructive,
     enabled: spec.enabled,
     tooltip: spec.tooltip,
+    tooltipPlacement: spec.tooltipPlacement,
     menuController: menuController,
     onTap: onTap,
   );

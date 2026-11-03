@@ -11,10 +11,21 @@ import 'package:flutter/material.dart';
 ///
 /// Prefer [TpTooltip] for hover-only list rows; keep Material [Tooltip] for
 /// focus/long-press and accessibility-driven tips.
+/// Where [TpTooltip] renders relative to its target.
+enum TpTooltipPlacement {
+  /// Under the target, left-aligned (default).
+  below,
+
+  /// Beside the target, vertically centered — for menu rows whose bubble
+  /// would otherwise cover the list.
+  right,
+}
+
 class TpTooltip extends StatefulWidget {
   const TpTooltip({
     required this.message,
     required this.child,
+    this.placement = TpTooltipPlacement.below,
     this.waitDuration = const Duration(milliseconds: 500),
     this.maxWidth = 320,
     super.key,
@@ -22,6 +33,7 @@ class TpTooltip extends StatefulWidget {
 
   final String message;
   final Widget child;
+  final TpTooltipPlacement placement;
   final Duration waitDuration;
   final double maxWidth;
 
@@ -73,28 +85,29 @@ class _TpTooltipState extends State<TpTooltip> {
 
   Widget _buildOverlay(BuildContext context) {
     final tooltipTheme = Theme.of(context).tooltipTheme;
+    final onRight = widget.placement == TpTooltipPlacement.right;
+    final bubble = ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: widget.maxWidth),
+      child: Material(
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          padding: tooltipTheme.padding,
+          decoration: tooltipTheme.decoration,
+          child: Text(widget.message, style: tooltipTheme.textStyle),
+        ),
+      ),
+    );
     return IgnorePointer(
       child: CompositedTransformFollower(
         link: _link,
         showWhenUnlinked: false,
-        targetAnchor: Alignment.bottomLeft,
-        followerAnchor: Alignment.topLeft,
-        offset: const Offset(0, 6),
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: widget.maxWidth),
-            child: Material(
-              color: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
-              child: Container(
-                padding: tooltipTheme.padding,
-                decoration: tooltipTheme.decoration,
-                child: Text(widget.message, style: tooltipTheme.textStyle),
-              ),
-            ),
-          ),
-        ),
+        targetAnchor: onRight ? Alignment.centerRight : Alignment.bottomLeft,
+        followerAnchor: onRight ? Alignment.centerLeft : Alignment.topLeft,
+        offset: onRight ? const Offset(8, 0) : const Offset(0, 6),
+        child: onRight
+            ? bubble
+            : Align(alignment: Alignment.topLeft, child: bubble),
       ),
     );
   }
