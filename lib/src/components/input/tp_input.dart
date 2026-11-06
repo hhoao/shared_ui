@@ -61,9 +61,10 @@ InputDecoration tpOutlineInputDecoration(
     contentPadding:
         base.contentPadding ??
         inputTheme.contentPadding ??
-        EdgeInsets.symmetric(
-          horizontal: control.input.horizontalPadding,
-          vertical: control.input.verticalPadding,
+        tpOutlineInputPadding(
+          height: control.input.height,
+          textTheme: theme.textTheme,
+          control: control,
         ),
     hintStyle: hintStyle,
     border: themed(
