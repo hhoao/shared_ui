@@ -62,6 +62,7 @@ export 'src/components/hover/tp_hover_row.dart';
 export 'src/components/icon_button/tp_icon_button.dart';
 export 'src/components/input/tp_input.dart';
 export 'src/components/input/tp_input_form_field.dart';
+export 'src/components/input/tp_search_pill.dart';
 export 'src/components/popover/tp_popover.dart';
 export 'src/components/preference/tp_preference_row.dart';
 export 'src/components/preference/tp_preference_stack.dart';

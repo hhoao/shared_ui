@@ -10,6 +10,7 @@ InputDecoration tpOutlineInputDecoration(
   BuildContext context, {
   InputDecoration? decoration,
   bool hasError = false,
+  double? borderRadius,
 }) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
@@ -17,7 +18,7 @@ InputDecoration tpOutlineInputDecoration(
   final tp = TpTheme.of(context);
   final control = tp.control;
   final metrics = tp.inputTheme;
-  final radius = BorderRadius.circular(control.radius);
+  final radius = BorderRadius.circular(borderRadius ?? control.radius);
   final base = decoration ?? const InputDecoration();
   final outline = scheme.outlineVariant;
 
@@ -105,6 +106,7 @@ class TpInput extends StatefulWidget {
     this.controller,
     this.focusNode,
     this.decoration,
+    this.borderRadius,
     this.onChanged,
     this.onEditingComplete,
     this.onSubmitted,
@@ -143,6 +145,7 @@ class TpInput extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final InputDecoration? decoration;
+  final double? borderRadius;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
   final ValueChanged<String>? onSubmitted;
@@ -235,6 +238,7 @@ class _TpInputState extends State<TpInput> {
       decoration: tpOutlineInputDecoration(
         context,
         decoration: widget.decoration,
+        borderRadius: widget.borderRadius,
       ),
       style: style,
       strutStyle: widget.strutStyle,
