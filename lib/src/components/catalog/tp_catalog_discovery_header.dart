@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/tp_theme.dart';
 import '../card/tp_card_header.dart';
+import '../input/tp_search_pill.dart';
 import 'tp_catalog_source_warning.dart';
 
 /// Shared discovery section chrome: title + filter trailing, optional search.
@@ -81,11 +82,9 @@ class TpCatalogDiscoveryHeader extends StatelessWidget {
             controller: searchController,
             onChanged: onSearchChanged,
             onSubmitted: onSearchSubmitted ?? onSearchChanged,
-            decoration: InputDecoration(
+            decoration: tpSearchPillDecoration(
+              context,
               hintText: searchHint,
-              prefixIcon: Icon(Icons.search, size: context.tpIconSizes.md),
-              isDense: true,
-              floatingLabelBehavior: FloatingLabelBehavior.never,
             ),
           ),
         ],
