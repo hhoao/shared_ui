@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/tp_theme.dart';
 import '../icon_button/tp_icon_button.dart';
+import '../input/tp_search_pill.dart';
 
 /// Compact search input for searchable [TpSelect] overlays (shadcn Combobox style).
 class TpSelectSearchField extends StatefulWidget {
@@ -56,27 +56,14 @@ class _TpSelectSearchFieldState extends State<TpSelectSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final spacing = context.tpSpacing;
     final hasQuery = widget.controller.text.isNotEmpty;
 
     return TextField(
       controller: widget.controller,
       focusNode: widget.focusNode,
-      decoration: InputDecoration(
+      decoration: tpSearchPillDecoration(
+        context,
         hintText: widget.hintText,
-        isDense: true,
-        filled: true,
-        fillColor: cs.surfaceContainer,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: spacing.md - 2,
-          vertical: spacing.sm,
-        ),
-        prefixIcon: Icon(
-          Icons.search_rounded,
-          size: context.tpIconSizes.md,
-          color: cs.onSurfaceVariant,
-        ),
         suffixIcon: hasQuery
             ? TpIconButton(
                 icon: Icons.clear,
@@ -85,17 +72,6 @@ class _TpSelectSearchFieldState extends State<TpSelectSearchField> {
                 onTap: _clear,
               )
             : null,
-        floatingLabelBehavior: FloatingLabelBehavior.never,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: cs.outlineVariant.withValues(alpha: 0.7),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(color: cs.primary),
-        ),
       ),
       onChanged: widget.onChanged,
       textInputAction: TextInputAction.search,

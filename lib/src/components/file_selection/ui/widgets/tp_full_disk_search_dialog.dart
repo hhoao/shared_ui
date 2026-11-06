@@ -5,6 +5,7 @@ import '../../../button/tp_button.dart';
 import '../../../dialog/tp_dialog.dart';
 import '../../../empty_state/tp_empty_state.dart';
 import '../../../input/tp_input.dart';
+import '../../../input/tp_search_pill.dart';
 import '../../models/tp_fs_entry.dart';
 import '../../models/tp_file_selection_options.dart';
 import '../../models/tp_picked_entry.dart';
@@ -192,6 +193,7 @@ class _TpFullDiskSearchDialogState extends State<TpFullDiskSearchDialog> {
                   child: TpInput(
                     key: const Key('tp_full_disk_search_query'),
                     controller: _queryController,
+                    borderRadius: tpSearchPillRadius,
                     decoration: InputDecoration(
                       hintText: strings.inputFileNameKeywordHint,
                       prefixIcon: const Icon(Icons.search),
