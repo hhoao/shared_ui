@@ -59,6 +59,8 @@ export 'src/components/form/tp_form_field_layout.dart';
 export 'src/components/form/tp_form_map.dart';
 export 'src/components/hover/tp_hover.dart';
 export 'src/components/hover/tp_hover_row.dart';
+export 'src/components/icon_button/tp_animated_icon.dart';
+export 'src/components/icon_button/tp_animated_icon_button.dart';
 export 'src/components/icon_button/tp_icon_button.dart';
 export 'src/components/input/tp_input.dart';
 export 'src/components/input/tp_input_form_field.dart';
