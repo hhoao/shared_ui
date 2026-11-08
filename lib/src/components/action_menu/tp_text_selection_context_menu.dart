@@ -14,7 +14,7 @@ Widget buildTpTextFieldContextMenu(
   BuildContext context,
   EditableTextState editableTextState,
 ) {
-  return _TpTextSelectionContextMenu(
+  return buildTpTextSelectionContextMenu(
     items: editableTextState.contextMenuButtonItems,
     anchor: editableTextState.contextMenuAnchors.primaryAnchor,
     hideToolbar: editableTextState.hideToolbar,
@@ -29,10 +29,25 @@ Widget buildTpSelectionAreaContextMenu(
   BuildContext context,
   SelectableRegionState selectableRegionState,
 ) {
-  return _TpTextSelectionContextMenu(
+  return buildTpTextSelectionContextMenu(
     items: selectableRegionState.contextMenuButtonItems,
     anchor: selectableRegionState.contextMenuAnchors.primaryAnchor,
     hideToolbar: selectableRegionState.hideToolbar,
+  );
+}
+
+/// Built-in [TpActionMenu]-backed context menu for any selection surface that
+/// exposes Flutter's [ContextMenuButtonItem]s (for example a third-party
+/// `EditableText` copy that does not implement [EditableTextState]).
+Widget buildTpTextSelectionContextMenu({
+  required List<ContextMenuButtonItem> items,
+  required Offset anchor,
+  required VoidCallback hideToolbar,
+}) {
+  return _TpTextSelectionContextMenu(
+    items: items,
+    anchor: anchor,
+    hideToolbar: hideToolbar,
   );
 }
 
