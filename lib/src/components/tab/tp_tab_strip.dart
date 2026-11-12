@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'tp_tab_strip_metrics.dart';
@@ -9,7 +10,8 @@ import 'tp_tab_strip_metrics.dart';
 ///
 /// When [onReorder] is set, a single [CustomScrollView] owns horizontal
 /// scrolling and reorder — nested scroll views must not wrap the list or they
-/// steal drag gestures.
+/// steal drag gestures. Reorder starts on mouse drags only; touch pointers
+/// stay with the scroll view so the strip can be swiped.
 class TpTabStrip extends StatelessWidget {
   const TpTabStrip({
     required this.itemCount,
@@ -103,7 +105,7 @@ class TpTabStrip extends StatelessWidget {
           itemCount: itemCount,
           onReorderItem: onReorder!,
           itemBuilder: (context, index) {
-            return ReorderableDragStartListener(
+            return _MouseReorderDragStartListener(
               key: _keyFor(index),
               index: index,
               child: itemBuilder(context, index),
@@ -118,6 +120,42 @@ class TpTabStrip extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Starts a reorder on mouse drags only.
+///
+/// [ReorderableDragStartListener] would start on any pointer: its immediate
+/// multi-drag recognizer accepts once the pointer passes the touch slop, and
+/// being inside the scroll view it wins the gesture arena over the strip's
+/// horizontal drag — a swipe on a tab reordered instead of scrolling. Touch
+/// stays with the scroll view; long-press keeps the host chip's menu.
+class _MouseReorderDragStartListener extends StatelessWidget {
+  const _MouseReorderDragStartListener({
+    required this.index,
+    required this.child,
+    super.key,
+  });
+
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (event) {
+        if (event.kind != PointerDeviceKind.mouse) return;
+        final list = SliverReorderableList.maybeOf(context);
+        if (list == null) return;
+        list.startItemDragReorder(
+          index: index,
+          event: event,
+          recognizer: ImmediateMultiDragGestureRecognizer(debugOwner: this)
+            ..gestureSettings = MediaQuery.maybeGestureSettingsOf(context),
+        );
+      },
+      child: child,
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -90,7 +91,7 @@ void main() {
     expect(list, isNotNull);
   });
 
-  testWidgets('pointer drag reorders without long-press', (tester) async {
+  testWidgets('mouse drag reorders without long-press', (tester) async {
     final order = <String>['a', 'b', 'c'];
 
     await tester.pumpWidget(
@@ -122,13 +123,93 @@ void main() {
 
     final from = tester.getCenter(find.text('a'));
     final to = tester.getCenter(find.text('c'));
-    final gesture = await tester.startGesture(from);
+    final gesture = await tester.startGesture(
+      from,
+      kind: PointerDeviceKind.mouse,
+    );
     await gesture.moveTo(to);
     await tester.pump();
     await gesture.up();
     await tester.pumpAndSettle();
 
     expect(order.first, isNot('a'));
+  });
+
+  testWidgets('touch drag scrolls an overflowing strip instead of reordering', (
+    tester,
+  ) async {
+    final order = <String>['a', 'b', 'c', 'd', 'e', 'f'];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TpTheme(
+          data: TpThemeData.fromColorScheme(
+            ColorScheme.fromSeed(seedColor: Colors.teal),
+            scale: 1.0,
+          ),
+          child: Scaffold(
+            body: SizedBox(
+              width: 200,
+              height: 48,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: StatefulBuilder(
+                  builder: (context, setState) {
+                    return TpTabStrip(
+                      fillWidth: false,
+                      itemCount: order.length,
+                      itemKey: (i) => ValueKey(order[i]),
+                      onReorder: (oldIndex, newIndex) {
+                        setState(() {
+                          final next = reorderListItems(
+                            order,
+                            oldIndex,
+                            newIndex,
+                          );
+                          order
+                            ..clear()
+                            ..addAll(next);
+                        });
+                      },
+                      itemBuilder: (context, index) => TpTabChip(
+                        title: 'Very Long Tab Title $index',
+                        active: index == 0,
+                        onTap: () {},
+                        onClose: () {},
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final position = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    expect(position.pixels, 0);
+    final before = List<String>.of(order);
+
+    final start =
+        tester.getTopLeft(find.byType(TpTabStrip)) + const Offset(50, 24);
+    final gesture = await tester.startGesture(start);
+    await gesture.moveBy(const Offset(-60, 0));
+    await tester.pump();
+    await gesture.moveBy(const Offset(-60, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(
+      position.pixels,
+      greaterThan(0),
+      reason: 'touch drag must reach the scroll view, not the reorder drag',
+    );
+    expect(order, before, reason: 'touch drag must not reorder tabs');
   });
 
   testWidgets('fillWidth false caps to parent and scrolls instead of overflowing', (
