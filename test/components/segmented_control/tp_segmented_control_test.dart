@@ -74,6 +74,43 @@ void main() {
     expect(size.height, closeTo(tpSegmentedControlMinHeight, 0.5));
   });
 
+  testWidgets('tapping a segment selects it and reports the index', (
+    tester,
+  ) async {
+    final toggles = <int?>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(useMaterial3: true),
+        home: TpTheme(
+          data: TpThemeData.fromColorScheme(
+            ColorScheme.fromSeed(seedColor: Colors.orange),
+            scale: 1.0,
+          ),
+          child: Scaffold(
+            body: Center(
+              child: TpSegmentedControl(
+                totalSwitches: 2,
+                initialLabelIndex: 0,
+                labels: const ['A', 'B'],
+                onToggle: toggles.add,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('B'));
+    await tester.pump();
+
+    expect(toggles, [1]);
+    expect(tester.widget<Text>(find.text('B')).style?.color, Colors.white);
+    expect(
+      tester.widget<Text>(find.text('A')).style?.color,
+      isNot(Colors.white),
+    );
+  });
+
   testWidgets('shows full label text at large typography scale', (
     tester,
   ) async {

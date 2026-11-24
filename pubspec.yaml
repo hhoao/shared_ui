@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  toggle_switch: ^2.3.0
   collection: ^1.19.0
   equatable: ^2.0.5
   intl: ^0.20.2

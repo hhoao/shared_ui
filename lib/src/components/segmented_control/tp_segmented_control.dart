@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:toggle_switch/toggle_switch.dart';
 
 import '../../theme/tp_theme.dart';
 
@@ -12,14 +11,17 @@ const tpSegmentedControlCornerRadius = 30.0;
 /// Content-driven floor for short labels.
 const tpSegmentedControlMinSegmentWidth = 72.0;
 
-/// Matches [ToggleSwitch] segment `padding: EdgeInsets.symmetric(horizontal: 10)`.
+/// Horizontal padding inside each segment (10 per side).
 const _segmentHorizontalPadding = 20.0;
 
-/// Matches [ToggleSwitch] icon→label `padding: EdgeInsets.only(left: 5)`.
+/// Icon → label gap.
 const _segmentIconTextGap = 5.0;
 
 /// Extra width so CJK / custom UI fonts are not ellipsized at the edge.
 const _segmentWidthSlack = 12.0;
+
+/// Called with the tapped segment index.
+typedef OnToggle = void Function(int? index);
 
 /// Per-segment widths from [labels], [fontSize], and optional [icons].
 List<double> computeTpSegmentedControlWidths({
@@ -52,13 +54,13 @@ List<double> computeTpSegmentedControlWidths({
 
 /// Pill multi-segment control styled from [ColorScheme] + [TpTheme] tokens.
 ///
-/// Uses [toggle_switch]; this is **not** a binary on/off switch.
+/// This is **not** a binary on/off switch.
 ///
 /// Lays out at the full content width ([customWidths] sum) so [Flexible]
-/// segments inside the package cannot shrink labels into ellipsis. Narrow
-/// parents should scroll (see [TpSegmentedPicker]), same idea as theme-color
-/// chips — not [FittedBox] scale-down.
-class TpSegmentedControl extends StatelessWidget {
+/// segments cannot shrink labels into ellipsis. Narrow parents should scroll
+/// (see [TpSegmentedPicker]), same idea as theme-color chips — not
+/// [FittedBox] scale-down.
+class TpSegmentedControl extends StatefulWidget {
   const TpSegmentedControl({
     super.key,
     required this.totalSwitches,
@@ -85,17 +87,38 @@ class TpSegmentedControl extends StatelessWidget {
   final double cornerRadius;
 
   @override
+  State<TpSegmentedControl> createState() => _TpSegmentedControlState();
+}
+
+class _TpSegmentedControlState extends State<TpSegmentedControl> {
+  late int _selectedIndex = widget.initialLabelIndex;
+
+  @override
+  void didUpdateWidget(covariant TpSegmentedControl oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialLabelIndex != widget.initialLabelIndex) {
+      _selectedIndex = widget.initialLabelIndex;
+    }
+  }
+
+  void _handleTap(int index) {
+    if (_selectedIndex != index) {
+      setState(() => _selectedIndex = index);
+    }
+    widget.onToggle?.call(index);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final tp = context.tpTheme;
-    // Build without color: TextStyle.copyWith cannot clear an inherited color
-    // (null keeps the old value), and toggle_switch prefers customTextStyles.color
-    // over activeFgColor when non-null.
     final baseStyle =
         theme.textTheme.labelLarge ??
         theme.textTheme.bodyMedium ??
         TextStyle(fontSize: tp.typography.bodySize);
+    // No color here: TextStyle.copyWith cannot clear an inherited color, so
+    // segment foregrounds are applied per selection state below.
     final textStyle = TextStyle(
       fontSize: baseStyle.fontSize ?? tp.typography.bodySize,
       fontFamily: baseStyle.fontFamily,
@@ -104,23 +127,22 @@ class TpSegmentedControl extends StatelessWidget {
       letterSpacing: baseStyle.letterSpacing,
       height: 1.0,
     );
-    final textBase = cs.onSurface;
-    final inactiveFg = textBase.withValues(alpha: 0.72);
+    final inactiveFg = cs.onSurface.withValues(alpha: 0.72);
     // Always white on the primary pill — Material onPrimary is black for some
     // mid-light seeds (amber/forest).
     const activeFg = Colors.white;
-    final n = totalSwitches;
-    final resolvedMinHeight = minHeight ?? tpSegmentedControlMinHeight;
-    final resolvedMinWidth = minWidth ?? tpSegmentedControlMinSegmentWidth;
+    final n = widget.totalSwitches;
+    final resolvedMinHeight = widget.minHeight ?? tpSegmentedControlMinHeight;
+    final resolvedMinWidth = widget.minWidth ?? tpSegmentedControlMinSegmentWidth;
     final fontSize = textStyle.fontSize ?? tp.typography.bodySize;
     final iconSize = context.tpIconSizes.sm;
     final resolvedCustomWidths =
-        customWidths ??
+        widget.customWidths ??
         computeTpSegmentedControlWidths(
-          labels: labels,
+          labels: widget.labels,
           fontSize: fontSize,
           iconSize: iconSize,
-          icons: icons,
+          icons: widget.icons,
           minSegmentWidth: resolvedMinWidth,
           textStyle: textStyle,
         );
@@ -128,27 +150,84 @@ class TpSegmentedControl extends StatelessWidget {
 
     return SizedBox(
       width: totalWidth,
-      child: ToggleSwitch(
-        totalSwitches: n,
-        initialLabelIndex: initialLabelIndex,
-        labels: labels,
-        icons: icons,
-        cornerRadius: cornerRadius,
-        radiusStyle: true,
-        minHeight: resolvedMinHeight,
-        minWidth: resolvedMinWidth,
-        customWidths: resolvedCustomWidths,
-        fontSize: fontSize,
-        iconSize: iconSize,
-        customTextStyles: List<TextStyle>.filled(n, textStyle),
-        activeFgColor: activeFg,
-        inactiveFgColor: inactiveFg,
-        inactiveBgColor: cs.surfaceContainerHighest,
-        dividerColor: Colors.transparent,
-        dividerMargin: 0,
-        activeBgColors: List.generate(n, (_) => <Color>[cs.primary]),
-        animate: false,
-        onToggle: onToggle,
+      height: resolvedMinHeight,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(widget.cornerRadius),
+        ),
+        child: Row(
+          children: List.generate(
+            n,
+            (index) => _buildSegment(
+              index: index,
+              width: resolvedCustomWidths[index],
+              height: resolvedMinHeight,
+              active: index == _selectedIndex,
+              activeBg: cs.primary,
+              activeFg: activeFg,
+              inactiveFg: inactiveFg,
+              textStyle: textStyle,
+              iconSize: iconSize,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegment({
+    required int index,
+    required double width,
+    required double height,
+    required bool active,
+    required Color activeBg,
+    required Color activeFg,
+    required Color inactiveFg,
+    required TextStyle textStyle,
+    required double iconSize,
+  }) {
+    final fgColor = active ? activeFg : inactiveFg;
+    final icon = index < (widget.icons?.length ?? 0) ? widget.icons![index] : null;
+    final label = index < widget.labels.length ? widget.labels[index] : '';
+    final effectiveIconSize = iconSize > width / 3 ? width / 3 : iconSize;
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _handleTap(index),
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: active
+              ? BoxDecoration(
+                  color: activeBg,
+                  borderRadius: BorderRadius.circular(widget.cornerRadius),
+                )
+              : null,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null)
+                Icon(icon, color: fgColor, size: effectiveIconSize),
+              Flexible(
+                child: Container(
+                  padding: EdgeInsets.only(
+                    left: icon != null ? _segmentIconTextGap : 0,
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textStyle.copyWith(color: fgColor),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
