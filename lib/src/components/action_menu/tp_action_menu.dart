@@ -575,6 +575,7 @@ class _TpActionMenuIconAnchorState extends State<TpActionMenuIconAnchor> {
           ),
       decoration: TpActionMenuMetrics.panelDecoration(context),
       padding: TpActionMenuMetrics.panelPadding,
+      capHeightToAnchorSide: true,
       popover: (ctx) => TpActionMenuPanel(
         minWidth: widget.minWidth,
         menuAnchorShell: true,
@@ -823,8 +824,7 @@ class _TpActionMenuScrollBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight =
-        spec.maxHeight ?? MediaQuery.sizeOf(context).height * 0.5;
+    final maxHeight = spec.maxHeight ?? MediaQuery.sizeOf(context).height * 0.5;
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
       child: SingleChildScrollView(
@@ -1153,6 +1153,7 @@ class _TpActionMenuSubmenuItemState extends State<TpActionMenuSubmenuItem> {
       controller: _popover,
       padding: TpActionMenuMetrics.panelPadding,
       decoration: TpActionMenuMetrics.panelDecoration(context),
+      capHeightToAnchorSide: true,
       anchor: const TpAnchor(
         childAlignment: Alignment.topLeft,
         overlayAlignment: Alignment.centerRight,

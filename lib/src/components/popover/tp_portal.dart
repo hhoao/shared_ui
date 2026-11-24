@@ -13,6 +13,7 @@ class TpPortal extends StatefulWidget {
     required this.anchor,
     this.transitionDuration = const Duration(milliseconds: 160),
     this.transitionCurve = Curves.easeOutCubic,
+    this.capHeightToAnchorSide = false,
   });
 
   final Widget child;
@@ -22,9 +23,16 @@ class TpPortal extends StatefulWidget {
   final Duration transitionDuration;
   final Curve transitionCurve;
 
+  /// Caps the overlay height to the roomier side around the anchor and scrolls
+  /// oversized content instead of letting it cover the anchor.
+  final bool capHeightToAnchorSide;
+
   @override
   State<TpPortal> createState() => _TpPortalState();
 }
+
+/// Mirrors an [Alignment] vertically (top ↔ bottom, center stays center).
+Alignment _mirrorY(Alignment alignment) => Alignment(alignment.x, -alignment.y);
 
 class _TpPortalState extends State<TpPortal>
     with SingleTickerProviderStateMixin {
@@ -153,7 +161,9 @@ class _TpPortalState extends State<TpPortal>
         overlayState.context.findRenderObject()! as RenderBox;
 
     final Offset targetPoint;
+    final Offset flipTargetPoint;
     final Alignment followerAlignment;
+    final Alignment flipFollowerAlignment;
     switch (anchor) {
       case TpGlobalAnchor():
         return CustomSingleChildLayout(
@@ -167,18 +177,33 @@ class _TpPortalState extends State<TpPortal>
           ancestor: overlayAncestor,
         );
         followerAlignment = anchor.childAlignment;
+        flipTargetPoint = box.localToGlobal(
+          alignmentPointOnRect(box.size, _mirrorY(anchor.overlayAlignment)) +
+              Offset(anchor.offset.dx, -anchor.offset.dy),
+          ancestor: overlayAncestor,
+        );
+        flipFollowerAlignment = _mirrorY(anchor.childAlignment);
       case TpAnchorAuto():
         targetPoint = box.localToGlobal(
           alignmentPointOnRect(box.size, anchor.targetAnchor) + anchor.offset,
           ancestor: overlayAncestor,
         );
         followerAlignment = anchor.followerAnchor;
+        flipTargetPoint = box.localToGlobal(
+          alignmentPointOnRect(box.size, _mirrorY(anchor.targetAnchor)) +
+              Offset(anchor.offset.dx, -anchor.offset.dy),
+          ancestor: overlayAncestor,
+        );
+        flipFollowerAlignment = _mirrorY(anchor.followerAnchor);
     }
 
     return CustomSingleChildLayout(
       delegate: TpOverlayPositionDelegate(
         targetPoint: targetPoint,
         followerAlignment: followerAlignment,
+        flipTargetPoint: flipTargetPoint,
+        flipFollowerAlignment: flipFollowerAlignment,
+        capHeightToAnchorSide: widget.capHeightToAnchorSide,
       ),
       child: _buildAnimatedPortal(context, widget.portalBuilder(context)),
     );

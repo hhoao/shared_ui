@@ -1,5 +1,7 @@
 // Portal positioning types adapted from AppFlowy UI / flutter_shadcn_ui.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// Base type for [TpPortal] overlay positioning.
@@ -133,30 +135,127 @@ Offset clampOverlayTopLeft({
 /// position on the previous frame's height, so a bottom-aligned panel that
 /// grows (a refresh error line appearing, for example) would be flipped above
 /// the anchor and jump upward.
+///
+/// When the panel does not fit on the primary side it flips to
+/// [flipTargetPoint] — the mirrored point on the anchor's opposite edge, so a
+/// menu flipped above its trigger ends at the trigger's *top* edge instead of
+/// its bottom edge (which would cover the trigger). With [capHeightToAnchorSide]
+/// the panel is additionally capped to the roomier side, so a menu tall enough
+/// to fit on neither side scrolls instead of spilling over the trigger.
 class TpOverlayPositionDelegate extends SingleChildLayoutDelegate {
   const TpOverlayPositionDelegate({
     required this.targetPoint,
     required this.followerAlignment,
-  });
+    Offset? flipTargetPoint,
+    Alignment? flipFollowerAlignment,
+    this.capHeightToAnchorSide = false,
+  }) : flipTargetPoint = flipTargetPoint ?? targetPoint,
+       flipFollowerAlignment = flipFollowerAlignment ?? followerAlignment;
 
   final Offset targetPoint;
   final Alignment followerAlignment;
 
-  @override
-  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
-      constraints.loosen();
+  /// Primary placement mirrored to the anchor's opposite side.
+  final Offset flipTargetPoint;
+  final Alignment flipFollowerAlignment;
+
+  /// Caps the panel height to the larger of the two sides around the anchor.
+  /// Only for content that scrolls; a fixed-size child would overflow instead.
+  final bool capHeightToAnchorSide;
+
+  static Offset _topLeft(Offset target, Alignment follower, Size childSize) =>
+      target - alignmentPointOnRect(childSize, follower);
+
+  static bool _fitsVertically(Offset topLeft, Size container, Size childSize) =>
+      topLeft.dy >= 0 && topLeft.dy + childSize.height <= container.height;
+
+  /// Tallest panel that stays inside [containerHeight] when pinned to [target]
+  /// with [follower].
+  static double _maxHeightFor(
+    Offset target,
+    Alignment follower,
+    double containerHeight,
+  ) {
+    final topFraction = (follower.y + 1) / 2;
+    final roomBelow = topFraction >= 1
+        ? double.infinity
+        : (containerHeight - target.dy) / (1 - topFraction);
+    final roomAbove = topFraction <= 0
+        ? double.infinity
+        : target.dy / topFraction;
+    return math.min(roomBelow, roomAbove);
+  }
+
+  static Offset _clampHorizontally(
+    Offset topLeft,
+    Size container,
+    Size childSize,
+  ) {
+    final maxX = (container.width - childSize.width).clamp(
+      0.0,
+      container.width,
+    );
+    return Offset(topLeft.dx.clamp(0.0, maxX), topLeft.dy);
+  }
+
+  static Offset _clampInside(Offset topLeft, Size container, Size childSize) {
+    final maxX = (container.width - childSize.width).clamp(
+      0.0,
+      container.width,
+    );
+    final maxY = (container.height - childSize.height).clamp(
+      0.0,
+      container.height,
+    );
+    return Offset(topLeft.dx.clamp(0.0, maxX), topLeft.dy.clamp(0.0, maxY));
+  }
 
   @override
-  Offset getPositionForChild(Size size, Size childSize) => clampOverlayTopLeft(
-    target: targetPoint - alignmentPointOnRect(childSize, followerAlignment),
-    size: size,
-    childSize: childSize,
-  );
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
+    final loose = constraints.loosen();
+    if (!capHeightToAnchorSide || !constraints.maxHeight.isFinite) {
+      return loose;
+    }
+    final capped = math.max(
+      _maxHeightFor(targetPoint, followerAlignment, constraints.maxHeight),
+      _maxHeightFor(
+        flipTargetPoint,
+        flipFollowerAlignment,
+        constraints.maxHeight,
+      ),
+    );
+    if (!capped.isFinite || capped >= loose.maxHeight) return loose;
+    return loose.copyWith(maxHeight: math.max(0, capped));
+  }
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final primary = _topLeft(targetPoint, followerAlignment, childSize);
+    if (_fitsVertically(primary, size, childSize)) {
+      return _clampHorizontally(primary, size, childSize);
+    }
+    final flipped = _topLeft(flipTargetPoint, flipFollowerAlignment, childSize);
+    if (_fitsVertically(flipped, size, childSize)) {
+      return _clampHorizontally(flipped, size, childSize);
+    }
+    // Neither side has enough room: keep the panel on the roomier side and
+    // clamp it inside the viewport.
+    final roomPrimary = size.height - targetPoint.dy;
+    final roomFlipped = flipTargetPoint.dy;
+    return _clampInside(
+      roomFlipped > roomPrimary ? flipped : primary,
+      size,
+      childSize,
+    );
+  }
 
   @override
   bool shouldRelayout(TpOverlayPositionDelegate oldDelegate) =>
       targetPoint != oldDelegate.targetPoint ||
-      followerAlignment != oldDelegate.followerAlignment;
+      followerAlignment != oldDelegate.followerAlignment ||
+      flipTargetPoint != oldDelegate.flipTargetPoint ||
+      flipFollowerAlignment != oldDelegate.flipFollowerAlignment ||
+      capHeightToAnchorSide != oldDelegate.capHeightToAnchorSide;
 }
 
 /// Positions the overlay at a fixed global offset (screen coordinates).

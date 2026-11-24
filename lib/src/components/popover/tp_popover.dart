@@ -11,6 +11,7 @@ import 'tp_portal.dart';
 export 'tp_anchor.dart';
 export 'tp_popover_controller.dart';
 export 'tp_portal.dart';
+
 /// Anchored overlay panel.
 class TpPopover extends StatefulWidget {
   const TpPopover({
@@ -28,6 +29,7 @@ class TpPopover extends StatefulWidget {
     this.useSameGroupIdForChild = true,
     this.transitionDuration,
     this.transitionCurve = Curves.easeOutCubic,
+    this.capHeightToAnchorSide = false,
   });
 
   final Widget child;
@@ -47,6 +49,11 @@ class TpPopover extends StatefulWidget {
   final bool useSameGroupIdForChild;
   final Duration? transitionDuration;
   final Curve transitionCurve;
+
+  /// Caps the panel height to the roomier side around the anchor and scrolls
+  /// oversized content instead of letting it cover the anchor. Only enable for
+  /// popovers whose content scrolls.
+  final bool capHeightToAnchorSide;
 
   @override
   State<TpPopover> createState() => _TpPopoverState();
@@ -171,6 +178,7 @@ class _TpPopoverState extends State<TpPopover> {
             anchor: effectiveAnchor,
             transitionDuration: transitionDuration,
             transitionCurve: widget.transitionCurve,
+            capHeightToAnchorSide: widget.capHeightToAnchorSide,
             portalBuilder: (_) => panel,
             child: widget.child,
           ),

@@ -69,6 +69,7 @@ class _TpTableColumnMenuState<T> extends State<TpTableColumnMenu<T>> {
       panelWidth: 220,
       padding: EdgeInsets.zero,
       decoration: TpActionMenuMetrics.panelDecoration(context),
+      capHeightToAnchorSide: true,
       anchor: const TpAnchor(
         childAlignment: Alignment.topRight,
         overlayAlignment: Alignment.bottomRight,
