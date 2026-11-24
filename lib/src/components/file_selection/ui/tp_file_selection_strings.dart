@@ -126,8 +126,11 @@ class TpFileSelectionStrings {
     required this.selectionSummaryItems,
     required this.sortByFileSize,
     required this.sortByFileType,
+    required this.sortByCreatedTime,
     required this.sortByModifiedTime,
     required this.sortByName,
+    required this.sortAscending,
+    required this.sortDescending,
     required this.sortOptionsTitle,
     required this.storagePermissionRequired,
     required this.storageSummary,
@@ -271,8 +274,11 @@ class TpFileSelectionStrings {
   final String Function(int count) selectionSummaryItems;
   final String sortByFileSize;
   final String sortByFileType;
+  final String sortByCreatedTime;
   final String sortByModifiedTime;
   final String sortByName;
+  final String sortAscending;
+  final String sortDescending;
   final String sortOptionsTitle;
   final String storagePermissionRequired;
   final String Function(int folderCount, int fileCount) storageSummary;
@@ -423,8 +429,11 @@ class TpFileSelectionStrings {
       selectionSummaryItems: (count) => '$count items',
       sortByFileSize: 'File size',
       sortByFileType: 'File type',
+      sortByCreatedTime: 'Created time',
       sortByModifiedTime: 'Modified time',
       sortByName: 'Name',
+      sortAscending: 'Ascending',
+      sortDescending: 'Descending',
       sortOptionsTitle: 'Sort by',
       storagePermissionRequired:
           'Storage permission is required to access files',

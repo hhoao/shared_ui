@@ -234,6 +234,12 @@ class TpFilesystemTabState extends State<TpFilesystemTab>
   int get selectableCount => _selectablePickedEntries().length;
 
   @override
+  String get sortType => _sortType;
+
+  @override
+  bool get sortAscending => _sortAscending;
+
+  @override
   void applySorting(String sortType, {required bool ascending}) {
     setState(() {
       _sortType = sortType;

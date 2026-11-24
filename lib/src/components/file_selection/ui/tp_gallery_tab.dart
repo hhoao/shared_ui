@@ -47,6 +47,8 @@ class TpGalleryTabState extends State<TpGalleryTab>
   String? _selectedAlbumId;
   String _selectedAlbumName = '';
   String _searchQuery = '';
+  String _sortType = 'date';
+  bool _sortAscending = false;
   bool _hasGalleryPermission = false;
   bool _isLoading = false;
   bool _isLoadingMore = false;
@@ -100,6 +102,8 @@ class TpGalleryTabState extends State<TpGalleryTab>
       final albums = await gallery.listAlbums(
         includeVideos: _includeVideos,
         includeImages: _includeImages,
+        sortType: _sortType,
+        ascending: _sortAscending,
       );
       if (!mounted) return;
 
@@ -159,6 +163,8 @@ class TpGalleryTabState extends State<TpGalleryTab>
         pageSize: _pageSize,
         includeVideos: _includeVideos,
         includeImages: _includeImages,
+        sortType: _sortType,
+        ascending: _sortAscending,
       );
       if (!mounted) return;
 
@@ -199,6 +205,8 @@ class TpGalleryTabState extends State<TpGalleryTab>
         pageSize: _pageSize,
         includeVideos: _includeVideos,
         includeImages: _includeImages,
+        sortType: _sortType,
+        ascending: _sortAscending,
       );
       if (!mounted) return;
 
@@ -436,7 +444,22 @@ class TpGalleryTabState extends State<TpGalleryTab>
   }
 
   @override
-  void applySorting(String sortType, {required bool ascending}) {}
+  String get sortType => _sortType;
+
+  @override
+  bool get sortAscending => _sortAscending;
+
+  @override
+  void applySorting(String sortType, {required bool ascending}) {
+    if (sortType != 'date') return;
+    if (_sortType == sortType && _sortAscending == ascending) return;
+
+    setState(() {
+      _sortType = sortType;
+      _sortAscending = ascending;
+    });
+    _loadAlbumsAndAssets();
+  }
 
   @visibleForTesting
   int get loadedAssetCount => _assets.length;

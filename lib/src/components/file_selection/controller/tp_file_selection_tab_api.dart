@@ -5,6 +5,11 @@ abstract class TpFileSelectionTabApi {
 
   int get selectableCount;
 
-  /// Filesystem tab only; gallery may no-op. Page app-bar sort calls this.
+  /// Current sort option id (e.g. `'name'`, `'date'`).
+  String get sortType;
+
+  /// Whether the current sort is ascending.
+  bool get sortAscending;
+
   void applySorting(String sortType, {required bool ascending});
 }

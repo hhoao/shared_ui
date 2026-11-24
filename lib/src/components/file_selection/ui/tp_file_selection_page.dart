@@ -38,8 +38,6 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
   late final TpFileSelectionController _controller;
   TabController? _tabController;
   bool _isProgrammaticTabChange = false;
-  String _sortType = 'name';
-  bool _sortAscending = true;
 
   TpFileSelectionStrings get _strings => widget.deps.strings;
 
@@ -203,18 +201,25 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
   }
 
   Future<void> _showSortSheet() async {
+    final api = _activeTabApi;
+    final isGallery = (_tabController?.index ?? 0) == 1;
+    final List<TpFileSortOption> options = isGallery
+        ? [(id: 'date', label: _strings.sortByCreatedTime)]
+        : [
+            (id: 'name', label: _strings.sortByName),
+            (id: 'date', label: _strings.sortByModifiedTime),
+            (id: 'size', label: _strings.sortByFileSize),
+            (id: 'type', label: _strings.sortByFileType),
+          ];
+
     await showTpFileSortSheet(
       context: context,
       strings: _strings,
-      currentSortType: _sortType,
-      currentAscending: _sortAscending,
+      currentSortType: api?.sortType ?? (isGallery ? 'date' : 'name'),
+      currentAscending: api?.sortAscending ?? !isGallery,
+      options: options,
       onSelected: (sortType, {required bool ascending}) {
-        setState(() {
-          _sortType = sortType;
-          _sortAscending = ascending;
-        });
-        _filesystemTabKey.currentState
-            ?.applySorting(sortType, ascending: ascending);
+        api?.applySorting(sortType, ascending: ascending);
       },
     );
   }
@@ -312,8 +317,7 @@ class _TpFileSelectionPageState extends State<TpFileSelectionPage>
     return _strings.selectionSummaryItems(count);
   }
 
-  bool get _showSortAction =>
-      !_isDirectoryMode && (_tabController?.index ?? 0) == 0;
+  bool get _showSortAction => !_isDirectoryMode;
 
   @override
   Widget build(BuildContext context) {

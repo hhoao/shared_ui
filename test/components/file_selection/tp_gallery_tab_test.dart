@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_ui/src/components/file_selection/ui/widgets/tp_gallery_asset_tile.dart';
 
 import 'fake_file_selection_ports.dart';
 
@@ -73,6 +74,38 @@ FakeGalleryPort _galleryWithSampleAssets() {
   return gallery;
 }
 
+FakeGalleryPort _galleryWithDatedVideos() {
+  final gallery = FakeGalleryPort(
+    albums: const [_albumCamera],
+    pathsByAssetId: {
+      'older': '/media/older.mp4',
+      'newer': '/media/newer.mp4',
+    },
+  );
+  gallery.setAssets('album_camera', [
+    TpGalleryAsset(
+      id: 'older',
+      displayName: 'older.mp4',
+      isVideo: true,
+      createDateTime: DateTime.utc(2021, 5, 1),
+    ),
+    TpGalleryAsset(
+      id: 'newer',
+      displayName: 'newer.mp4',
+      isVideo: true,
+      createDateTime: DateTime.utc(2024, 5, 1),
+    ),
+  ]);
+  return gallery;
+}
+
+List<String> _renderedAssetIds(WidgetTester tester) {
+  return tester
+      .widgetList<TpGalleryAssetTile>(find.byType(TpGalleryAssetTile))
+      .map((tile) => tile.asset.id)
+      .toList();
+}
+
 void main() {
   group('TpGalleryTab', () {
     testWidgets('shows albums then assets after gallery permission grant',
@@ -122,7 +155,6 @@ void main() {
         ),
       );
       final controller = _controller();
-      final strings = TpFileSelectionStrings.english();
 
       await tester.pumpWidget(
         _wrap(
@@ -152,6 +184,82 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tabState.loadedAssetCount, 55);
+    });
+
+    testWidgets('defaults to newest-first gallery ordering', (tester) async {
+      final gallery = _galleryWithDatedVideos();
+      final controller = _controller();
+
+      await tester.pumpWidget(
+        _wrap(
+          TpGalleryTab(
+            deps: _deps(gallery: gallery),
+            options: const TpFileSelectionOptions(),
+            controller: controller,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tabState =
+          tester.state<TpGalleryTabState>(find.byType(TpGalleryTab));
+
+      expect(tabState.sortType, 'date');
+      expect(tabState.sortAscending, isFalse);
+      expect(gallery.lastSortAscending, isFalse);
+      expect(_renderedAssetIds(tester), ['newer', 'older']);
+    });
+
+    testWidgets('applySorting(date, ascending) reloads assets ascending',
+        (tester) async {
+      final gallery = _galleryWithDatedVideos();
+      final controller = _controller();
+
+      await tester.pumpWidget(
+        _wrap(
+          TpGalleryTab(
+            deps: _deps(gallery: gallery),
+            options: const TpFileSelectionOptions(),
+            controller: controller,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tabState =
+          tester.state<TpGalleryTabState>(find.byType(TpGalleryTab));
+      tabState.applySorting('date', ascending: true);
+      await tester.pumpAndSettle();
+
+      expect(tabState.sortAscending, isTrue);
+      expect(gallery.lastSortAscending, isTrue);
+      expect(_renderedAssetIds(tester), ['older', 'newer']);
+    });
+
+    testWidgets('applySorting ignores unsupported gallery sort types',
+        (tester) async {
+      final gallery = _galleryWithDatedVideos();
+      final controller = _controller();
+
+      await tester.pumpWidget(
+        _wrap(
+          TpGalleryTab(
+            deps: _deps(gallery: gallery),
+            options: const TpFileSelectionOptions(),
+            controller: controller,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tabState =
+          tester.state<TpGalleryTabState>(find.byType(TpGalleryTab));
+      tabState.applySorting('name', ascending: true);
+      await tester.pumpAndSettle();
+
+      expect(tabState.sortType, 'date');
+      expect(tabState.sortAscending, isFalse);
+      expect(_renderedAssetIds(tester), ['newer', 'older']);
     });
 
     testWidgets('in-list search filters assets', (tester) async {

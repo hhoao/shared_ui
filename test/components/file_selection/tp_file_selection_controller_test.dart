@@ -14,6 +14,12 @@ class _FakeTabApi implements TpFileSelectionTabApi {
   int get selectableCount => 0;
 
   @override
+  String get sortType => 'name';
+
+  @override
+  bool get sortAscending => true;
+
+  @override
   void applySorting(String sortType, {required bool ascending}) {}
 }
 

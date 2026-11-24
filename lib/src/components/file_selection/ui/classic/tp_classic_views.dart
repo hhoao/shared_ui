@@ -26,6 +26,12 @@ abstract class TpClassicViewApi {
 
   int get selectableCount;
 
+  /// Current sort option id (e.g. `'name'`, `'date'`).
+  String get sortType;
+
+  /// Whether the current sort is ascending.
+  bool get sortAscending;
+
   void applySorting(String sortType, {required bool ascending});
 }
 
@@ -236,6 +242,12 @@ class TpClassicStorageTabState extends State<TpClassicStorageTab>
     if (max != null && total > max) return max;
     return total;
   }
+
+  @override
+  String get sortType => _sortType;
+
+  @override
+  bool get sortAscending => _sortAscending;
 
   @override
   void applySorting(String sortType, {required bool ascending}) {
@@ -820,6 +832,8 @@ class TpClassicMediaGrid extends StatefulWidget {
     this.showHeader = true,
     this.viewMode = TpClassicMediaViewMode.grid,
     this.query = '',
+    this.sortType = 'date',
+    this.ascending = false,
   });
 
   final TpFileSelectionDeps deps;
@@ -838,6 +852,12 @@ class TpClassicMediaGrid extends StatefulWidget {
   /// Optional display-name filter applied to the loaded assets.
   final String query;
 
+  /// Sort criterion id; the gallery supports `'date'`.
+  final String sortType;
+
+  /// Whether assets are requested in ascending order.
+  final bool ascending;
+
   @override
   State<TpClassicMediaGrid> createState() => TpClassicMediaGridState();
 }
@@ -845,8 +865,7 @@ class TpClassicMediaGrid extends StatefulWidget {
 /// How [TpClassicMediaGrid] renders its assets.
 enum TpClassicMediaViewMode { grid, list }
 
-class TpClassicMediaGridState extends State<TpClassicMediaGrid>
-    implements TpClassicViewApi {
+class TpClassicMediaGridState extends State<TpClassicMediaGrid> {
   static const _pageSize = 50;
 
   List<TpGalleryAsset> _assets = [];
@@ -880,6 +899,16 @@ class TpClassicMediaGridState extends State<TpClassicMediaGrid>
   }
 
   @override
+  void didUpdateWidget(covariant TpClassicMediaGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final sortChanged = oldWidget.sortType != widget.sortType ||
+        oldWidget.ascending != widget.ascending;
+    if (oldWidget.source.albumId != widget.source.albumId || sortChanged) {
+      _loadAssets();
+    }
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
@@ -903,6 +932,8 @@ class TpClassicMediaGridState extends State<TpClassicMediaGrid>
         pageSize: _pageSize,
         includeVideos: widget.source.includeVideos,
         includeImages: widget.source.includeImages,
+        sortType: widget.sortType,
+        ascending: widget.ascending,
       );
       if (!mounted) return;
 
@@ -935,6 +966,8 @@ class TpClassicMediaGridState extends State<TpClassicMediaGrid>
         pageSize: _pageSize,
         includeVideos: widget.source.includeVideos,
         includeImages: widget.source.includeImages,
+        sortType: widget.sortType,
+        ascending: widget.ascending,
       );
       if (!mounted) return;
 
@@ -1029,7 +1062,6 @@ class TpClassicMediaGridState extends State<TpClassicMediaGrid>
     }
   }
 
-  @override
   Future<void> selectAll() async {
     final gallery = widget.deps.gallery;
     if (gallery == null) return;
@@ -1051,16 +1083,12 @@ class TpClassicMediaGridState extends State<TpClassicMediaGrid>
     widget.controller.selectAllFrom(picked);
   }
 
-  @override
   int get selectableCount {
     final total = _visibleAssets.length;
     final max = widget.options.maxSelectionCount;
     if (max != null && total > max) return max;
     return total;
   }
-
-  @override
-  void applySorting(String sortType, {required bool ascending}) {}
 
   @override
   Widget build(BuildContext context) {
@@ -1342,6 +1370,8 @@ class TpClassicGalleryTabState extends State<TpClassicGalleryTab>
   TpGalleryAlbum? _currentAlbum;
   TpClassicMediaViewMode _viewMode = TpClassicMediaViewMode.grid;
   String _query = '';
+  String _sortType = 'date';
+  bool _sortAscending = false;
   bool _hasGalleryPermission = false;
   bool _isLoading = true;
 
@@ -1402,6 +1432,8 @@ class TpClassicGalleryTabState extends State<TpClassicGalleryTab>
       final albums = await gallery.listAlbums(
         includeVideos: _includeVideos,
         includeImages: _includeImages,
+        sortType: _sortType,
+        ascending: _sortAscending,
       );
       if (!mounted) return;
       setState(() {
@@ -1433,6 +1465,8 @@ class TpClassicGalleryTabState extends State<TpClassicGalleryTab>
           pageSize: 1,
           includeVideos: _includeVideos,
           includeImages: _includeImages,
+          sortType: _sortType,
+          ascending: _sortAscending,
         )
         .then((assets) async {
       if (assets.isEmpty) return null;
@@ -1604,8 +1638,20 @@ class TpClassicGalleryTabState extends State<TpClassicGalleryTab>
   int get selectableCount => _mediaGridKey.currentState?.selectableCount ?? 0;
 
   @override
+  String get sortType => _sortType;
+
+  @override
+  bool get sortAscending => _sortAscending;
+
+  @override
   void applySorting(String sortType, {required bool ascending}) {
-    _mediaGridKey.currentState?.applySorting(sortType, ascending: ascending);
+    if (sortType != 'date') return;
+    if (_sortType == sortType && _sortAscending == ascending) return;
+
+    setState(() {
+      _sortType = sortType;
+      _sortAscending = ascending;
+    });
   }
 
   @override
@@ -1657,6 +1703,8 @@ class TpClassicGalleryTabState extends State<TpClassicGalleryTab>
                   showHeader: false,
                   viewMode: _viewMode,
                   query: _query,
+                  sortType: _sortType,
+                  ascending: _sortAscending,
                 ),
         ),
       ],

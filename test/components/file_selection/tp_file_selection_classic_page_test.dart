@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../support/tp_test_widgets.dart';
 import 'package:shared_ui/shared_ui.dart';
-import 'package:shared_ui/src/components/file_selection/ui/classic/tp_file_selection_classic_page.dart';
 
 import 'fake_file_selection_ports.dart';
 
@@ -269,6 +268,63 @@ void main() {
 
       expect(find.byKey(const Key('tp_gallery_asset_tile_s1')), findsOneWidget);
       expect(find.byKey(const Key('tp_gallery_asset_tile_v1')), findsNothing);
+    });
+
+    testWidgets('sort sheet reorders gallery assets', (tester) async {
+      final gallery = FakeGalleryPort(
+        albums: const [
+          TpGalleryAlbum(
+            id: 'album_all',
+            name: 'Recent',
+            assetCount: 2,
+            isAll: true,
+          ),
+        ],
+        pathsByAssetId: const {
+          'v1': '/storage/DCIM/old.mp4',
+          'v2': '/storage/DCIM/new.mp4',
+        },
+      );
+      gallery.setAssets('album_all', [
+        TpGalleryAsset(
+          id: 'v1',
+          displayName: 'old.mp4',
+          isVideo: true,
+          createDateTime: DateTime.utc(2021, 1, 1),
+        ),
+        TpGalleryAsset(
+          id: 'v2',
+          displayName: 'new.mp4',
+          isVideo: true,
+          createDateTime: DateTime.utc(2024, 1, 1),
+        ),
+      ]);
+
+      await _openPage(
+        tester,
+        deps: _deps(gallery: gallery),
+        options: const TpFileSelectionOptions(
+          allowMultiple: true,
+          layout: TpFileSelectionLayout.classic,
+          initialTab: TpFileSelectionTab.gallery,
+        ),
+      );
+
+      double xOf(String id) =>
+          tester.getTopLeft(find.byKey(Key('tp_gallery_asset_tile_$id'))).dx;
+
+      expect(gallery.lastSortAscending, isFalse);
+      expect(xOf('v2'), lessThan(xOf('v1')));
+
+      await tester.tap(find.byKey(const Key('tp_file_selection_sort')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('tp_file_sort_ascending')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('tp_file_sort_option_date')));
+      await tester.pumpAndSettle();
+
+      expect(gallery.lastSortAscending, isTrue);
+      expect(xOf('v1'), lessThan(xOf('v2')));
     });
 
     testWidgets('switching tabs with a selection asks for confirmation',

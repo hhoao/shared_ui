@@ -176,6 +176,21 @@ void main() {
       final appBar = tester.widget<AppBar>(find.byType(AppBar));
       expect(appBar.actions, isNull);
     });
+
+    testWidgets('shows the sort action on the gallery tab too', (tester) async {
+      await _openPage(
+        tester,
+        deps: _depsWithFilesystem(gallery: _galleryWithSampleAssets()),
+        options: const TpFileSelectionOptions(
+          allowMultiple: true,
+          initialTab: TpFileSelectionTab.gallery,
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('tp_file_selection_sort')), findsOneWidget);
+    });
   });
 
   group('TpFileSelectionPage bottom bar', () {

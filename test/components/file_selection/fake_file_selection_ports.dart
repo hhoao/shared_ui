@@ -123,6 +123,9 @@ class FakeGalleryPort implements TpGalleryPort {
   final Map<String, Uint8List> _thumbnailsByAssetId = {};
   final Map<String, String> _pathsByAssetId = {};
 
+  String lastSortType = 'date';
+  bool lastSortAscending = false;
+
   void setAlbums(List<TpGalleryAlbum> albums) {
     _albums
       ..clear()
@@ -137,7 +140,11 @@ class FakeGalleryPort implements TpGalleryPort {
   Future<List<TpGalleryAlbum>> listAlbums({
     required bool includeVideos,
     required bool includeImages,
+    String sortType = 'date',
+    bool ascending = false,
   }) async {
+    lastSortType = sortType;
+    lastSortAscending = ascending;
     return List.unmodifiable(_albums);
   }
 
@@ -165,16 +172,37 @@ class FakeGalleryPort implements TpGalleryPort {
     required int pageSize,
     required bool includeVideos,
     required bool includeImages,
+    String sortType = 'date',
+    bool ascending = false,
   }) async {
+    lastSortType = sortType;
+    lastSortAscending = ascending;
     final filtered = _filteredAssets(
       albumId,
       includeVideos: includeVideos,
       includeImages: includeImages,
     );
+    final ordered = _orderedByCreation(filtered, sortType, ascending);
     final start = page * pageSize;
-    if (start >= filtered.length) return [];
-    final end = (start + pageSize).clamp(0, filtered.length);
-    return List.unmodifiable(filtered.sublist(start, end));
+    if (start >= ordered.length) return [];
+    final end = (start + pageSize).clamp(0, ordered.length);
+    return List.unmodifiable(ordered.sublist(start, end));
+  }
+
+  List<TpGalleryAsset> _orderedByCreation(
+    List<TpGalleryAsset> assets,
+    String sortType,
+    bool ascending,
+  ) {
+    if (sortType != 'date') return assets;
+    if (assets.any((asset) => asset.createDateTime == null)) return assets;
+    final ordered = List<TpGalleryAsset>.from(assets);
+    ordered.sort((a, b) {
+      final aDate = a.createDateTime!;
+      final bDate = b.createDateTime!;
+      return ascending ? aDate.compareTo(bDate) : bDate.compareTo(aDate);
+    });
+    return ordered;
   }
 
   @override

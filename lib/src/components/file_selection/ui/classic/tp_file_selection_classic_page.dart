@@ -38,8 +38,6 @@ class _TpFileSelectionClassicPageState
   TabController? _tabController;
   bool _isProgrammaticTabChange = false;
   int _currentTabIndex = 0;
-  String _sortType = 'name';
-  bool _sortAscending = true;
 
   final _storageTabKey = GlobalKey<TpClassicStorageTabState>();
   final _galleryTabKey = GlobalKey<TpClassicGalleryTabState>();
@@ -158,17 +156,25 @@ class _TpFileSelectionClassicPageState
       _apiForTabIndex(_tabController?.index ?? 0);
 
   Future<void> _showSortSheet() async {
+    final api = _activeApi;
+    final isGallery = (_tabController?.index ?? 0) == 1;
+    final List<TpFileSortOption> options = isGallery
+        ? [(id: 'date', label: _strings.sortByCreatedTime)]
+        : [
+            (id: 'name', label: _strings.sortByName),
+            (id: 'date', label: _strings.sortByModifiedTime),
+            (id: 'size', label: _strings.sortByFileSize),
+            (id: 'type', label: _strings.sortByFileType),
+          ];
+
     await showTpFileSortSheet(
       context: context,
       strings: _strings,
-      currentSortType: _sortType,
-      currentAscending: _sortAscending,
+      currentSortType: api?.sortType ?? (isGallery ? 'date' : 'name'),
+      currentAscending: api?.sortAscending ?? !isGallery,
+      options: options,
       onSelected: (sortType, {required bool ascending}) {
-        setState(() {
-          _sortType = sortType;
-          _sortAscending = ascending;
-        });
-        _activeApi?.applySorting(sortType, ascending: ascending);
+        api?.applySorting(sortType, ascending: ascending);
       },
     );
   }
